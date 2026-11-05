@@ -1,0 +1,34 @@
+{
+  "name": "chapter-whip",
+  "title": "章节甩切",
+  "description": "章节卡用 whip 转场进入，电影感嗖声 + 闪光",
+  "tags": [
+    "章节",
+    "转场",
+    "whip"
+  ],
+  "scenes": [
+    {
+      "type": "chapter",
+      "enter": {
+        "type": "whip",
+        "sfx": "whoosh-cinematic"
+      },
+      "props": {
+        "index": 1,
+        "title": "{{title}}",
+        "subtitle": "{{subtitle}}"
+      },
+      "overlays": [
+        {
+          "type": "lottie",
+          "src": "sparkle",
+          "at": 0.5,
+          "x": 0.5,
+          "y": 0.25,
+          "size": 130
+        }
+      ]
+    }
+  ]
+}

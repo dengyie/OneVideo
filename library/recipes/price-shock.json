@@ -1,0 +1,73 @@
+{
+  "name": "price-shock",
+  "title": "价格暴涨/暴跌",
+  "description": "走势图画到事件点时聚光 + 闪白，箭头指向拐点",
+  "tags": [
+    "金融",
+    "price-chart",
+    "冲击"
+  ],
+  "scenes": [
+    {
+      "type": "price-chart",
+      "props": {
+        "title": "{{title}}",
+        "label": "{{unit}}",
+        "area": true,
+        "points": [
+          [
+            "1",
+            100
+          ],
+          [
+            "2",
+            108
+          ],
+          [
+            "3",
+            104
+          ],
+          [
+            "4",
+            160
+          ],
+          [
+            "5",
+            150
+          ]
+        ],
+        "events": [
+          {
+            "x": "4",
+            "label": "{{event}}",
+            "tone": "up"
+          }
+        ]
+      },
+      "overlays": [
+        {
+          "type": "spotlight",
+          "x": 0.68,
+          "y": 0.4,
+          "at": 2.6,
+          "duration": 2,
+          "sfx": "auto"
+        },
+        {
+          "type": "arrow",
+          "from": [
+            0.45,
+            0.85
+          ],
+          "to": [
+            0.66,
+            0.45
+          ],
+          "at": 2.8,
+          "label": "{{arrow_label}}"
+        }
+      ]
+    }
+  ],
+  "notes": "mark.rect / arrow.from-to / callout.x-y / spotlight.x-y 是画面比例坐标，按实际内容微调后跑 onevideo stills 核对"
+}

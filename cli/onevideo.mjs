@@ -23,7 +23,7 @@ const COMMANDS = {
   qc: [render.qc, "qc [--video file]            post-render review → plan/review.json"],
   publish: [render.publish, "publish [--force]            SRT/VTT, chapters, description → out/publish/ (needs approved review)"],
   build: [render.build, "build [--draft]              tts → music → timeline → render → qc (then approve review, publish)"],
-  lib: [library.lib, "lib list [--category c] | search <words> | import <candidates.json> | merge <catalog.json> | verify"],
+  lib: [library.lib, "lib list [--kind sfx|lottie] [--category c] | search <words> | import <candidates.json> | merge <catalog.json> | verify | recipe [<name> --id x --set k=v]"],
   doctor: [render.doctor, "doctor                       environment check"],
 };
 

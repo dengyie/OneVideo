@@ -1,0 +1,51 @@
+{
+  "name": "warning-moment",
+  "title": "风险/反转",
+  "description": "列出风险点，错误项划掉，角落警示 Lottie",
+  "tags": [
+    "风险",
+    "bullets",
+    "反转",
+    "strike"
+  ],
+  "scenes": [
+    {
+      "type": "bullets",
+      "header": {
+        "title": "{{title}}"
+      },
+      "props": {
+        "items": [
+          "{{risk1}}",
+          "{{risk2}}",
+          "{{risk3}}"
+        ]
+      },
+      "overlays": [
+        {
+          "type": "lottie",
+          "src": "warning",
+          "at": 0.4,
+          "x": 0.88,
+          "y": 0.18,
+          "size": 140,
+          "sfx": "auto"
+        },
+        {
+          "type": "mark",
+          "kind": "strike",
+          "rect": [
+            0.12,
+            0.6,
+            0.5,
+            0.06
+          ],
+          "at": 2.6,
+          "color": "#ff4d4f",
+          "sfx": "auto"
+        }
+      ]
+    }
+  ],
+  "notes": "mark.rect / arrow.from-to / callout.x-y / spotlight.x-y 是画面比例坐标，按实际内容微调后跑 onevideo stills 核对"
+}

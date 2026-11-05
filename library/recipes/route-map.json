@@ -1,0 +1,63 @@
+{
+  "name": "route-map",
+  "title": "地图航线",
+  "description": "地图从全球推近，航线飞出，字条说明航线意义",
+  "tags": [
+    "地图",
+    "航线",
+    "地理"
+  ],
+  "scenes": [
+    {
+      "type": "map",
+      "props": {
+        "title": "{{title}}",
+        "views": [
+          {
+            "center": [
+              20,
+              25
+            ],
+            "zoom": 1
+          },
+          {
+            "center": [
+              110,
+              25
+            ],
+            "zoom": 2.4,
+            "at": 2
+          }
+        ],
+        "pins": [
+          {
+            "lon": 110.95,
+            "lat": 19.6,
+            "label": "{{from_label}}"
+          }
+        ],
+        "routes": [
+          {
+            "from": [
+              110.95,
+              19.6
+            ],
+            "to": [
+              103.8,
+              1.35
+            ],
+            "label": "{{route_label}}"
+          }
+        ]
+      },
+      "overlays": [
+        {
+          "type": "lower-third",
+          "text": "{{note}}",
+          "at": 3.4,
+          "sfx": "auto"
+        }
+      ]
+    }
+  ]
+}

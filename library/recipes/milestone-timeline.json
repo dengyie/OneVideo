@@ -1,0 +1,58 @@
+{
+  "name": "milestone-timeline",
+  "title": "里程碑时间线",
+  "description": "时间线逐个点亮，高光事件画圈 + 闪光 Lottie",
+  "tags": [
+    "时间线",
+    "历史",
+    "mark"
+  ],
+  "scenes": [
+    {
+      "type": "timeline",
+      "header": {
+        "title": "{{title}}"
+      },
+      "props": {
+        "events": [
+          {
+            "date": "{{date1}}",
+            "title": "{{event1}}"
+          },
+          {
+            "date": "{{date2}}",
+            "title": "{{event2}}",
+            "highlight": true
+          },
+          {
+            "date": "{{date3}}",
+            "title": "{{event3}}"
+          }
+        ]
+      },
+      "overlays": [
+        {
+          "type": "mark",
+          "kind": "circle",
+          "rect": [
+            0.4,
+            0.38,
+            0.2,
+            0.26
+          ],
+          "at": 2.2,
+          "sfx": "auto"
+        },
+        {
+          "type": "lottie",
+          "src": "sparkle",
+          "at": 2.4,
+          "x": 0.6,
+          "y": 0.32,
+          "size": 150
+        }
+      ]
+    }
+  ],
+  "notes": "mark.rect / arrow.from-to / callout.x-y / spotlight.x-y 是画面比例坐标，按实际内容微调后跑 onevideo stills 核对"
+}

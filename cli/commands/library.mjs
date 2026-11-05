@@ -1,7 +1,7 @@
-// lib list | search | import | merge | verify — the shared asset library (cli/lib/library.mjs).
+// lib list | search | import | merge | verify | recipe — the shared asset library (cli/lib/library.mjs).
 import { readFileSync } from "node:fs";
 import { UserError, log, warn } from "../lib/project.mjs";
-import { CATALOG, extRoot, importCandidates, loadCatalog, mergeCatalogs, saveCatalog, searchCatalog, verifyCatalog, entryAvailable } from "../lib/library.mjs";
+import { CATALOG, extRoot, fillRecipe, importCandidates, loadCatalog, loadRecipes, mergeCatalogs, recipeSlots, saveCatalog, searchCatalog, verifyCatalog, entryAvailable } from "../lib/library.mjs";
 
 const row = (e) => `${e.id.padEnd(24)} ${(e.store === "ext" ? "ext " : "repo")} ${entryAvailable(e) ? "✓" : "·"} ${String(e.audio?.duration ?? e.lottie?.duration ?? "").padStart(6)}s  ${e.provenance?.source ?? ""}${e.note ? ` — ${e.note}` : ""}`;
 
@@ -52,5 +52,20 @@ export async function lib(args) {
     if (bad.length) process.exitCode = 1;
     return;
   }
-  throw new UserError(`unknown lib subcommand "${sub}" (list, search, import, merge, verify)`);
+  if (sub === "recipe") {
+    const recipes = loadRecipes();
+    if (!rest[0]) {
+      if (args.json) return console.log(JSON.stringify(recipes, null, 2));
+      for (const r of recipes) console.log(`${r.name.padEnd(20)} ${r.title} — ${r.description}${r.notes ? `（${r.notes}）` : ""}\n${"".padEnd(20)} 场景: ${r.scenes.map((s) => s.type).join(" + ")} · 槽位: ${recipeSlots(r).join(", ")}`);
+      return log(`${recipes.length} recipes · onevideo lib recipe <name> [--id scene-id] [--set k=v,k2=v2]`);
+    }
+    const r = recipes.find((x) => x.name === rest[0]);
+    if (!r) throw new UserError(`unknown recipe "${rest[0]}" (${recipes.map((x) => x.name).join(", ")})`);
+    const vars = Object.fromEntries(String(args.set ?? "").split(",").filter(Boolean).map((kv) => { const i = kv.indexOf("="); return [kv.slice(0, i), kv.slice(i + 1)]; }));
+    const { scenes, missing } = fillRecipe(r, { id: typeof args.id === "string" ? args.id : undefined, vars });
+    console.log(JSON.stringify(scenes, null, 2));
+    if (missing.length) warn(`unfilled slots: ${missing.join(", ")} — replace the {{…}} strings before validate`);
+    return;
+  }
+  throw new UserError(`unknown lib subcommand "${sub}" (list, search, import, merge, verify, recipe)`);
 }

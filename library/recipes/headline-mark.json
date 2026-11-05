@@ -1,0 +1,49 @@
+{
+  "name": "headline-mark",
+  "title": "新闻标题划重点",
+  "description": "报纸/媒体标题卡，关键词下划线，盖“官方”印章",
+  "tags": [
+    "新闻",
+    "headline",
+    "划重点"
+  ],
+  "scenes": [
+    {
+      "type": "headline",
+      "props": {
+        "items": [
+          {
+            "outlet": "{{outlet}}",
+            "title": "{{headline}}",
+            "date": "{{date}}",
+            "highlight": "{{highlight}}"
+          }
+        ]
+      },
+      "overlays": [
+        {
+          "type": "mark",
+          "kind": "underline",
+          "rect": [
+            0.3,
+            0.5,
+            0.4,
+            0.08
+          ],
+          "at": 1.4,
+          "sfx": "auto"
+        },
+        {
+          "type": "stamp",
+          "text": "{{stamp}}",
+          "at": 2.2,
+          "x": 0.8,
+          "y": 0.72,
+          "rotate": -10,
+          "sfx": "auto"
+        }
+      ]
+    }
+  ],
+  "notes": "mark.rect / arrow.from-to / callout.x-y / spotlight.x-y 是画面比例坐标，按实际内容微调后跑 onevideo stills 核对"
+}

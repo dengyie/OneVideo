@@ -1,0 +1,57 @@
+{
+  "name": "hook-slam",
+  "title": "开场重锤",
+  "description": "开场钩子：大字逐行砸入 + 闪白 + 印章，3–5 秒抓住注意力",
+  "tags": [
+    "开场",
+    "kinetic",
+    "冲击"
+  ],
+  "scenes": [
+    {
+      "type": "kinetic",
+      "enter": "punch",
+      "camera": {
+        "move": "push"
+      },
+      "props": {
+        "kicker": "{{kicker}}",
+        "lines": [
+          {
+            "text": "{{line1}}",
+            "style": "rise"
+          },
+          {
+            "text": "{{line2}}",
+            "style": "slam",
+            "emphasis": [
+              "{{emphasis}}"
+            ]
+          }
+        ]
+      },
+      "overlays": [
+        {
+          "type": "flash",
+          "at": 0.9,
+          "sfx": "auto"
+        },
+        {
+          "type": "stamp",
+          "text": "{{stamp}}",
+          "at": 1.1,
+          "x": 0.78,
+          "y": 0.28,
+          "sfx": "auto"
+        },
+        {
+          "type": "burst",
+          "at": 1.1,
+          "x": 0.78,
+          "y": 0.28,
+          "size": 220
+        }
+      ]
+    }
+  ]
+}

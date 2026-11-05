@@ -1,0 +1,33 @@
+{
+  "name": "broll-lower-third",
+  "title": "实拍 B-roll + 下三分之一字条",
+  "description": "全屏实拍视频，左下角字条交代人物/地点/时间",
+  "tags": [
+    "视频",
+    "b-roll",
+    "字条",
+    "纪录片"
+  ],
+  "scenes": [
+    {
+      "type": "media",
+      "camera": {
+        "move": "drift"
+      },
+      "props": {
+        "asset": "{{video}}",
+        "dim": 0.15
+      },
+      "overlays": [
+        {
+          "type": "lower-third",
+          "text": "{{name}}",
+          "subtitle": "{{role}}",
+          "at": 0.6,
+          "duration": 4,
+          "sfx": "auto"
+        }
+      ]
+    }
+  ]
+}

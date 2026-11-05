@@ -80,3 +80,20 @@ test("cutClip trims a video window to silent ≤1080p H.264", async () => {
   assert.equal(streams.filter((s) => s.codec_type === "audio").length, 0);
   assert.equal(streams.find((s) => s.codec_type === "video").codec_name, "h264");
 });
+
+test("recipes: every recipe fills to a valid storyboard", async () => {
+  const { loadRecipes, fillRecipe, recipeSlots } = await import("../cli/lib/library.mjs");
+  const { schemaGate } = await import("../cli/lib/gates.mjs");
+  const recipes = loadRecipes();
+  assert.ok(recipes.length >= 10);
+  for (const r of recipes) {
+    assert.ok(r.name && r.title && r.description, `${r.name}: name/title/description`);
+    const vars = Object.fromEntries(recipeSlots(r).map((k) => [k, "a"]));
+    const { scenes, missing } = fillRecipe(r, { id: "x", vars });
+    assert.deepEqual(missing, []);
+    assert.equal(scenes[0].id, "x");
+    assert.deepEqual(schemaGate("storyboard", { scenes }), [], r.name);
+  }
+  const { missing } = fillRecipe(recipes[0], {});
+  assert.ok(missing.length > 0);
+});

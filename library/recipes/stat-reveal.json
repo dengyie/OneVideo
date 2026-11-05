@@ -1,0 +1,55 @@
+{
+  "name": "stat-reveal",
+  "title": "关键数字揭晓",
+  "description": "数字卡逐个弹出，第一张卡配爆点和标注，适合“三个数字看懂”",
+  "tags": [
+    "数据",
+    "stat-cards",
+    "标注"
+  ],
+  "scenes": [
+    {
+      "type": "stat-cards",
+      "header": {
+        "title": "{{title}}"
+      },
+      "props": {
+        "cards": [
+          {
+            "value": 100,
+            "label": "{{label1}}"
+          },
+          {
+            "value": 50,
+            "format": {
+              "suffix": "%"
+            },
+            "label": "{{label2}}"
+          },
+          {
+            "value": 3,
+            "label": "{{label3}}"
+          }
+        ]
+      },
+      "overlays": [
+        {
+          "type": "burst",
+          "at": 0.9,
+          "x": 0.22,
+          "y": 0.52,
+          "size": 260
+        },
+        {
+          "type": "callout",
+          "at": 1.4,
+          "x": 0.22,
+          "y": 0.42,
+          "text": "{{callout}}",
+          "sfx": "auto"
+        }
+      ]
+    }
+  ],
+  "notes": "mark.rect / arrow.from-to / callout.x-y / spotlight.x-y 是画面比例坐标，按实际内容微调后跑 onevideo stills 核对"
+}

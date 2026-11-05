@@ -1,0 +1,46 @@
+{
+  "name": "success-moment",
+  "title": "成功时刻",
+  "description": "里程碑达成：大字 + 彩带 + 成功音效（首次回收、上市敲钟等）",
+  "tags": [
+    "庆祝",
+    "confetti",
+    "成功"
+  ],
+  "scenes": [
+    {
+      "type": "kinetic",
+      "props": {
+        "lines": [
+          {
+            "text": "{{line1}}",
+            "style": "rise"
+          },
+          {
+            "text": "{{line2}}",
+            "style": "slam",
+            "emphasis": [
+              "{{emphasis}}"
+            ]
+          }
+        ]
+      },
+      "overlays": [
+        {
+          "type": "confetti",
+          "at": 1.0,
+          "duration": 3,
+          "sfx": "auto"
+        },
+        {
+          "type": "lottie",
+          "src": "confetti",
+          "at": 0.9,
+          "x": 0.2,
+          "y": 0.7,
+          "size": 200
+        }
+      ]
+    }
+  ]
+}

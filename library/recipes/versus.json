@@ -1,0 +1,54 @@
+{
+  "name": "versus",
+  "title": "正面对比",
+  "description": "左右对比卡，胜方一侧奖杯 + 爆点",
+  "tags": [
+    "对比",
+    "compare",
+    "胜负"
+  ],
+  "scenes": [
+    {
+      "type": "compare",
+      "props": {
+        "title": "{{title}}",
+        "left": {
+          "title": "{{left}}",
+          "items": [
+            "{{left1}}",
+            "{{left2}}"
+          ]
+        },
+        "right": {
+          "title": "{{right}}",
+          "items": [
+            "{{right1}}",
+            "{{right2}}"
+          ],
+          "value": 10,
+          "format": {
+            "suffix": "×"
+          }
+        }
+      },
+      "overlays": [
+        {
+          "type": "lottie",
+          "src": "trophy",
+          "at": 2.4,
+          "x": 0.75,
+          "y": 0.22,
+          "size": 170,
+          "sfx": "auto"
+        },
+        {
+          "type": "burst",
+          "at": 2.4,
+          "x": 0.75,
+          "y": 0.22,
+          "size": 220
+        }
+      ]
+    }
+  ]
+}

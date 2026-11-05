@@ -1,0 +1,42 @@
+{
+  "name": "pip-explainer",
+  "title": "画中画讲解",
+  "description": "主画面是数字/文字，角落小窗放实拍视频，适合“边看边讲”",
+  "tags": [
+    "split",
+    "pip",
+    "视频"
+  ],
+  "scenes": [
+    {
+      "type": "split",
+      "props": {
+        "mode": "pip",
+        "corner": "bottom-right",
+        "left": {
+          "title": "{{title}}",
+          "value": 42,
+          "format": {
+            "suffix": "%"
+          },
+          "caption": "{{caption}}"
+        },
+        "right": {
+          "asset": "{{video}}"
+        }
+      },
+      "overlays": [
+        {
+          "type": "callout",
+          "x": 0.78,
+          "y": 0.66,
+          "at": 1.2,
+          "text": "{{callout}}",
+          "side": "left",
+          "sfx": "auto"
+        }
+      ]
+    }
+  ],
+  "notes": "mark.rect / arrow.from-to / callout.x-y / spotlight.x-y 是画面比例坐标，按实际内容微调后跑 onevideo stills 核对"
+}

@@ -1,0 +1,46 @@
+{
+  "name": "photo-focus",
+  "title": "照片聚焦讲解",
+  "description": "一张实拍图，镜头推到细节区域，箭头 + 标注解释“看这里”",
+  "tags": [
+    "图片",
+    "focus",
+    "箭头",
+    "讲解"
+  ],
+  "scenes": [
+    {
+      "type": "focus",
+      "props": {
+        "asset": "{{asset}}",
+        "regions": [
+          {
+            "x": 0.55,
+            "y": 0.3,
+            "w": 0.25,
+            "h": 0.3,
+            "label": "{{region_label}}",
+            "zoom": 1.8
+          }
+        ]
+      },
+      "overlays": [
+        {
+          "type": "arrow",
+          "from": [
+            0.2,
+            0.82
+          ],
+          "to": [
+            0.5,
+            0.55
+          ],
+          "at": 1.2,
+          "label": "{{arrow_label}}",
+          "sfx": "auto"
+        }
+      ]
+    }
+  ],
+  "notes": "mark.rect / arrow.from-to / callout.x-y / spotlight.x-y 是画面比例坐标，按实际内容微调后跑 onevideo stills 核对"
+}

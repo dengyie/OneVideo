@@ -5,7 +5,7 @@
 //          redistribution (Sonniss GDC bundles); only the metadata is committed.
 // Projects name a sound by entry id ("impact-02") or category ("impact" → catalog default).
 import { createHash } from "node:crypto";
-import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync, readdirSync, rmSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { tmpdir } from "node:os";
 import { ONEVIDEO_ROOT, UserError } from "./project.mjs";
@@ -222,4 +222,28 @@ export function verifyCatalog(catalog = loadCatalog()) {
     if (!existsSync(p)) return { id: e.id, status: e.store === "ext" ? "unavailable" : "missing" };
     return { id: e.id, status: e.sha256 && sha256(p) !== e.sha256 ? "mismatch" : "ok" };
   });
+}
+
+// Scene recipes: reusable storyboard snippets (library/recipes/<name>.json) with {{slot}} strings.
+export const RECIPES = join(LIB_ROOT, "recipes");
+
+export function loadRecipes(dir = RECIPES) {
+  if (!existsSync(dir)) return [];
+  return readdirSync(dir).filter((f) => f.endsWith(".json")).sort().map((f) => JSON.parse(readFileSync(join(dir, f), "utf8")));
+}
+
+export const recipeSlots = (recipe) => [...new Set([...JSON.stringify(recipe.scenes).matchAll(/\{\{(\w+)\}\}/g)].map((m) => m[1]))];
+
+// Fill slots from `vars` and give each scene an id (`<id>`, or `<id>-2`… for multi-scene recipes).
+// Returns the scenes and the slots still unfilled.
+export function fillRecipe(recipe, { id = recipe.name, vars = {} } = {}) {
+  const missing = new Set();
+  const fill = (v) => {
+    if (typeof v === "string") return v.replace(/\{\{(\w+)\}\}/g, (m, k) => (k in vars ? String(vars[k]) : (missing.add(k), m)));
+    if (Array.isArray(v)) return v.map(fill);
+    if (v && typeof v === "object") return Object.fromEntries(Object.entries(v).map(([k, x]) => [k, fill(x)]));
+    return v;
+  };
+  const scenes = recipe.scenes.map((sc, i) => ({ id: i ? `${id}-${i + 1}` : id, ...fill(sc) }));
+  return { scenes, missing: [...missing] };
 }
