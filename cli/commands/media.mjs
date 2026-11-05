@@ -87,7 +87,7 @@ export async function music(args) {
       log(`music: downloaded ${config.music.url} → public/${config.music.file}`);
     }
     if (args.force) rmSync(beatsFile(file), { force: true });
-    const b = await ensureBeats(project.root, config.music);
+    const b = await ensureBeats(project.root, { src: config.music.file });
     log(`using provided music file ${config.music.file}${config.music.credit ? ` (${config.music.credit})` : ""}${b ? `, ~${b.bpm} BPM, ${b.beats.length} beats` : ""}`);
     return;
   }
