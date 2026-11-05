@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
-import { mkdtempSync, rmSync, writeFileSync, readFileSync, cpSync } from "node:fs";
+import { mkdtempSync, mkdirSync, rmSync, writeFileSync, readFileSync, cpSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { ROOT } from "./helpers.mjs";
@@ -81,6 +81,25 @@ test("shared API keys only go to trusted hosts", () => {
     assert.equal(resolveApiKey("OTHER_KEY", "https://evil.example/v1").key, "sk-other");
     process.env.ONEVIDEO_KEY_HOSTS = "relay.example";
     assert.equal(resolveApiKey("MANGO_API_KEY", "https://relay.example/v1").key, "sk-test-shared");
+  } finally {
+    for (const k of Object.keys(process.env)) if (!(k in saved)) delete process.env[k];
+    Object.assign(process.env, saved);
+  }
+});
+
+test("zcode provider config is opt-in", () => {
+  const saved = { ...process.env };
+  try {
+    delete process.env.ONEVIDEO_API_KEY;
+    delete process.env.MANGO_API_KEY;
+    process.env.HOME = mkdtempSync(join(tmpdir(), "ov-home-"));
+    mkdirSync(join(process.env.HOME, ".zcode", "v2"), { recursive: true });
+    writeFileSync(join(process.env.HOME, ".zcode", "v2", "provider_config.json"), "provider sk-zcodeproviderfakekey012345");
+    delete process.env.ONEVIDEO_ZCODE_PROVIDER;
+    assert.equal(resolveApiKey("MANGO_API_KEY", "https://api.mangoqwq.com/v1"), null);
+    process.env.ONEVIDEO_ZCODE_PROVIDER = "1";
+    assert.equal(resolveApiKey("MANGO_API_KEY", "https://api.mangoqwq.com/v1").key, "sk-zcodeproviderfakekey012345");
+    assert.equal(resolveApiKey("MANGO_API_KEY", "https://evil.example/v1"), null);
   } finally {
     for (const k of Object.keys(process.env)) if (!(k in saved)) delete process.env[k];
     Object.assign(process.env, saved);

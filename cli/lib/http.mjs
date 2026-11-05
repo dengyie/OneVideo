@@ -8,7 +8,7 @@ import { UserError } from "./project.mjs";
 
 const UA = "OneVideo/0.1 (+https://github.com/dengyie/OneVideo)";
 
-// Shared keys (ONEVIDEO_API_KEY, MANGO_API_KEY, ~/.zcode provider config) are only ever sent to
+// Shared keys (ONEVIDEO_API_KEY, MANGO_API_KEY) are only ever sent to
 // trusted hosts; ONEVIDEO_KEY_HOSTS (comma list) extends the default. Any other baseUrl must name
 // its own key variable via keyEnv, so a project file cannot redirect the shared key elsewhere.
 export const DEFAULT_KEY_HOSTS = ["api.mangoqwq.com"];
@@ -21,7 +21,8 @@ export function trustedKeyHost(baseUrl) {
   return [...DEFAULT_KEY_HOSTS, ...extra].includes(host);
 }
 
-// Lookup order: keyEnv → ONEVIDEO_API_KEY → MANGO_API_KEY → ~/.zcode provider config (trusted hosts only).
+// Lookup order: keyEnv → ONEVIDEO_API_KEY → MANGO_API_KEY → ~/.zcode provider config
+// (trusted hosts only, and only when ONEVIDEO_ZCODE_PROVIDER=1 is explicitly exported).
 // The key is never printed; callers only learn where it came from.
 export function resolveApiKey(envName, baseUrl) {
   const trusted = trustedKeyHost(baseUrl);
@@ -30,6 +31,9 @@ export function resolveApiKey(envName, baseUrl) {
     if (process.env[name]) return { key: process.env[name], source: `env ${name}` };
   }
   if (!trusted) return null;
+  // Opt-in only: never silently harvest keys from a local zcode install — third-party
+  // users may have unrelated sk- strings there that must not leak to any relay.
+  if (process.env.ONEVIDEO_ZCODE_PROVIDER !== "1") return null;
   const cfg = join(homedir(), ".zcode", "v2", "provider_config.json");
   if (existsSync(cfg)) {
     const m = readFileSync(cfg, "utf8").match(/sk-[A-Za-z0-9]{20,}/);

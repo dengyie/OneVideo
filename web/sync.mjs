@@ -1,15 +1,19 @@
 #!/usr/bin/env node
 // Pull published OneVideo projects from the render host into web/site/v/<slug>/ and write
 // web/site/videos.json. Only projects that ran `onevideo publish` (review approved) are listed.
-//   ONEVIDEO_HOST      ssh host of the render node   (default: huawei-sg)
+//   ONEVIDEO_HOST      ssh host of the render node   (required)
 //   ONEVIDEO_PROJECTS  projects root on that host     (default: /srv/onevideo)
 import { execFileSync } from "node:child_process";
 import { existsSync, mkdirSync, readFileSync, readdirSync, rmSync, statSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
-const HOST = process.env.ONEVIDEO_HOST ?? "huawei-sg";
+const HOST = process.env.ONEVIDEO_HOST;
 const ROOT = process.env.ONEVIDEO_PROJECTS ?? "/srv/onevideo";
+if (!HOST) {
+  console.error("ONEVIDEO_HOST is required: set it to the ssh host of your render node, e.g. `ONEVIDEO_HOST=render-box npm run web:sync`.");
+  process.exit(1);
+}
 const SITE = join(dirname(fileURLToPath(import.meta.url)), "site");
 const MAX_ASSET = 25 * 1024 * 1024; // Workers static assets per-file limit
 
