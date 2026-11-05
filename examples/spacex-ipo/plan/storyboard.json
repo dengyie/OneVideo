@@ -80,7 +80,8 @@
       },
       "backdrop": {
         "asset": "nasdaq",
-        "dim": 0.72,
+        "dim": 0.84,
+        "blur": 6,
         "motion": "left"
       }
     },

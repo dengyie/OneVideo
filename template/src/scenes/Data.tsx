@@ -266,7 +266,8 @@ export const LineChartScene: React.FC<{ title?: string; xLabel?: string; yLabel?
                 <path d={`${d} L${pts[pts.length - 1][0]},${H} L${pts[0][0]},${H} Z`} fill={color} opacity={0.08 * drawP} />
                 <path d={d} fill="none" stroke={color} strokeWidth={5 * u} strokeLinejoin="round" strokeLinecap="round" strokeDasharray={len} strokeDashoffset={len * (1 - drawP)} />
                 {drawP > 0.02 && (
-                  <text x={X(xVal(tip[0])) + 14 * u} y={Y(Number(tip[1])) - 14 * u} fontSize={34 * u} fontWeight={800} fill={color} fontFamily={theme.fonts.number}>
+                  // Near the right edge the label would run off the frame: right-align it above the point instead.
+                  <text {...(X(xVal(tip[0])) > W * 0.85 ? { x: X(xVal(tip[0])), y: Y(Number(tip[1])) - 28 * u, textAnchor: "end" as const } : { x: X(xVal(tip[0])) + 14 * u, y: Y(Number(tip[1])) - 14 * u })} fontSize={34 * u} fontWeight={800} fill={color} fontFamily={theme.fonts.number}>
                     {series.length > 1 ? `${s.name} ` : ""}{fmt(Number(tip[1]), format)}
                   </text>
                 )}
