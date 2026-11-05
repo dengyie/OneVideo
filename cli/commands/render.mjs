@@ -133,7 +133,7 @@ export async function doctor() {
   const major = Number(process.versions.node.split(".")[0]);
   add(major >= 20, "node", `v${process.versions.node} (need ≥ 20)`);
   try { execFileSync("curl", ["--version"], { stdio: "pipe" }); add(true, "curl", "available"); } catch { add(false, "curl", "not found (needed for API calls)"); }
-  add(existsSync(REMOTION_BIN), "remotion", existsSync(REMOTION_BIN) ? TEMPLATE_DIR : `run: npm install --prefix ${TEMPLATE_DIR}`);
+  add(existsSync(REMOTION_BIN), "remotion", existsSync(REMOTION_BIN) ? TEMPLATE_DIR : `run: npm ci --prefix ${TEMPLATE_DIR}`);
   if (existsSync(REMOTION_BIN)) {
     try { await ffmpeg(["-version"]); add(true, "ffmpeg", "bundled with Remotion"); } catch (e) { add(false, "ffmpeg", e.message.split("\n")[0]); }
   }

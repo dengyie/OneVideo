@@ -9,7 +9,7 @@
   "engines": { "node": ">=20" },
   "scripts": {
     "test": "node --test",
-    "setup": "npm install --prefix template",
+    "setup": "npm ci --prefix template",
     "typecheck": "cd template && npx tsc -p . --noEmit"
   },
   "repository": { "type": "git", "url": "https://github.com/dengyie/OneVideo.git" },

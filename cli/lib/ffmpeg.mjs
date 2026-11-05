@@ -8,7 +8,7 @@ export const TEMPLATE_DIR = join(ONEVIDEO_ROOT, "template");
 export const REMOTION_BIN = join(TEMPLATE_DIR, "node_modules", ".bin", "remotion");
 
 export function requireRemotion() {
-  if (!existsSync(REMOTION_BIN)) throw new UserError(`Remotion is not installed; run: npm install --prefix ${TEMPLATE_DIR}`);
+  if (!existsSync(REMOTION_BIN)) throw new UserError(`Remotion is not installed; run: npm ci --prefix ${TEMPLATE_DIR}`);
 }
 
 // Spawn and collect output; rejects with stderr tail on non-zero exit.
