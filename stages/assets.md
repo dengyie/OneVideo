@@ -14,7 +14,7 @@
 ] }
 ```
 
-- `query`：按 provider 顺序检索（默认 NASA → Wikimedia → Openverse；视频走 Pexels，需要 `PEXELS_API_KEY`），按许可开放度、画幅贴合度、分辨率打分取第一（`pick` 可指定第 N 个）。
+- `query`：按 provider 顺序检索（图片默认 NASA → Wikimedia → Openverse；视频默认 NASA → Wikimedia，有 `PEXELS_API_KEY` 时再加 Pexels；视频下载后自动裁成无声 H.264 片段，`clip: [起点秒, 时长秒]`，默认前 20 秒，最长 60 秒），按许可开放度、画幅贴合度、分辨率打分取第一（`pick` 可指定第 N 个）。
 - `url`：直链，必须手填 `license`/`author`/`source`。
 - `generate`：AI 生图（默认 `gpt-image-2.5`，经 Mango API）；许可记为 `generated`，片尾标注“AI 生成”。
 

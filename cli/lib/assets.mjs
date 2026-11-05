@@ -1,25 +1,28 @@
-// Licensed media sourcing. Keyless providers: NASA Images, Wikimedia Commons, Openverse.
-// Optional: Pexels (PEXELS_API_KEY, photos + video) and AI image generation (OpenAI-compatible relay).
-import { existsSync, mkdirSync, writeFileSync } from "node:fs";
+// Licensed media sourcing. Keyless providers: NASA Images (photos + video), Wikimedia Commons
+// (photos + video), Openverse (photos). Optional: Pexels (PEXELS_API_KEY, photos + video) and
+// AI image generation (OpenAI-compatible relay). Videos are cut to a short silent H.264 clip.
+import { existsSync, mkdirSync, rmSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
+import { ffmpeg, ffprobe } from "./ffmpeg.mjs";
 import { getJson, download, request, requireApiKey } from "./http.mjs";
 
 const stripHtml = (s) => String(s ?? "").replace(/<[^>]+>/g, "").replace(/&amp;/g, "&").replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/\s+/g, " ").trim();
 const enc = encodeURIComponent;
 
 export const PROVIDERS = {
-  async nasa(query, { limit = 12 } = {}) {
-    const j = await getJson(`https://images-api.nasa.gov/search?q=${enc(query)}&media_type=image&page_size=${limit}`);
+  async nasa(query, { limit = 12, kind = "image" } = {}) {
+    const j = await getJson(`https://images-api.nasa.gov/search?q=${enc(query)}&media_type=${kind === "video" ? "video" : "image"}&page_size=${limit}`);
     return (j.collection?.items ?? []).slice(0, limit).map((it) => {
       const d = it.data?.[0] ?? {};
       return {
-        provider: "nasa", pid: d.nasa_id, kind: "image", title: d.title, author: d.photographer || d.secondary_creator || d.center || "NASA",
+        provider: "nasa", pid: d.nasa_id, kind: kind === "video" ? "video" : "image", title: d.title, author: d.photographer || d.secondary_creator || d.center || "NASA",
         license: "PD (NASA)", source: `https://images.nasa.gov/details/${enc(d.nasa_id)}`, preview: it.links?.[0]?.href, width: null, height: null,
         date: d.date_created?.slice(0, 10),
       };
     });
   },
-  async wikimedia(query, { limit = 12 } = {}) {
+  async wikimedia(query, { limit = 12, kind = "image" } = {}) {
+    if (kind === "video") return wikimediaVideo(query, limit);
     const url = `https://commons.wikimedia.org/w/api.php?action=query&format=json&generator=search&gsrnamespace=6&gsrlimit=${limit}&gsrsearch=${enc(`${query} filetype:bitmap`)}&prop=imageinfo&iiprop=url|size|mime|extmetadata&iiurlwidth=2400`;
     const j = await getJson(url);
     return Object.values(j.query?.pages ?? {})
@@ -59,13 +62,52 @@ export const PROVIDERS = {
   },
 };
 
+// Commons serves transcodes of every video; take the sharpest WebM at or under 1080p.
+async function wikimediaVideo(query, limit) {
+  const url = `https://commons.wikimedia.org/w/api.php?action=query&format=json&generator=search&gsrnamespace=6&gsrlimit=${limit}&gsrsearch=${enc(`${query} filetype:video`)}&prop=videoinfo&viprop=url|size|mime|extmetadata|derivatives`;
+  const j = await getJson(url);
+  return Object.values(j.query?.pages ?? {})
+    .sort((a, b) => a.index - b.index)
+    .map((p) => {
+      const v = p.videoinfo?.[0] ?? {};
+      const m = v.extmetadata ?? {};
+      const d = (v.derivatives ?? []).filter((x) => /^video\/webm/.test(x.type ?? "") && (x.height ?? 0) <= 1080).sort((a, b) => b.height - a.height)[0];
+      return {
+        provider: "wikimedia", pid: p.title, kind: "video", title: stripHtml(m.ObjectName?.value) || p.title.replace(/^File:/, ""),
+        author: stripHtml(m.Artist?.value), license: stripHtml(m.LicenseShortName?.value) || "unknown", source: v.descriptionurl,
+        url: d?.src ?? v.url, width: d?.width ?? v.width, height: d?.height ?? v.height, duration: v.duration,
+      };
+    })
+    .filter((c) => c.url && !/\b(NC|ND)\b|non-?commercial/i.test(c.license));
+}
+
 export const DEFAULT_PROVIDER_ORDER = ["nasa", "wikimedia", "openverse"];
+export const DEFAULT_VIDEO_PROVIDERS = () => ["nasa", "wikimedia", ...(process.env.PEXELS_API_KEY ? ["pexels"] : [])];
 
 // NASA search results only carry thumbnails; the asset manifest lists the full renditions.
-async function nasaFullUrl(nasaId) {
+// Video: ~large is ~1080p at a sane size; ~orig can run to gigabytes.
+async function nasaFullUrl(nasaId, kind = "image") {
   const j = await getJson(`https://images-api.nasa.gov/asset/${enc(nasaId)}`);
-  const hrefs = (j.collection?.items ?? []).map((i) => i.href).filter((h) => /\.(jpe?g|png)$/i.test(h));
-  return hrefs.find((h) => /~large\./.test(h)) ?? hrefs.find((h) => /~orig\./.test(h)) ?? hrefs.find((h) => /~medium\./.test(h)) ?? hrefs[0];
+  const hrefs = (j.collection?.items ?? []).map((i) => i.href.replace(/^http:/, "https:"));
+  if (kind === "video") {
+    const mp4 = hrefs.filter((h) => /\.mp4$/i.test(h));
+    return mp4.find((h) => /~large\./.test(h)) ?? mp4.find((h) => /~medium\./.test(h)) ?? mp4.find((h) => /~orig\./.test(h)) ?? mp4[0];
+  }
+  const img = hrefs.filter((h) => /\.(jpe?g|png)$/i.test(h));
+  return img.find((h) => /~large\./.test(h)) ?? img.find((h) => /~orig\./.test(h)) ?? img.find((h) => /~medium\./.test(h)) ?? img[0];
+}
+
+export const CLIP_MAX = 20;
+
+// A downloaded video becomes a short, silent, ≤1080p H.264 clip: `clip: [start, seconds]`
+// picks the window (default the first CLIP_MAX seconds). Returns the clip's dimensions.
+export async function cutClip(src, dest, clip) {
+  const [start, seconds] = Array.isArray(clip) ? [clip[0] ?? 0, clip[1] ?? CLIP_MAX] : [0, CLIP_MAX];
+  await ffmpeg(["-y", "-ss", String(start), "-i", src, "-t", String(Math.min(seconds, 60)), "-an",
+    "-vf", "scale=min(1920\\,iw):-2:flags=lanczos", "-r", "30", "-c:v", "libx264", "-preset", "veryfast", "-crf", "20", "-pix_fmt", "yuv420p", "-movflags", "+faststart", dest]);
+  const v = (await ffprobe(dest)).streams.find((x) => x.codec_type === "video");
+  if (!v) throw new Error(`clip ${dest} has no video stream (start ${start}s past the end?)`);
+  return { width: v.width, height: v.height, duration: +(+v.duration || seconds).toFixed(2) };
 }
 
 const LICENSE_RANK = (l) => (/^(pd|public domain|cc0|pdm)/i.test(l) ? 0 : /pexels/i.test(l) ? 0.5 : /by-sa|by sa/i.test(l) ? 1.5 : /by/i.test(l) ? 1 : 3);
@@ -108,18 +150,25 @@ export async function fetchAsset(item, { publicDir, aspect = 16 / 9, imageDefaul
   if (item.url) chosen = { url: item.url, license: item.license, author: item.author, title: item.title, source: item.source ?? item.url, provider: "url", kind: item.kind ?? "image" };
   else {
     if (!item.query) throw new Error(`asset "${item.id}" needs one of: url, query, generate`);
-    const providers = item.provider ? [].concat(item.provider) : item.kind === "video" ? ["pexels"] : DEFAULT_PROVIDER_ORDER;
+    const providers = item.provider ? [].concat(item.provider) : item.kind === "video" ? DEFAULT_VIDEO_PROVIDERS() : DEFAULT_PROVIDER_ORDER;
     const { results, errors } = await search(item.query, { providers, kind: item.kind ?? "image" });
     const ranked = results.filter((c) => c.kind === (item.kind ?? "image")).sort((a, b) => scoreCandidate(a, aspect) - scoreCandidate(b, aspect));
     chosen = ranked[item.pick ?? 0];
     if (!chosen) throw new Error(`no ${item.kind ?? "image"} results for "${item.query}"${errors.length ? ` (${errors.join("; ")})` : ""}`);
   }
-  if (chosen.provider === "nasa") chosen.url = await nasaFullUrl(chosen.pid);
+  if (chosen.provider === "nasa") chosen.url = await nasaFullUrl(chosen.pid, chosen.kind);
   if (!chosen.url) throw new Error(`asset "${item.id}": candidate has no downloadable URL`);
-  const buf = await download(chosen.url);
-  const ext = extOf(chosen.url, chosen.kind === "video" ? "mp4" : "jpg");
-  const file = `assets/${item.id}.${ext}`;
-  writeFileSync(join(publicDir, file), buf);
+  const buf = await download(chosen.url, chosen.kind === "video" ? { timeoutSec: 900 } : undefined);
+  let file;
+  if (chosen.kind === "video") {
+    file = `assets/${item.id}.mp4`;
+    const raw = join(dir, `${item.id}.src.${extOf(chosen.url, "mp4")}`);
+    writeFileSync(raw, buf);
+    try { Object.assign(chosen, await cutClip(raw, join(publicDir, file), item.clip)); } finally { rmSync(raw, { force: true }); }
+  } else {
+    file = `assets/${item.id}.${extOf(chosen.url, "jpg")}`;
+    writeFileSync(join(publicDir, file), buf);
+  }
   return {
     ...item,
     file,
@@ -131,6 +180,7 @@ export async function fetchAsset(item, { publicDir, aspect = 16 / 9, imageDefaul
     source: item.source ?? chosen.source,
     width: chosen.width ?? item.width,
     height: chosen.height ?? item.height,
+    ...(chosen.kind === "video" ? { duration: chosen.duration ?? null } : {}),
     fetchedAt: new Date().toISOString(),
   };
 }

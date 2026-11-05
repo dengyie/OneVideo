@@ -66,3 +66,17 @@ test("transition sfx: auto map, per-type map, synth: names map to safe files", (
   assert.equal(sfxFile("synth:tick"), "sfx/synth-tick.wav");
   assert.equal(sfxFile("impact-02"), "sfx/impact-02.wav");
 });
+
+test("cutClip trims a video window to silent ≤1080p H.264", async () => {
+  const { cutClip } = await import("../cli/lib/assets.mjs");
+  const { ffmpeg, ffprobe } = await import("../cli/lib/ffmpeg.mjs");
+  const dir = mkdtempSync(join(tmpdir(), "ov-clip-"));
+  const src = join(dir, "src.mp4"), out = join(dir, "out.mp4");
+  await ffmpeg(["-y", "-f", "lavfi", "-i", "nullsrc=size=2560x1440:rate=25:duration=4", "-f", "lavfi", "-i", "sine=duration=4", "-shortest", "-c:v", "libx264", "-preset", "ultrafast", "-c:a", "aac", src]);
+  const res = await cutClip(src, out, [1, 2]);
+  assert.deepEqual([res.width, res.height], [1920, 1080]);
+  assert.ok(Math.abs(res.duration - 2) < 0.15, `duration ${res.duration}`);
+  const streams = (await ffprobe(out)).streams;
+  assert.equal(streams.filter((s) => s.codec_type === "audio").length, 0);
+  assert.equal(streams.find((s) => s.codec_type === "video").codec_name, "h264");
+});
