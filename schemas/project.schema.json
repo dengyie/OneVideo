@@ -96,6 +96,18 @@
         "instructions": {
           "type": "string"
         },
+        "protocol": {
+          "description": "chat: POST /chat/completions with the style as the user turn and the text as the assistant turn (MiMo TTS); speech: OpenAI-style POST /audio/speech.",
+          "enum": ["chat", "speech"]
+        },
+        "unit": {
+          "description": "scene: one TTS call per scene for natural prosody, caption timing aligned from the pauses in the audio; line: one call per caption line (exact timing, choppier delivery).",
+          "enum": ["scene", "line"]
+        },
+        "style": {
+          "description": "Delivery direction for the voice (tone, pace, emphasis). Sent as the chat user turn, or as instructions with protocol speech.",
+          "type": "string"
+        },
         "syllablesPerSecond": {
           "type": "number",
           "minimum": 2,
@@ -185,6 +197,10 @@
         "file": {
           "type": "string",
           "description": "path under public/, e.g. music/track.mp3"
+        },
+        "url": {
+          "type": "string",
+          "description": "where onevideo music downloads music.file from when it is missing (a licensed track)"
         },
         "credit": {
           "type": "string",

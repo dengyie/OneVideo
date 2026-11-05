@@ -1,6 +1,7 @@
 // tts / music / timeline / assets / decide
-import { appendFileSync, existsSync, mkdirSync } from "node:fs";
-import { join } from "node:path";
+import { appendFileSync, existsSync, mkdirSync, writeFileSync } from "node:fs";
+import { dirname, join } from "node:path";
+import { download } from "../lib/http.mjs";
 import { UserError, loadProject, readJson, writeJson, log, warn } from "../lib/project.mjs";
 import { runTts, ttsConfig, sceneLines } from "../lib/tts.mjs";
 import { writeMusic, synthSfx, SFX, MUSIC_PRESETS } from "../lib/synth.mjs";
@@ -16,15 +17,15 @@ export async function tts(args) {
   const project = loadProject();
   const script = readJson(project.paths.script);
   if (args.sample) {
-    // Synthesize only the first line so voice and pacing can be approved before the batch.
+    // Synthesize only the first scene (first line in line unit) so voice and pacing can be approved before the batch.
     const first = script.scenes.find((s) => sceneLines(s, project.config).length);
     if (!first) throw new UserError("script has no narration");
-    const line = sceneLines(first, project.config)[0];
-    const sampleScript = { ...script, scenes: [{ id: "_sample", lines: [line] }] };
-    const res = await runTts(project, sampleScript, { force: Boolean(args.force) });
+    const sample = ttsConfig(project.config).unit === "line" ? { id: "_sample", lines: [sceneLines(first, project.config)[0]] } : { ...first, id: "_sample" };
+    const res = await runTts(project, { ...script, scenes: [sample] }, { force: Boolean(args.force) });
     const s = res.scenes._sample;
-    const rate = spokenLength(line.text) / Math.max(0.1, s.lines[0].end - s.lines[0].start);
-    log(`sample: public/${s.file} (${s.duration.toFixed(2)}s, ${rate.toFixed(1)} syllables/s) — "${line.text}"`);
+    const text = s.lines.map((l) => l.text).join(" / ");
+    const rate = s.lines.reduce((n, l) => n + spokenLength(l.text), 0) / Math.max(0.1, s.lines.reduce((n, l) => n + l.end - l.start, 0));
+    log(`sample: public/${s.file} (${s.duration.toFixed(2)}s, ${rate.toFixed(1)} syllables/s) — "${text}"`);
     log(`voice ${ttsConfig(project.config).voice}; listen, then run: onevideo tts`);
     return;
   }
@@ -50,7 +51,16 @@ export async function music(args) {
   if (sfxNames.size) log(`sfx: ${[...sfxNames].join(", ")} → public/sfx/`);
 
   if (config.music?.enabled === false) return log("music disabled in onevideo.json");
-  if (config.music?.file) return log(`using provided music file ${config.music.file}`);
+  if (config.music?.file) {
+    const file = join(project.p("public"), config.music.file);
+    if (!existsSync(file) || args.force) {
+      if (!config.music.url) throw new UserError(`music.file public/${config.music.file} is missing; put the track there or set music.url`);
+      mkdirSync(dirname(file), { recursive: true });
+      writeFileSync(file, await download(config.music.url));
+      log(`music: downloaded ${config.music.url} → public/${config.music.file}`);
+    }
+    return log(`using provided music file ${config.music.file}${config.music.credit ? ` (${config.music.credit})` : ""}`);
+  }
   const preset = args.preset ?? config.music?.preset ?? "ambient";
   if (!MUSIC_PRESETS[preset]) throw new UserError(`unknown preset "${preset}" (${Object.keys(MUSIC_PRESETS).join(", ")})`);
   const duration = args.duration ? Number(args.duration) : pre.timeline ? pre.timeline.duration + 2 : null;

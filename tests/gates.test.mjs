@@ -100,4 +100,8 @@ test("timingsGate flags narration changed since tts", () => {
   assert.ok(msgs(timingsGate(script, ex.timings, ex.config)).some((x) => x.includes(`scene "${s.id}"`) && /run: onevideo tts/.test(x)));
   const voice = { ...ex.config, tts: { voice: "other" } };
   assert.ok(timingsGate(ex.script, ex.timings, voice).length > 0, "a voice change invalidates timings");
+  const style = { ...ex.config, tts: { ...ex.config.tts, style: "另一种语气" } };
+  assert.ok(timingsGate(ex.script, ex.timings, style).length > 0, "a style change invalidates timings");
+  const split = { ...ex.config, captions: { ...ex.config.captions, maxChars: 10 } };
+  assert.ok(timingsGate(ex.script, ex.timings, split).length > 0, "a new caption split re-aligns the lines");
 });

@@ -4,6 +4,7 @@ import type { Scene, Timeline } from "./types";
 import { SceneContext, TimelineContext } from "./context";
 import { clamp01, easeOut, easeInOut } from "./motion";
 import { Backdrop } from "../components/Backdrop";
+import { Credit, MediaFill } from "../components/Media";
 import { Header } from "../components/Header";
 import { Watermark } from "../components/Watermark";
 import { Captions } from "./Captions";
@@ -39,6 +40,8 @@ const SceneFrame: React.FC<{ scene: Scene; children: React.ReactNode }> = ({ sce
   else if (kind === "zoom") style = { opacity: p, transform: `scale(${leaving ? 1 + (1 - p) * 0.05 : 0.94 + 0.06 * p})` };
   else if (kind === "wipe") style = { clipPath: leaving ? `inset(0 0 0 ${(1 - p) * 100}%)` : `inset(0 ${(1 - p) * 100}% 0 0)` };
   else if (kind === "cut") style = {};
+  // Text over a photo gets a soft shadow (inherited by every label in the scene).
+  if (scene.backdrop) style = { ...style, textShadow: "0 2px 14px rgba(0,0,0,0.6)" };
   return <AbsoluteFill style={style}>{children}</AbsoluteFill>;
 };
 
@@ -56,7 +59,9 @@ export const Video: React.FC<Timeline> = (timeline) => {
             <Sequence key={scene.id} name={`${scene.id} · ${scene.type}`} from={scene.from} durationInFrames={scene.durationInFrames}>
               <SceneContext.Provider value={scene}>
                 <SceneFrame scene={scene}>
-                  {scene.background && scene.background !== "default" && scene.background !== theme.background && <Backdrop variant={scene.background} />}
+                  {scene.backdrop
+                    ? <><MediaFill asset={scene.backdrop.asset} motion={scene.backdrop.motion} dim={scene.backdrop.dim} blur={scene.backdrop.blur} startFrom={scene.backdrop.startFrom} /><Credit asset={scene.backdrop.asset} corner="bottom-right" /></>
+                    : scene.background && scene.background !== "default" && scene.background !== theme.background && <Backdrop variant={scene.background} />}
                   {scene.header && <Header title={scene.header.title} subtitle={scene.header.subtitle} />}
                   <Comp {...scene.props} />
                 </SceneFrame>

@@ -41,7 +41,8 @@ const scenes: Scene[] = specs.map((s) => {
   const durationInFrames = s.seconds * FPS;
   const scene: Scene = {
     id: s.id, type: s.type, from, durationInFrames, start: from / FPS, duration: s.seconds, audio: null,
-    enter: "fade", exit: "fade", header: s.header ?? null, background: null, captions: true, cues: {}, lines: [], props: s.props,
+    enter: "fade", exit: "fade", header: s.header ?? null, background: null,
+    backdrop: null, captions: true, cues: {}, lines: [], props: s.props,
   };
   from += durationInFrames;
   return scene;

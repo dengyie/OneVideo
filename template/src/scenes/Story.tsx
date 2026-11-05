@@ -100,18 +100,18 @@ const CompareSide: React.FC<{ side: Side; at: number; color: string }> = ({ side
   const tl = useTimeline();
   const { u } = useLayout();
   const t = useTime();
-  const o = easeOut((t - at) / 0.6);
+  const o = easeOut((t - at) / 0.45);
   const a = side.asset ? tl.assets[side.asset] : null;
   return (
-    <Card o={o} accent={color} style={{ flex: 1, display: "flex", flexDirection: "column", gap: 14 * u }}>
+    <Card o={o} accent={color} style={{ flex: 1, display: "flex", flexDirection: "column", gap: 16 * u, padding: `${40 * u}px ${44 * u}px` }}>
       {a && a.kind === "image" && <Img src={staticFile(a.src)} style={{ width: "100%", height: 220 * u, objectFit: "cover", borderRadius: 10 * u }} />}
-      <div style={{ fontSize: 44 * u, fontWeight: 800, color }}>{side.title}</div>
-      {side.subtitle && <div style={{ fontSize: 26 * u, color: theme.colors.muted }}>{side.subtitle}</div>}
+      <div style={{ fontSize: 50 * u, fontWeight: 800, color }}>{side.title}</div>
+      {side.subtitle && <div style={{ fontSize: 30 * u, color: theme.colors.muted }}>{side.subtitle}</div>}
       {side.value !== undefined && (
-        <div style={{ fontFamily: theme.fonts.number, fontSize: 80 * u, fontWeight: 800, lineHeight: 1.05 }}>{fmtCount(side.value * easeOut((t - at - 0.2) / 1.2), side.value, side.format)}</div>
+        <div style={{ fontFamily: theme.fonts.number, fontSize: 112 * u, fontWeight: 800, lineHeight: 1.05 }}>{fmtCount(side.value * easeOut((t - at - 0.1) / 0.8), side.value, side.format)}</div>
       )}
       {(side.items ?? []).map((it, i) => (
-        <div key={i} style={{ fontSize: 30 * u, display: "flex", gap: 14 * u, opacity: easeOut((t - at - 0.5 - i * 0.35) / 0.4) }}>
+        <div key={i} style={{ fontSize: 32 * u, display: "flex", gap: 14 * u, opacity: easeOut((t - at - 0.5 - i * 0.35) / 0.4) }}>
           <span style={{ color }}>●</span>
           <span>{it}</span>
         </div>

@@ -32,6 +32,7 @@ export type Scene = {
   exit: Transition;
   header: { title: string; subtitle?: string } | null;
   background: Background | null;
+  backdrop: { asset: string; dim: number; blur: number; motion: "in" | "out" | "left" | "right" | "up" | "none"; startFrom: number } | null;
   captions: boolean;
   cues: Record<string, number>;
   lines: Line[];

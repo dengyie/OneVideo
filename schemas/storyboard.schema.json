@@ -224,6 +224,19 @@
             "media"
           ]
         },
+        "backdrop": {
+          "description": "Full-bleed photo or footage behind the scene (charts sit on frosted cards above it).",
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["asset"],
+          "properties": {
+            "asset": { "type": "string" },
+            "dim": { "type": "number", "minimum": 0, "maximum": 1 },
+            "blur": { "type": "number", "minimum": 0, "maximum": 40 },
+            "motion": { "enum": ["in", "out", "left", "right", "up", "none"] },
+            "startFrom": { "type": "number", "minimum": 0 }
+          }
+        },
         "captions": {
           "type": "boolean"
         },

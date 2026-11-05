@@ -6,7 +6,8 @@ import type { Format } from "../engine/types";
 import { Card } from "../components/Card";
 import { Stage, Title } from "./Stage";
 
-const COUNT = 1.2;
+// Count-ups finish fast: the number should be readable while the voice is still saying it.
+const COUNT = 0.8;
 
 // Round axis ticks (1/2/2.5/5 × 10^n) covering [lo, hi].
 export function niceTicks(lo: number, hi: number, target = 4): number[] {
@@ -27,17 +28,17 @@ export const StatCardsScene: React.FC<{ columns?: number; cards: StatCard[] }> =
   const at = useRevealAt();
   const t = useTime();
   const cols = columns ?? (portrait ? (cards.length > 3 ? 2 : 1) : Math.min(cards.length, cards.length === 4 ? 2 : 3));
-  const big = cards.length <= 2 ? 1.35 : cards.length <= 4 ? 1 : 0.8;
+  const big = cards.length <= 2 ? 1.4 : cards.length <= 4 ? 1.15 : 0.8;
   return (
     <Stage center>
-      <div style={{ display: "grid", gridTemplateColumns: `repeat(${cols}, 1fr)`, gap: 32 * u }}>
+      <div style={{ display: "grid", gridTemplateColumns: `repeat(${cols}, 1fr)`, gap: 36 * u }}>
         {cards.map((c, i) => {
           const s = at(i, cards.length, c.cue);
-          const o = easeOut((t - s) / 0.6);
+          const o = easeOut((t - s) / 0.45);
           const v = lerp(c.from ?? 0, c.value, easeOut((t - s) / COUNT));
           const color = c.color ?? (i === 0 ? theme.colors.accent : colorAt(theme, i));
           return (
-            <Card key={i} o={o} accent={color} style={{ textAlign: "left" }}>
+            <Card key={i} o={o} accent={color} style={{ textAlign: "left", padding: `${34 * u}px ${40 * u}px` }}>
               <div style={{ fontSize: 28 * u * Math.max(0.85, big * 0.9), color: theme.colors.muted }}>{c.label}</div>
               <div style={{ fontFamily: theme.fonts.number, fontSize: 88 * u * big, fontWeight: 800, color, marginTop: 10 * u, lineHeight: 1.05, whiteSpace: "nowrap" }}>
                 {fmtCount(v, c.value, c.format)}
@@ -246,12 +247,26 @@ export const LineChartScene: React.FC<{ title?: string; xLabel?: string; yLabel?
             let len = 0;
             for (let k = 1; k < pts.length; k++) len += Math.hypot(pts[k][0] - pts[k - 1][0], pts[k][1] - pts[k - 1][1]);
             const tip = lastLabel(s);
+            const tipK = s.points.indexOf(tip);
+            const annotated = new Set(annotations.filter((a) => (a.series ?? 0) === si).map((a) => String(a.x)));
             return (
               <g key={s.name}>
+                {pts.map(([x, y], k) => {
+                  const o = clamp01((drawP * (pts.length - 1) - k + 0.15) / 0.3);
+                  if (o <= 0) return null;
+                  return (
+                    <g key={k} opacity={o}>
+                      <circle cx={x} cy={y} r={8 * u} fill={theme.colors.bg} stroke={color} strokeWidth={4 * u} />
+                      {series.length === 1 && k !== tipK && !annotated.has(String(s.points[k][0])) && (
+                        <text x={x} y={y - 22 * u} textAnchor="middle" fontSize={24 * u} fontWeight={600} fill={theme.colors.text} fontFamily={theme.fonts.number}>{fmt(Number(s.points[k][1]), format)}</text>
+                      )}
+                    </g>
+                  );
+                })}
                 <path d={`${d} L${pts[pts.length - 1][0]},${H} L${pts[0][0]},${H} Z`} fill={color} opacity={0.08 * drawP} />
                 <path d={d} fill="none" stroke={color} strokeWidth={5 * u} strokeLinejoin="round" strokeLinecap="round" strokeDasharray={len} strokeDashoffset={len * (1 - drawP)} />
                 {drawP > 0.02 && (
-                  <text x={X(xVal(tip[0])) + 12 * u} y={Y(Number(tip[1])) - 12 * u} fontSize={24 * u} fontWeight={700} fill={color} fontFamily={theme.fonts.number}>
+                  <text x={X(xVal(tip[0])) + 14 * u} y={Y(Number(tip[1])) - 14 * u} fontSize={34 * u} fontWeight={800} fill={color} fontFamily={theme.fonts.number}>
                     {series.length > 1 ? `${s.name} ` : ""}{fmt(Number(tip[1]), format)}
                   </text>
                 )}
@@ -292,14 +307,18 @@ export const ShareScene: React.FC<{ title?: string; unit?: string; format?: Form
   // One precision for the whole chart: a decimal only when some slice is under 10%.
   const pctDecimals = segments.some((x) => x.value / total < 0.1) ? 1 : 0;
   const pct = (v: number) => `${((v / total) * 100).toFixed(pctDecimals)}%`;
-  const R = (portrait ? 300 : 260) * u, r = R * 0.62;
+  const R = (portrait ? 320 : 300) * u, r = R * 0.62;
+  // The whole ring sweeps in on the first reveal, so the chart never shows a broken circle;
+  // each slice then lights up (and its legend row) on its own cue.
+  const first = Math.min(...segments.map((s, i) => at(i, segments.length, s.cue)));
+  const sweep = easeInOut((t - first + 0.3) / 1.1) * Math.PI * 2;
   let acc = 0;
   const arcs = segments.map((s, i) => {
     const a0 = (acc / total) * Math.PI * 2;
     acc += s.value;
     const a1 = (acc / total) * Math.PI * 2;
-    const p = easeOut((t - at(i, segments.length, s.cue)) / 0.8);
-    return { s, i, a0, a1: a0 + (a1 - a0) * p, p, color: s.color ?? colorAt(theme, i) };
+    const p = easeOut((t - at(i, segments.length, s.cue)) / 0.5);
+    return { s, i, a0: Math.min(a0, sweep), a1: Math.min(a1, sweep), p, color: s.color ?? colorAt(theme, i) };
   });
   const arc = (a0: number, a1: number) => {
     if (a1 - a0 < 1e-4) return "";
@@ -314,18 +333,18 @@ export const ShareScene: React.FC<{ title?: string; unit?: string; format?: Form
       <Title text={title} />
       <div style={{ display: "flex", flexDirection: portrait ? "column" : "row", alignItems: "center", gap: 80 * u, justifyContent: "center" }}>
         <svg width={R * 2 + 20 * u} height={R * 2 + 20 * u} viewBox={`${-R - 10 * u} ${-R - 10 * u} ${R * 2 + 20 * u} ${R * 2 + 20 * u}`}>
-          {arcs.map((a) => <path key={a.s.label} d={arc(a.a0, a.a1)} fill={a.color} stroke={theme.colors.bg} strokeWidth={3 * u} />)}
-          <text x={0} y={-6 * u} textAnchor="middle" fontSize={64 * u} fontWeight={800} fill={theme.colors.text} fontFamily={theme.fonts.number} opacity={lead.p}>
+          {arcs.map((a) => <path key={a.s.label} d={arc(a.a0, a.a1)} fill={a.color} opacity={0.3 + 0.7 * a.p} stroke={theme.colors.bg} strokeWidth={3 * u} />)}
+          <text x={0} y={-6 * u} textAnchor="middle" fontSize={76 * u} fontWeight={800} fill={theme.colors.text} fontFamily={theme.fonts.number} opacity={lead.p}>
             {pct(lead.s.value)}
           </text>
           <text x={0} y={40 * u} textAnchor="middle" fontSize={26 * u} fill={theme.colors.muted} opacity={lead.p}>{lead.s.label}</text>
         </svg>
         <div style={{ display: "flex", flexDirection: "column", gap: 20 * u, minWidth: 420 * u }}>
           {arcs.map((a) => (
-            <div key={a.s.label} style={{ display: "flex", alignItems: "center", gap: 16 * u, opacity: Math.max(0.15, a.p) }}>
-              <div style={{ width: 22 * u, height: 22 * u, borderRadius: 6 * u, background: a.color }} />
-              <div style={{ flex: 1, fontSize: 32 * u }}>{a.s.label}</div>
-              <div style={{ fontFamily: theme.fonts.number, fontSize: 32 * u, fontWeight: 700 }}>{pct(a.s.value)}</div>
+            <div key={a.s.label} style={{ display: "flex", alignItems: "center", gap: 18 * u, opacity: Math.max(0.3, a.p), transform: `translateX(${(1 - a.p) * 12 * u}px)` }}>
+              <div style={{ width: 26 * u, height: 26 * u, borderRadius: 6 * u, background: a.color }} />
+              <div style={{ flex: 1, fontSize: 38 * u }}>{a.s.label}</div>
+              <div style={{ fontFamily: theme.fonts.number, fontSize: 40 * u, fontWeight: 700 }}>{pct(a.s.value)}</div>
               <div style={{ fontFamily: theme.fonts.number, fontSize: 22 * u, color: theme.colors.muted, minWidth: 140 * u, textAlign: "right" }}>
                 {fmt(a.s.value, format)}{unit ? ` ${unit}` : ""}
               </div>

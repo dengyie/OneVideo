@@ -97,3 +97,22 @@ export function concatWithGaps(clips, gapsSec, sampleRate) {
   });
   return { samples: out, spans, duration: total / sampleRate };
 }
+
+// Quiet stretches inside speech, as [start, end] seconds. The level threshold follows the clip's
+// peak, so a soft voice still shows its pauses.
+export function findPauses(mono, sampleRate, { minMs = 90, relative = 0.04, floor = 250 } = {}) {
+  const win = Math.max(1, Math.round(sampleRate * 0.01));
+  let peak = 0;
+  for (let i = 0; i < mono.length; i++) peak = Math.max(peak, Math.abs(mono[i]));
+  const threshold = Math.max(floor, peak * relative);
+  const out = [];
+  let quietFrom = -1;
+  for (let i = 0; i < mono.length; i += win) {
+    let m = 0;
+    for (let j = i; j < Math.min(i + win, mono.length); j++) m = Math.max(m, Math.abs(mono[j]));
+    if (m <= threshold) { if (quietFrom < 0) quietFrom = i; continue; }
+    if (quietFrom >= 0 && (i - quietFrom) * 1000 >= minMs * sampleRate) out.push([quietFrom / sampleRate, i / sampleRate]);
+    quietFrom = -1;
+  }
+  return out;
+}

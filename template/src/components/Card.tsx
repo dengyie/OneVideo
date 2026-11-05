@@ -1,16 +1,20 @@
 import React from "react";
-import { useLayout, useTheme } from "../engine/context";
+import { useLayout, useScene, useTheme } from "../engine/context";
 
 // Entrance-aware surface: `o` is the reveal progress 0→1.
 export const Card: React.FC<{ o: number; children: React.ReactNode; style?: React.CSSProperties; accent?: string }> = ({ o, children, style, accent }) => {
   const theme = useTheme();
   const { u } = useLayout();
+  // Over a photo backdrop the card turns into frosted glass so numbers stay legible.
+  const onMedia = Boolean(useScene().backdrop);
   return (
     <div
       style={{
         opacity: o,
         transform: `translateY(${(1 - o) * 30 * u}px)`,
-        background: theme.colors.surface,
+        background: onMedia ? "rgba(6,10,24,0.58)" : theme.colors.surface,
+        backdropFilter: onMedia ? `blur(${18 * u}px)` : undefined,
+        boxShadow: onMedia ? `0 ${12 * u}px ${40 * u}px rgba(0,0,0,0.35)` : undefined,
         border: `1px solid ${theme.colors.border}`,
         borderTop: accent ? `${4 * u}px solid ${accent}` : undefined,
         borderRadius: theme.radius * u,

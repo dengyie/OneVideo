@@ -1,8 +1,7 @@
 // Pre-compose gates: catch structural, factual and pacing problems before spending a render.
 import { validate, loadSchema } from "./schema.mjs";
 import { extractNumbers, parseNumber, visualLength, spokenLength } from "./text.mjs";
-import { sceneLines, captionMaxChars, ttsConfig, lineHash } from "./tts.mjs";
-import { speakable } from "./text.mjs";
+import { sceneLines, captionMaxChars, timingHashes } from "./tts.mjs";
 
 export const STATIC_TYPES = new Set(["quote", "bullets", "title", "chapter", "sources"]);
 const DEFAULT_HOLD_EST = 0.5;
@@ -115,11 +114,10 @@ function cueRefs(v, out = []) {
 // timings.json must match the current narration line for line (same text, pronunciation and voice);
 // otherwise captions and cues would be timed against audio of a different script.
 export function timingsGate(script, timings, config) {
-  const t = ttsConfig(config);
   const lexicon = { ...(config.lexicon ?? {}), ...(script.lexicon ?? {}) };
   const out = [];
   for (const s of script.scenes) {
-    const want = sceneLines(s, config).map((l) => lineHash(l.speak ?? speakable(l.text, lexicon), t));
+    const want = timingHashes(s, config, lexicon);
     const have = (timings.scenes?.[s.id]?.lines ?? []).map((l) => l.hash);
     if (!want.length && !have.length) continue;
     if (want.join() !== have.join()) out.push(issue("error", "timings", `scene "${s.id}" narration or voice changed since tts; run: onevideo tts`));

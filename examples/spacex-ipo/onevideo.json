@@ -8,8 +8,27 @@
   "language": "zh-CN",
   "targetSeconds": 85,
   "watermark": "OneVideo · 示例",
-  "lexicon": { "SPCX": "S P C X", "IPO": "I P O", "xAI": "x A I" },
-  "music": { "preset": "pulse", "volume": 0.2, "duckTo": 0.07 },
-  "sfx": { "transition": "whoosh", "volume": 0.45 },
-  "captions": { "style": "line" }
+  "lexicon": {
+    "SPCX": "S P C X",
+    "IPO": "I P O",
+    "xAI": "x A I"
+  },
+  "music": {
+    "file": "music/inspired.mp3",
+    "url": "https://incompetech.com/music/royalty-free/mp3-royaltyfree/Inspired.mp3",
+    "credit": "Inspired · Kevin MacLeod (incompetech.com) · CC BY 4.0",
+    "volume": 0.24,
+    "duckTo": 0.08
+  },
+  "sfx": {
+    "transition": "whoosh",
+    "volume": 0.45
+  },
+  "captions": {
+    "style": "line"
+  },
+  "tts": {
+    "voice": "白桦",
+    "style": "财经纪录片旁白。沉稳、清晰、有信息密度，语速中等偏快，句与句之间自然停顿，重音落在数字上，不要播音腔。"
+  }
 }

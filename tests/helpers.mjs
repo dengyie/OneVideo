@@ -15,6 +15,10 @@ export function example({ media = ["sfx/whoosh.wav", "sfx/pop.wav", "music/bgm.w
     mkdirSync(dirname(join(root, "public", f)), { recursive: true });
     writeFileSync(join(root, "public", f), "");
   }
+  // The manifest as `assets fetch` leaves it, with empty stand-in files.
+  const items = json(join(EXAMPLE, "plan", "assets.json")).items.map((a) => ({ ...a, file: `assets/${a.id}.jpg` }));
+  mkdirSync(join(root, "public", "assets"), { recursive: true });
+  for (const a of items) writeFileSync(join(root, "public", a.file), "");
   return {
     root,
     config: json(join(EXAMPLE, "onevideo.json")),
@@ -22,5 +26,6 @@ export function example({ media = ["sfx/whoosh.wav", "sfx/pop.wav", "music/bgm.w
     storyboard: json(join(EXAMPLE, "plan", "storyboard.json")),
     research: json(join(EXAMPLE, "plan", "research.json")),
     timings: json(join(ROOT, "tests", "fixtures", "spacex-timings.json")),
+    fetchedAssets: { items },
   };
 }

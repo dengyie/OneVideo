@@ -2,15 +2,19 @@
 // The Remotion template reads only this file, so every timing decision lives here.
 import { existsSync } from "node:fs";
 import { join } from "node:path";
-import { normalizeForMatch } from "./text.mjs";
+import { normalizeForMatch, spokenLength } from "./text.mjs";
 import { styleDef } from "./project.mjs";
 
 export const DIMENSIONS = { "16:9": [1920, 1080], "9:16": [1080, 1920], "1:1": [1080, 1080], "4:5": [1080, 1350] };
 export const DEFAULT_HOLD = 0.5;
 export const SILENT_SCENE_DEFAULT = 4;
+// Phrase cues fire this much before the word is spoken: the eye should land on a number as the
+// voice says it, and a reveal takes a few frames to read.
+export const CUE_LEAD = 0.2;
 
 // Find a phrase across a scene's caption lines and return its spoken time (scene-relative).
-// Time inside a line is interpolated by character position, which is accurate to ~0.2s for TTS speech.
+// Time inside a line is interpolated by spoken syllables (a digit takes longer to say than it
+// takes to write), which is accurate to ~0.2s for TTS speech.
 export function phraseTime(lines, phrase) {
   const needle = normalizeForMatch(phrase);
   if (!needle) return null;
@@ -23,9 +27,11 @@ export function phraseTime(lines, phrase) {
   });
   const idx = hay.indexOf(needle);
   if (idx < 0) return null;
-  const [li, pos, len] = map[idx];
+  const [li, pos] = map[idx];
   const l = lines[li];
-  return l.start + (l.end - l.start) * (pos / Math.max(1, len));
+  const n = normalizeForMatch(l.text);
+  const share = spokenLength(n.slice(0, pos)) / Math.max(1e-6, spokenLength(n));
+  return l.start + (l.end - l.start) * (Number.isFinite(share) ? Math.min(1, share) : 0);
 }
 
 export function resolveAt(at, lines, duration) {
@@ -34,7 +40,7 @@ export function resolveAt(at, lines, duration) {
   if (typeof spec.phrase !== "string") return { error: `invalid cue ${JSON.stringify(at)}` };
   const t = phraseTime(lines, spec.phrase);
   if (t === null) return { error: `phrase "${spec.phrase}" not found in narration` };
-  return { t: t + (spec.offset ?? 0) };
+  return { t: t - CUE_LEAD + (spec.offset ?? 0) };
 }
 
 const clampT = (t, d) => Math.max(0, Math.min(d, t));
@@ -91,7 +97,9 @@ export function compileTimeline({ config, script, storyboard, timings, assets, r
 
     const props = { ...(sb.props ?? {}) };
     if (sb.type === "sources" && !props.items?.length && props.auto !== false) props.items = sourceList(research, assets);
-    for (const id of collectAssetRefs(props)) {
+    const refs = collectAssetRefs(props);
+    if (sb.backdrop) refs.add(sb.backdrop.asset);
+    for (const id of refs) {
       const a = assetById.get(id);
       if (!a) { errors.push(`scene "${sb.id}" references unknown asset "${id}"`); continue; }
       if (!a.file) { errors.push(`asset "${id}" not fetched yet; run: onevideo assets fetch`); continue; }
@@ -118,6 +126,7 @@ export function compileTimeline({ config, script, storyboard, timings, assets, r
       exit: sb.exit ?? theme.transition ?? "fade",
       header: sb.header ?? null,
       background: sb.background ?? null,
+      backdrop: sb.backdrop ? { dim: 0.62, blur: 0, motion: "in", startFrom: 0, ...sb.backdrop } : null,
       captions: sb.captions !== false,
       cues,
       lines: lines.map((l) => ({ text: l.text, start: l.start, end: l.end })),
@@ -182,7 +191,7 @@ export function researchSources(research) {
 export function sourceList(research, assets) {
   const out = researchSources(research).map((s) => s.line);
   for (const a of assets?.items ?? []) {
-    const line = `图片：${credit(a)}`;
+    const line = `${a.kind === "video" ? "视频" : "图片"}：${credit(a)}`;
     if (!out.includes(line)) out.push(line);
   }
   return out;

@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { compileTimeline, phraseTime, resolveAt, mergeTheme, researchSources, sourceList, credit } from "../cli/lib/timeline.mjs";
+import { compileTimeline, phraseTime, resolveAt, mergeTheme, researchSources, sourceList, credit, CUE_LEAD } from "../cli/lib/timeline.mjs";
 import { example } from "./helpers.mjs";
 
 const lines = [{ text: "1990年，全球第一", start: 0.2, end: 2.2 }, { text: "36年后，苹果排第一", start: 2.5, end: 4.5 }];
@@ -10,12 +10,15 @@ test("phraseTime interpolates inside a line and spans punctuation", () => {
   const t = phraseTime(lines, "苹果");
   assert.ok(t > 2.5 && t < 4.5);
   assert.equal(phraseTime(lines, "不存在"), null);
+  // Digits weigh 1.6 syllables: "36年后" is 5.2 of the line's 10.2, so 苹果 lands past the middle.
+  const share = (phraseTime(lines, "苹果") - 2.5) / 2;
+  assert.ok(Math.abs(share - 5.2 / 10.2) < 1e-9);
 });
 
 test("resolveAt accepts seconds, negative seconds, phrases and {phrase, offset}", () => {
   assert.deepEqual(resolveAt(1.5, lines, 6), { t: 1.5 });
   assert.deepEqual(resolveAt(-1, lines, 6), { t: 5 });
-  assert.equal(resolveAt({ phrase: "36年后", offset: -0.4 }, lines, 6).t, 2.1);
+  assert.ok(Math.abs(resolveAt({ phrase: "36年后", offset: -0.4 }, lines, 6).t - (2.1 - CUE_LEAD)) < 1e-9, "phrase cues lead the voice");
   assert.match(resolveAt("缺失", lines, 6).error, /not found/);
   assert.match(resolveAt({ offset: 1 }, lines, 6).error, /invalid cue/);
 });
@@ -43,10 +46,12 @@ test("sourceList appends asset credits; generated assets credit the model", () =
 });
 
 test("compileTimeline on the SpaceX example: frames, captions, cues, chapters, music credit", () => {
-  const ex = example();
-  const { timeline, errors } = compileTimeline({ ...ex, assets: null });
+  const ex = example({ media: ["sfx/whoosh.wav", "sfx/pop.wav", "music/inspired.mp3"] });
+  const { timeline, errors } = compileTimeline({ ...ex, assets: ex.fetchedAssets });
   assert.deepEqual(errors, []);
   assert.equal(timeline.width, 1920);
+  assert.deepEqual(timeline.scenes.find((s) => s.id === "race").backdrop, { asset: "falcon-heavy", dim: 0.82, blur: 14, motion: "none", startFrom: 0 });
+  assert.ok(timeline.scenes.filter((s) => s.id !== "credits").every((s) => s.backdrop), "every content scene has footage behind it");
   assert.equal(timeline.scenes.length, ex.storyboard.scenes.length);
   let frame = 0;
   for (const s of timeline.scenes) {
@@ -60,7 +65,9 @@ test("compileTimeline on the SpaceX example: frames, captions, cues, chapters, m
   const race = timeline.scenes.find((s) => s.id === "race");
   assert.ok(race.cues.y1990 < race.cues.y2026);
   assert.deepEqual(timeline.chapters.map((c) => c.title).slice(0, 2), ["上市", "36 年市值榜"]);
-  assert.equal(timeline.music.credit, "OneVideo 程序化合成");
+  assert.equal(timeline.music.credit, ex.config.music.credit);
+  const synth = compileTimeline({ ...example(), config: { ...ex.config, music: { preset: "pulse" } }, assets: ex.fetchedAssets });
+  assert.equal(synth.timeline.music.credit, "OneVideo 程序化合成");
 });
 
 test("compileTimeline reports a cue phrase missing from narration", () => {
@@ -73,7 +80,7 @@ test("compileTimeline reports a cue phrase missing from narration", () => {
 
 test("compileTimeline: a provided music file needs a credit", () => {
   const ex = example({ media: ["sfx/whoosh.wav", "sfx/pop.wav", "music/track.mp3"] });
-  const config = { ...ex.config, music: { ...ex.config.music, file: "music/track.mp3" } };
+  const config = { ...ex.config, music: { file: "music/track.mp3" } };
   const { timeline, warnings } = compileTimeline({ ...ex, config, assets: null });
   assert.equal(timeline.music.src, "music/track.mp3");
   assert.ok(warnings.some((w) => /credit/.test(w)));
