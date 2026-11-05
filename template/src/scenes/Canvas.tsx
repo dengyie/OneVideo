@@ -108,6 +108,17 @@ export function cameraAt(path: Stop[], items: Item[], t: number, screen: { w: nu
   return cam;
 }
 
+// The backdrop behind a canvas drifts with the camera at `far` of its travel (and a breath of its
+// zoom), overscaled so the shift never shows an edge: a flight reads as moving through a place.
+export function canvasBackdrop(props: { items?: Item[]; path?: Stop[] }, t: number, width: number, height: number, u: number, far = 0.12): string {
+  const screen = { w: width / u, h: height / u };
+  const cam = cameraAt(props.path ?? [], props.items ?? [], t, screen);
+  const s = 1.2 * Math.pow(cam.zoom, 0.12);
+  const room = (v: number, size: number) => Math.max(-(s - 1) / 2 * size, Math.min((s - 1) / 2 * size, v));
+  const dx = room(-(cam.x - screen.w / 2) * u * far, width), dy = room(-(cam.y - screen.h / 2) * u * far, height);
+  return `translate(${dx.toFixed(1)}px, ${dy.toFixed(1)}px) scale(${s.toFixed(4)})`;
+}
+
 const Content: React.FC<{ s: State; scale: number; theme: ReturnType<typeof useTheme>; t: number; enter: number }> = ({ s, scale, theme, t, enter }) => {
   const tl = useTimeline();
   const color = s.color ?? theme.colors.accent;

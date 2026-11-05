@@ -2,7 +2,7 @@ import React from "react";
 import { AbsoluteFill, Html5Audio, Sequence, staticFile, useCurrentFrame, useVideoConfig } from "remotion";
 import { noise2D } from "@remotion/noise";
 import type { Camera, Direction, Scene, Timeline, Transition } from "./types";
-import { SceneContext, TimelineContext } from "./context";
+import { SceneContext, TimelineContext, useLayout } from "./context";
 import { clamp01, easeInOut } from "./motion";
 import { cutBetween, farther, viewAt, viewTransform, viewVelocity } from "./camera";
 import { MotionBlur } from "../components/MotionBlur";
@@ -13,6 +13,7 @@ import { Watermark } from "../components/Watermark";
 import { FilmLook, Overlays } from "../components/Overlay";
 import { Captions } from "./Captions";
 import { SCENES } from "../scenes";
+import { canvasBackdrop } from "../scenes/Canvas";
 
 // Music gain: full between lines, ducked under speech, with short ramps and fade in/out.
 export function musicGain(t: number, total: number, m: NonNullable<Timeline["music"]>, narration: [number, number][]): number {
@@ -109,6 +110,7 @@ const SOLID: Transition[] = ["push", "whip", "iris", "clock", "wipe"];
 const SceneFrame: React.FC<{ scene: Scene; length: number; children: React.ReactNode; content: React.ReactNode; base: React.ReactNode }> = ({ scene, length, children, content, base }) => {
   const frame = useCurrentFrame();
   const { fps, width, height } = useVideoConfig();
+  const { u } = useLayout();
   const tin = scene.transitionIn;
   const tout = scene.transitionOut;
   let look: Look = { style: {} };
@@ -147,7 +149,9 @@ const SceneFrame: React.FC<{ scene: Scene; length: number; children: React.React
           </svg>
         ) : null}
         {solid && base}
-        {shots ? <AbsoluteFill style={{ transform: viewTransform(farther(view, 0.55), width, height) }}>{children}</AbsoluteFill> : children}
+        {shots ? <AbsoluteFill style={{ transform: viewTransform(farther(view, 0.55), width, height) }}>{children}</AbsoluteFill>
+          : scene.type === "canvas" && scene.backdrop ? <AbsoluteFill style={{ transform: canvasBackdrop(scene.props, t, width, height, u) }}>{children}</AbsoluteFill>
+          : children}
         <MotionBlur id={scene.id} vx={vel.vx} vy={vel.vy} radial={vel.radial} style={{ transform: viewTransform(view, width, height) }}>
           <AbsoluteFill style={{ transform: cam || undefined }}>{content}</AbsoluteFill>
           <Overlays />
