@@ -1,0 +1,13 @@
+node_modules/
+.DS_Store
+*.log
+.env
+# 项目产物（引擎共享，项目只存数据）
+/examples/*/public/
+/examples/*/out/
+/examples/*/state.json
+/examples/*/plan/timings.json
+/examples/*/plan/timeline.json
+/examples/*/plan/review.json
+/examples/*/plan/publish.json
+/template/out/

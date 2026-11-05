@@ -1,0 +1,41 @@
+{
+  "name": "neon-tech",
+  "description": "High-contrast black with neon accents; punchy motion for shorts.",
+  "colors": {
+    "bg": "#05050A",
+    "bgAlt": "#0E0E1A",
+    "surface": "rgba(255,255,255,0.06)",
+    "border": "rgba(255,255,255,0.14)",
+    "text": "#FFFFFF",
+    "muted": "#9A9AB0",
+    "accent": "#FF2E88",
+    "accent2": "#00E5FF",
+    "positive": "#39FF88",
+    "negative": "#FF5C5C",
+    "highlight": "#FFE14D"
+  },
+  "palette": [
+    "#FF2E88",
+    "#00E5FF",
+    "#FFE14D",
+    "#39FF88",
+    "#A26BFF",
+    "#FF8A3D",
+    "#5CA8FF",
+    "#C0C0D0"
+  ],
+  "fonts": {
+    "body": "\"PingFang SC\", \"Noto Sans SC\", \"Microsoft YaHei\", sans-serif",
+    "number": "\"SF Pro Display\", \"Roboto Mono\", \"PingFang SC\", sans-serif"
+  },
+  "background": "grid",
+  "radius": 24,
+  "transition": "zoom",
+  "motion": {
+    "pace": "fast",
+    "spring": {
+      "damping": 120
+    }
+  },
+  "captionBg": "rgba(5,5,10,0.7)"
+}

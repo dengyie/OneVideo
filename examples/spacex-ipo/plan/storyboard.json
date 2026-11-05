@@ -1,0 +1,499 @@
+{
+  "scenes": [
+    {
+      "id": "hook",
+      "type": "title",
+      "enter": "cut",
+      "intent": "日期 + 问题，2 秒内抛出钩子",
+      "props": {
+        "kicker": "NASDAQ · SPCX",
+        "title": "SpaceX 上市",
+        "subtitle": "一家造火箭的公司，凭什么值一万多亿美元？",
+        "date": "2026-06-12"
+      }
+    },
+    {
+      "id": "ipo",
+      "type": "stat-cards",
+      "header": {
+        "title": "上市当天",
+        "subtitle": "来源：公司新闻稿、路透社、纳斯达克"
+      },
+      "cues": {
+        "price": "发行价",
+        "raise": "募资",
+        "pop": "首日",
+        "cap": "市值约"
+      },
+      "sfx": [
+        {
+          "sound": "pop",
+          "at": "发行价"
+        }
+      ],
+      "props": {
+        "columns": 4,
+        "cards": [
+          {
+            "value": 135,
+            "format": {
+              "prefix": "$"
+            },
+            "label": "发行价",
+            "cue": "price"
+          },
+          {
+            "value": 85700000000.0,
+            "format": {
+              "compact": "zh",
+              "suffix": "美元"
+            },
+            "label": "募资（含超额配售）",
+            "note": "史上最大 IPO",
+            "cue": "raise"
+          },
+          {
+            "value": 19,
+            "format": {
+              "prefix": "+",
+              "suffix": "%"
+            },
+            "label": "首日涨幅",
+            "color": "#34D399",
+            "cue": "pop"
+          },
+          {
+            "value": 2100000000000.0,
+            "format": {
+              "compact": "zh",
+              "suffix": "美元"
+            },
+            "label": "首日收盘市值",
+            "cue": "cap"
+          }
+        ]
+      }
+    },
+    {
+      "id": "race",
+      "type": "bar-race",
+      "minDuration": 12,
+      "header": {
+        "title": "全球上市公司市值",
+        "subtitle": "前 8 名 · 1990 BW Global 1000 · 2000/2010 FT Global 500 · 2026-11-04 StockTitan"
+      },
+      "props": {
+        "top": 8,
+        "format": {
+          "compact": "zh",
+          "suffix": "美元"
+        },
+        "periods": [
+          "1990",
+          "2000",
+          "2010",
+          "2026"
+        ],
+        "groupColors": {
+          "美国": "#4F8CFF",
+          "日本": "#F87171",
+          "大中华区": "#FBBF24",
+          "欧洲": "#34D399",
+          "SpaceX": "#F2F5FF"
+        },
+        "series": [
+          {
+            "name": "NTT",
+            "group": "日本",
+            "values": [
+              118700000000.0,
+              274900000000.0,
+              null,
+              null
+            ]
+          },
+          {
+            "name": "IBM",
+            "group": "美国",
+            "values": [
+              68800000000.0,
+              null,
+              null,
+              null
+            ]
+          },
+          {
+            "name": "日本兴业银行",
+            "group": "日本",
+            "values": [
+              67600000000.0,
+              null,
+              null,
+              null
+            ]
+          },
+          {
+            "name": "皇家壳牌",
+            "group": "欧洲",
+            "values": [
+              67100000000.0,
+              null,
+              null,
+              null
+            ]
+          },
+          {
+            "name": "通用电气",
+            "group": "美国",
+            "values": [
+              62500000000.0,
+              475000000000.0,
+              194200000000.0,
+              null
+            ]
+          },
+          {
+            "name": "埃克森美孚",
+            "group": "美国",
+            "values": [
+              60000000000.0,
+              265900000000.0,
+              316200000000.0,
+              null
+            ]
+          },
+          {
+            "name": "住友银行",
+            "group": "日本",
+            "values": [
+              55800000000.0,
+              null,
+              null,
+              null
+            ]
+          },
+          {
+            "name": "富士银行",
+            "group": "日本",
+            "values": [
+              53100000000.0,
+              null,
+              null,
+              null
+            ]
+          },
+          {
+            "name": "微软",
+            "group": "美国",
+            "values": [
+              null,
+              586200000000.0,
+              256900000000.0,
+              4130000000000.0
+            ]
+          },
+          {
+            "name": "NTT DoCoMo",
+            "group": "日本",
+            "values": [
+              null,
+              366200000000.0,
+              null,
+              null
+            ]
+          },
+          {
+            "name": "思科",
+            "group": "美国",
+            "values": [
+              null,
+              349000000000.0,
+              null,
+              null
+            ]
+          },
+          {
+            "name": "沃尔玛",
+            "group": "美国",
+            "values": [
+              null,
+              286200000000.0,
+              209000000000.0,
+              null
+            ]
+          },
+          {
+            "name": "英特尔",
+            "group": "美国",
+            "values": [
+              null,
+              277100000000.0,
+              null,
+              null
+            ]
+          },
+          {
+            "name": "中国石油",
+            "group": "大中华区",
+            "values": [
+              null,
+              null,
+              329300000000.0,
+              null
+            ]
+          },
+          {
+            "name": "工商银行",
+            "group": "大中华区",
+            "values": [
+              null,
+              null,
+              246400000000.0,
+              null
+            ]
+          },
+          {
+            "name": "苹果",
+            "group": "美国",
+            "values": [
+              null,
+              null,
+              213100000000.0,
+              5100000000000.0
+            ]
+          },
+          {
+            "name": "必和必拓",
+            "group": "欧洲",
+            "values": [
+              null,
+              null,
+              209900000000.0,
+              null
+            ]
+          },
+          {
+            "name": "伯克希尔",
+            "group": "美国",
+            "values": [
+              null,
+              null,
+              200600000000.0,
+              null
+            ]
+          },
+          {
+            "name": "英伟达",
+            "group": "美国",
+            "values": [
+              null,
+              null,
+              null,
+              4830000000000.0
+            ]
+          },
+          {
+            "name": "Alphabet",
+            "group": "美国",
+            "values": [
+              null,
+              null,
+              null,
+              3550000000000.0
+            ]
+          },
+          {
+            "name": "亚马逊",
+            "group": "美国",
+            "values": [
+              null,
+              null,
+              null,
+              2880000000000.0
+            ]
+          },
+          {
+            "name": "台积电",
+            "group": "大中华区",
+            "values": [
+              null,
+              null,
+              null,
+              2050000000000.0
+            ]
+          },
+          {
+            "name": "SpaceX",
+            "group": "SpaceX",
+            "values": [
+              null,
+              null,
+              null,
+              1850000000000.0
+            ]
+          },
+          {
+            "name": "Meta",
+            "group": "美国",
+            "values": [
+              null,
+              null,
+              null,
+              1610000000000.0
+            ]
+          }
+        ],
+        "periodCues": [
+          "y1990",
+          null,
+          null,
+          "y2026"
+        ]
+      },
+      "cues": {
+        "y1990": {
+          "phrase": "36年后",
+          "offset": -0.4
+        },
+        "y2026": "而SpaceX"
+      }
+    },
+    {
+      "id": "valuation",
+      "type": "line-chart",
+      "header": {
+        "title": "SpaceX 估值",
+        "subtitle": "私募轮为媒体转述"
+      },
+      "cues": {
+        "draw": 0.6,
+        "xai": "合并xAI"
+      },
+      "props": {
+        "format": {
+          "compact": "zh"
+        },
+        "drawCue": "draw",
+        "series": [
+          {
+            "name": "估值",
+            "points": [
+              [
+                "2024.12",
+                350000000000.0
+              ],
+              [
+                "2025.12",
+                800000000000.0
+              ],
+              [
+                "2026.02",
+                1250000000000.0
+              ],
+              [
+                "2026.06",
+                1770000000000.0
+              ]
+            ]
+          }
+        ],
+        "annotations": [
+          {
+            "x": "2026.02",
+            "label": "合并 xAI",
+            "cue": "xai"
+          }
+        ]
+      }
+    },
+    {
+      "id": "revenue",
+      "type": "share",
+      "header": {
+        "title": "2025 年收入结构",
+        "subtitle": "来源：S-1 招股书"
+      },
+      "cues": {
+        "conn": "星链为主",
+        "launch": "占比",
+        "ai": "占比"
+      },
+      "props": {
+        "unit": "",
+        "format": {
+          "compact": "zh",
+          "suffix": "美元"
+        },
+        "segments": [
+          {
+            "label": "连接（星链为主）",
+            "value": 11400000000.0,
+            "cue": "conn"
+          },
+          {
+            "label": "航天发射",
+            "value": 4100000000.0,
+            "cue": "launch"
+          },
+          {
+            "label": "AI（xAI）",
+            "value": 3200000000.0,
+            "cue": "ai"
+          }
+        ]
+      }
+    },
+    {
+      "id": "profit",
+      "type": "compare",
+      "cues": {
+        "left": 0.4,
+        "right": "整个集团"
+      },
+      "props": {
+        "title": "2025 年盈亏",
+        "vs": "≠",
+        "left": {
+          "title": "连接业务",
+          "subtitle": "经营利润",
+          "value": 4400000000.0,
+          "format": {
+            "compact": "zh",
+            "suffix": "美元"
+          },
+          "color": "#34D399"
+        },
+        "right": {
+          "title": "集团整体",
+          "subtitle": "净亏损",
+          "value": -4900000000.0,
+          "format": {
+            "compact": "zh",
+            "suffix": "美元"
+          },
+          "color": "#F87171",
+          "items": [
+            "AI 业务是主要拖累"
+          ]
+        }
+      }
+    },
+    {
+      "id": "landing",
+      "type": "quote",
+      "hold": 1.2,
+      "props": {
+        "text": "市场为它支付的，不是今天的利润，而是对太空互联网的想象。"
+      }
+    },
+    {
+      "id": "credits",
+      "type": "sources",
+      "duration": 5,
+      "captions": false,
+      "props": {
+        "auto": true
+      }
+    }
+  ]
+}

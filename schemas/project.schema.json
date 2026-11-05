@@ -1,0 +1,253 @@
+{
+  "$id": "onevideo/project",
+  "title": "onevideo.json — project config",
+  "type": "object",
+  "required": [
+    "name",
+    "title",
+    "pipeline",
+    "style",
+    "aspect"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "name": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]*$"
+    },
+    "title": {
+      "type": "string",
+      "minLength": 1
+    },
+    "pipeline": {
+      "type": "string"
+    },
+    "style": {
+      "type": "string"
+    },
+    "aspect": {
+      "enum": [
+        "16:9",
+        "9:16",
+        "1:1",
+        "4:5"
+      ]
+    },
+    "fps": {
+      "type": "integer",
+      "minimum": 24,
+      "maximum": 60
+    },
+    "width": {
+      "type": "integer"
+    },
+    "height": {
+      "type": "integer"
+    },
+    "language": {
+      "type": "string"
+    },
+    "targetSeconds": {
+      "type": "number",
+      "minimum": 10
+    },
+    "watermark": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "theme": {
+      "type": "object"
+    },
+    "lexicon": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "string"
+      }
+    },
+    "tts": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "baseUrl": {
+          "type": "string"
+        },
+        "model": {
+          "type": "string"
+        },
+        "voice": {
+          "type": "string"
+        },
+        "keyEnv": {
+          "type": "string"
+        },
+        "sampleRate": {
+          "type": "integer"
+        },
+        "concurrency": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 8
+        },
+        "speed": {
+          "type": "number"
+        },
+        "instructions": {
+          "type": "string"
+        },
+        "syllablesPerSecond": {
+          "type": "number",
+          "minimum": 2,
+          "maximum": 9
+        },
+        "leadIn": {
+          "type": "number"
+        },
+        "tail": {
+          "type": "number"
+        },
+        "pause": {
+          "type": "object",
+          "properties": {
+            "sentence": {
+              "type": "number"
+            },
+            "clause": {
+              "type": "number"
+            }
+          },
+          "additionalProperties": false
+        },
+        "loudness": {
+          "description": "Integrated loudness (LUFS) the whole narration is normalized to; false keeps the TTS level.",
+          "oneOf": [
+            {
+              "type": "number",
+              "minimum": -30,
+              "maximum": -10
+            },
+            {
+              "const": false
+            }
+          ]
+        }
+      }
+    },
+    "captions": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "enabled": {
+          "type": "boolean"
+        },
+        "maxChars": {
+          "type": "number",
+          "minimum": 6,
+          "maximum": 40
+        },
+        "style": {
+          "enum": [
+            "line",
+            "karaoke"
+          ]
+        }
+      }
+    },
+    "music": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "enabled": {
+          "type": "boolean"
+        },
+        "preset": {
+          "enum": [
+            "ambient",
+            "pulse",
+            "documentary",
+            "bright"
+          ]
+        },
+        "seed": {
+          "type": "integer"
+        },
+        "volume": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "duckTo": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "file": {
+          "type": "string",
+          "description": "path under public/, e.g. music/track.mp3"
+        },
+        "credit": {
+          "type": "string",
+          "description": "title · author · license of music.file, used in publish credits"
+        }
+      }
+    },
+    "sfx": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "transition": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "volume": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        }
+      }
+    },
+    "image": {
+      "type": "object"
+    },
+    "publish": {
+      "type": "object",
+      "properties": {
+        "title": {
+          "type": "string"
+        },
+        "summary": {
+          "type": "string"
+        },
+        "tags": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "cover": {
+          "type": "string"
+        }
+      }
+    },
+    "render": {
+      "type": "object",
+      "properties": {
+        "concurrency": {
+          "type": "integer"
+        },
+        "crf": {
+          "type": "integer"
+        }
+      }
+    },
+    "qc": {
+      "type": "object"
+    },
+    "gates": {
+      "type": "object"
+    }
+  }
+}

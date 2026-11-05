@@ -1,0 +1,138 @@
+{
+  "name": "data-explainer",
+  "description": "Data-driven explainer (16:9, 3–6 min): sourced facts → narrated charts, stat cards and timelines.",
+  "defaults": {
+    "style": "midnight-data",
+    "aspect": "16:9",
+    "fps": 30,
+    "targetSeconds": 240,
+    "music": {
+      "preset": "pulse",
+      "volume": 0.2,
+      "duckTo": 0.07
+    },
+    "sfx": {
+      "transition": "whoosh",
+      "volume": 0.45
+    },
+    "captions": {
+      "style": "line"
+    }
+  },
+  "sceneMix": {
+    "prefer": [
+      "stat-cards",
+      "bar-compare",
+      "bar-race",
+      "line-chart",
+      "share",
+      "timeline",
+      "media"
+    ],
+    "limit": {
+      "static": 0.35
+    }
+  },
+  "stages": [
+    {
+      "id": "research",
+      "director": "stages/research.md",
+      "purpose": "Collect dated, sourced facts; every number in the video must come from here.",
+      "produces": [
+        "plan/research.json"
+      ],
+      "approval": true,
+      "schema": "research"
+    },
+    {
+      "id": "proposal",
+      "director": "stages/proposal.md",
+      "purpose": "Angle, audience, structure, length and style — one page for the user to approve.",
+      "produces": [
+        "plan/proposal.md"
+      ],
+      "approval": true
+    },
+    {
+      "id": "script",
+      "director": "stages/script.md",
+      "purpose": "Narration per scene, written for the ear; numbers checked against research.",
+      "produces": [
+        "plan/script.json"
+      ],
+      "approval": true,
+      "schema": "script"
+    },
+    {
+      "id": "storyboard",
+      "director": "stages/storyboard.md",
+      "purpose": "Scene type, props and phrase cues per scene; pre-compose gates must pass.",
+      "produces": [
+        "plan/storyboard.json"
+      ],
+      "approval": false,
+      "schema": "storyboard"
+    },
+    {
+      "id": "assets",
+      "director": "stages/assets.md",
+      "purpose": "Licensed photos/footage (NASA, Wikimedia, Openverse, Pexels) or generated images.",
+      "produces": [
+        "plan/assets.json"
+      ],
+      "approval": false,
+      "schema": "assets",
+      "optional": true
+    },
+    {
+      "id": "voice",
+      "director": "stages/voice.md",
+      "purpose": "Sentence-level TTS; measured line timings drive every frame.",
+      "produces": [
+        "plan/timings.json"
+      ],
+      "approval": false,
+      "command": "onevideo tts --sample  →  onevideo tts"
+    },
+    {
+      "id": "compose",
+      "director": "stages/compose.md",
+      "purpose": "Compile the timeline, procedural music/SFX, per-scene stills for a visual check.",
+      "produces": [
+        "plan/timeline.json"
+      ],
+      "approval": false,
+      "command": "onevideo music && onevideo timeline && onevideo stills"
+    },
+    {
+      "id": "render",
+      "director": "stages/compose.md",
+      "purpose": "Full-quality Remotion render.",
+      "produces": [
+        "out"
+      ],
+      "approval": false,
+      "command": "onevideo render"
+    },
+    {
+      "id": "review",
+      "director": "stages/review.md",
+      "purpose": "Automated QC plus a look at every sampled frame; human sign-off.",
+      "produces": [
+        "plan/review.json"
+      ],
+      "approval": true,
+      "command": "onevideo qc"
+    },
+    {
+      "id": "publish",
+      "director": "stages/publish.md",
+      "purpose": "Captions, chapters, description and credits.",
+      "produces": [
+        "plan/publish.json"
+      ],
+      "approval": false,
+      "command": "onevideo publish"
+    }
+  ]
+}

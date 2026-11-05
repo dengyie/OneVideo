@@ -1,0 +1,22 @@
+# 阶段：publish — 发布包
+
+**产物**：`plan/publish.json`、`out/publish/`
+
+```bash
+onevideo publish
+```
+
+生成：
+
+- `captions.srt` / `captions.vtt`：字幕（与成片一致的时间轴）
+- `chapters.txt`：章节时间戳（来自脚本 `chapter` 字段，首个章节从 00:00 开始）
+- `description.txt`：标题、摘要、章节、资料来源、素材署名
+- `plan/publish.json`：上述内容的结构化版本 + 警告
+
+QC 结论为 fail 时拒绝生成。发布到具体平台（B站、YouTube、视频号）由用户操作；本工具不上传。
+
+## 检查
+
+- 简介中的数据来源是否完整、日期是否正确
+- CC BY / CC BY-SA 素材的署名是否保留在简介中
+- AI 生成素材已标注

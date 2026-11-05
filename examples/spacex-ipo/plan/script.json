@@ -1,0 +1,14 @@
+{
+  "title": "SpaceX 上市：一家火箭公司的万亿估值",
+  "summary": "从 IPO 数字、36 年市值榜、估值曲线和收入结构，看 SpaceX 为什么值一万多亿美元。",
+  "scenes": [
+    { "id": "hook", "beat": "hook", "narration": "2026年6月12日，SpaceX在纳斯达克上市，代码SPCX。一家造火箭的公司，凭什么值一万多亿美元？" },
+    { "id": "ipo", "beat": "setup", "chapter": "上市", "narration": "发行价135美元，募资约857亿美元，是史上规模最大的IPO。首日收盘上涨约19%，市值约2.1万亿美元。", "claims": ["ipo-price", "ipo-proceeds", "day-one"] },
+    { "id": "race", "beat": "build", "chapter": "36 年市值榜", "narration": "1990年，全球市值第一是日本电信电话，约1187亿美元。36年后，苹果以约5.1万亿美元排在第一，而SpaceX，排在全球第7。", "claims": ["top-1990", "top-2026", "mcap-now"] },
+    { "id": "valuation", "beat": "build", "chapter": "估值曲线", "narration": "它的估值涨得很快。2024年12月约3500亿美元，2025年12月约8000亿。2026年2月合并xAI后，约1.25万亿美元，IPO定价对应约1.77万亿。", "claims": ["val-2024", "val-2025", "val-xai", "ipo-valuation"] },
+    { "id": "revenue", "beat": "turn", "chapter": "收入结构", "narration": "撑起估值的是星链。2025年收入约187亿美元，以星链为主的连接业务贡献约114亿，占比超过六成。", "claims": ["rev-2025"] },
+    { "id": "profit", "beat": "turn", "chapter": "利润与亏损", "narration": "连接业务的经营利润约44亿美元，但整个集团仍净亏损约49亿，AI业务是主要拖累。", "claims": ["starlink-op", "net-loss"] },
+    { "id": "landing", "beat": "landing", "narration": "市场为它支付的，不是今天的利润，而是对太空互联网的想象。" },
+    { "id": "credits", "beat": "credits" }
+  ]
+}

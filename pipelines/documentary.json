@@ -1,0 +1,140 @@
+{
+  "name": "documentary",
+  "description": "Documentary montage (16:9, 4–10 min): real footage and archival images carry the story, data scenes punctuate it.",
+  "defaults": {
+    "style": "paper-documentary",
+    "aspect": "16:9",
+    "fps": 30,
+    "targetSeconds": 360,
+    "music": {
+      "preset": "documentary",
+      "volume": 0.22,
+      "duckTo": 0.08
+    },
+    "sfx": {
+      "transition": null,
+      "volume": 0.4
+    },
+    "captions": {
+      "style": "line"
+    },
+    "gates": {
+      "staticRatioMax": 0.3
+    }
+  },
+  "sceneMix": {
+    "prefer": [
+      "media",
+      "timeline",
+      "quote",
+      "chapter",
+      "stat-cards",
+      "line-chart"
+    ],
+    "limit": {
+      "static": 0.3,
+      "mediaMin": 0.4
+    }
+  },
+  "stages": [
+    {
+      "id": "research",
+      "director": "stages/research.md",
+      "purpose": "Facts, dates, quotes with sources; list candidate archives for footage.",
+      "produces": [
+        "plan/research.json"
+      ],
+      "approval": true,
+      "schema": "research"
+    },
+    {
+      "id": "proposal",
+      "director": "stages/proposal.md",
+      "purpose": "Narrative arc (hook → context → turn → landing), chapters, footage plan.",
+      "produces": [
+        "plan/proposal.md"
+      ],
+      "approval": true
+    },
+    {
+      "id": "script",
+      "director": "stages/script.md",
+      "purpose": "Chaptered narration; leave breathing room for footage.",
+      "produces": [
+        "plan/script.json"
+      ],
+      "approval": true,
+      "schema": "script"
+    },
+    {
+      "id": "assets",
+      "director": "stages/assets.md",
+      "purpose": "Footage and images first — the storyboard is built around what exists and is licensed.",
+      "produces": [
+        "plan/assets.json"
+      ],
+      "approval": true,
+      "schema": "assets"
+    },
+    {
+      "id": "storyboard",
+      "director": "stages/storyboard.md",
+      "purpose": "Map scenes to fetched media; data scenes only where a number matters.",
+      "produces": [
+        "plan/storyboard.json"
+      ],
+      "approval": false,
+      "schema": "storyboard"
+    },
+    {
+      "id": "voice",
+      "director": "stages/voice.md",
+      "purpose": "Sentence-level TTS; measured line timings drive every frame.",
+      "produces": [
+        "plan/timings.json"
+      ],
+      "approval": false,
+      "command": "onevideo tts --sample  →  onevideo tts"
+    },
+    {
+      "id": "compose",
+      "director": "stages/compose.md",
+      "purpose": "Compile the timeline, procedural music/SFX, per-scene stills for a visual check.",
+      "produces": [
+        "plan/timeline.json"
+      ],
+      "approval": false,
+      "command": "onevideo music && onevideo timeline && onevideo stills"
+    },
+    {
+      "id": "render",
+      "director": "stages/compose.md",
+      "purpose": "Full-quality Remotion render.",
+      "produces": [
+        "out"
+      ],
+      "approval": false,
+      "command": "onevideo render"
+    },
+    {
+      "id": "review",
+      "director": "stages/review.md",
+      "purpose": "Automated QC plus a look at every sampled frame; human sign-off.",
+      "produces": [
+        "plan/review.json"
+      ],
+      "approval": true,
+      "command": "onevideo qc"
+    },
+    {
+      "id": "publish",
+      "director": "stages/publish.md",
+      "purpose": "Captions, chapters, description and credits.",
+      "produces": [
+        "plan/publish.json"
+      ],
+      "approval": false,
+      "command": "onevideo publish"
+    }
+  ]
+}

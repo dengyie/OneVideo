@@ -1,0 +1,40 @@
+{
+  "$id": "onevideo/script",
+  "title": "plan/script.json — narration by scene",
+  "type": "object",
+  "required": ["title", "scenes"],
+  "additionalProperties": false,
+  "properties": {
+    "title": { "type": "string", "minLength": 1 },
+    "summary": { "type": "string" },
+    "lexicon": { "type": "object", "additionalProperties": { "type": "string" } },
+    "scenes": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/scene" } }
+  },
+  "$defs": {
+    "line": {
+      "oneOf": [
+        { "type": "string", "minLength": 1 },
+        {
+          "type": "object",
+          "required": ["text"],
+          "additionalProperties": false,
+          "properties": { "text": { "type": "string", "minLength": 1 }, "speak": { "type": "string" }, "pause": { "enum": ["sentence", "clause"] } }
+        }
+      ]
+    },
+    "scene": {
+      "type": "object",
+      "required": ["id"],
+      "additionalProperties": false,
+      "properties": {
+        "id": { "type": "string", "pattern": "^[a-z0-9][a-z0-9_-]*$" },
+        "chapter": { "type": "string" },
+        "beat": { "enum": ["hook", "setup", "build", "turn", "climax", "landing", "credits"] },
+        "narration": { "type": "string" },
+        "lines": { "type": "array", "items": { "$ref": "#/$defs/line" } },
+        "claims": { "type": "array", "items": { "type": "string" } },
+        "visualIntent": { "type": "string" }
+      }
+    }
+  }
+}

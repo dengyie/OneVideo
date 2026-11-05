@@ -1,0 +1,338 @@
+import React from "react";
+import { colorAt, useLayout, useRevealAt, useScene, useTheme, useTime, cueOr } from "../engine/context";
+import { fmt, fmtCount } from "../engine/format";
+import { clamp01, easeInOut, easeOut, lerp } from "../engine/motion";
+import type { Format } from "../engine/types";
+import { Card } from "../components/Card";
+import { Stage, Title } from "./Stage";
+
+const COUNT = 1.2;
+
+// Round axis ticks (1/2/2.5/5 × 10^n) covering [lo, hi].
+export function niceTicks(lo: number, hi: number, target = 4): number[] {
+  const raw = (hi - lo) / Math.max(1, target);
+  const mag = Math.pow(10, Math.floor(Math.log10(Math.max(1e-12, raw))));
+  const step = [1, 2, 2.5, 5, 10].map((m) => m * mag).find((s) => s >= raw) ?? 10 * mag;
+  const out: number[] = [];
+  for (let v = Math.floor(lo / step) * step; v <= hi + step * 1e-9; v += step) out.push(Math.round(v / step) * step);
+  if (out[out.length - 1] < hi) out.push(out[out.length - 1] + step);
+  return out;
+}
+
+type StatCard = { value: number; from?: number; format?: Format; label: string; note?: string; color?: string; cue?: string };
+
+export const StatCardsScene: React.FC<{ columns?: number; cards: StatCard[] }> = ({ columns, cards }) => {
+  const theme = useTheme();
+  const { u, portrait } = useLayout();
+  const at = useRevealAt();
+  const t = useTime();
+  const cols = columns ?? (portrait ? (cards.length > 3 ? 2 : 1) : Math.min(cards.length, cards.length === 4 ? 2 : 3));
+  const big = cards.length <= 2 ? 1.35 : cards.length <= 4 ? 1 : 0.8;
+  return (
+    <Stage center>
+      <div style={{ display: "grid", gridTemplateColumns: `repeat(${cols}, 1fr)`, gap: 32 * u }}>
+        {cards.map((c, i) => {
+          const s = at(i, cards.length, c.cue);
+          const o = easeOut((t - s) / 0.6);
+          const v = lerp(c.from ?? 0, c.value, easeOut((t - s) / COUNT));
+          const color = c.color ?? (i === 0 ? theme.colors.accent : colorAt(theme, i));
+          return (
+            <Card key={i} o={o} accent={color} style={{ textAlign: "left" }}>
+              <div style={{ fontSize: 28 * u * Math.max(0.85, big * 0.9), color: theme.colors.muted }}>{c.label}</div>
+              <div style={{ fontFamily: theme.fonts.number, fontSize: 88 * u * big, fontWeight: 800, color, marginTop: 10 * u, lineHeight: 1.05, whiteSpace: "nowrap" }}>
+                {fmtCount(v, c.value, c.format)}
+              </div>
+              {c.note && <div style={{ fontSize: 22 * u, color: theme.colors.muted, marginTop: 12 * u, lineHeight: 1.4 }}>{c.note}</div>}
+            </Card>
+          );
+        })}
+      </div>
+    </Stage>
+  );
+};
+
+type BarItem = { label: string; value: number; color?: string; highlight?: boolean; note?: string; cue?: string };
+
+export const BarCompareScene: React.FC<{ title?: string; unit?: string; format?: Format; sort?: "none" | "desc" | "asc"; max?: number; items: BarItem[] }> = ({
+  title, unit, format, sort = "desc", max, items,
+}) => {
+  const theme = useTheme();
+  const { u, portrait } = useLayout();
+  const at = useRevealAt();
+  const t = useTime();
+  const rows = sort === "none" ? items : [...items].sort((a, b) => (sort === "desc" ? b.value - a.value : a.value - b.value));
+  const top = max ?? Math.max(...items.map((x) => Math.abs(x.value)));
+  const anyHi = items.some((x) => x.highlight);
+  const rowH = Math.min(portrait ? 110 : 90, (portrait ? 1100 : 640) / rows.length) * u;
+  const labelW = (portrait ? 260 : 320) * u;
+  return (
+    <Stage center>
+      <Title text={title} />
+      {unit && <div style={{ fontSize: 22 * u, color: theme.colors.muted, marginTop: -14 * u, marginBottom: 20 * u }}>单位：{unit}</div>}
+      <div style={{ display: "flex", flexDirection: "column" }}>
+        {rows.map((r, i) => {
+          const s = at(items.indexOf(r), items.length, r.cue);
+          const p = easeOut((t - s) / 0.9);
+          const color = r.color ?? (r.highlight ? theme.colors.accent : anyHi ? theme.colors.muted : colorAt(theme, items.indexOf(r)));
+          const w = Math.max(0.004, Math.abs(r.value) / top) * p;
+          return (
+            <div key={r.label} style={{ height: rowH, display: "flex", alignItems: "center", opacity: clamp01((t - s) / 0.3) }}>
+              <div style={{ width: labelW, flex: "none", textAlign: "right", paddingRight: 22 * u, fontSize: Math.min(32, rowH / u * 0.42) * u, fontWeight: r.highlight ? 700 : 500, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                {r.label}
+              </div>
+              <div style={{ flex: 1, display: "flex", alignItems: "center" }}>
+                <div
+                  style={{
+                    width: `${w * 78}%`,
+                    height: rowH * 0.62,
+                    borderRadius: 8 * u,
+                    background: `linear-gradient(90deg, ${color}88, ${color})`,
+                    boxShadow: r.highlight ? `0 0 ${24 * u}px ${color}66` : "none",
+                  }}
+                />
+                <div style={{ marginLeft: 16 * u, fontFamily: theme.fonts.number, fontSize: Math.min(30, rowH / u * 0.4) * u, fontWeight: 600, whiteSpace: "nowrap", color: r.highlight ? color : theme.colors.text }}>
+                  {fmtCount(r.value * p, r.value, format)}
+                  {r.note && <span style={{ fontFamily: theme.fonts.body, fontSize: 20 * u, color: theme.colors.muted, marginLeft: 12 * u }}>{r.note}</span>}
+                </div>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </Stage>
+  );
+};
+
+type Series = { name: string; color?: string; group?: string; values: (number | null)[] };
+
+// Bars re-rank smoothly while the period advances; each period gets an equal slice of the scene.
+// Time (s) at which each period is fully shown. Cued periods (periodCues[k]) are anchors;
+// the rest are spread evenly between anchors, and the last period lands by 72% of the scene
+// (unless cued) so the final standings get a hold.
+export function periodTimes(n: number, duration: number, cueAt: (k: number) => number | undefined): number[] {
+  const endAt = Math.max(1.6, Math.min(duration * 0.72, duration - 1.5));
+  const T: (number | undefined)[] = Array.from({ length: n }, (_, k) => cueAt(k));
+  T[0] = T[0] ?? 0.6;
+  T[n - 1] = T[n - 1] ?? Math.max(endAt, T[0] + 1);
+  let a = 0;
+  for (let k = 1; k < n; k++) {
+    if (T[k] === undefined) continue;
+    for (let j = a + 1; j < k; j++) T[j] = T[a]! + ((T[k]! - T[a]!) * (j - a)) / (k - a);
+    a = k;
+  }
+  const out = T as number[];
+  for (let k = 1; k < n; k++) out[k] = Math.max(out[k], out[k - 1] + 0.5);
+  return out;
+}
+
+export const BarRaceScene: React.FC<{ title?: string; unit?: string; format?: Format; top?: number; periods: string[]; series: Series[]; groupColors?: Record<string, string>; periodCues?: (string | null)[] }> = ({
+  title, unit, format, top = 10, periods, series, groupColors = {}, periodCues = [],
+}) => {
+  const theme = useTheme();
+  const scene = useScene();
+  const { u, portrait, height, top: headerBottom, bottom, pad } = useLayout();
+  const t = useTime();
+  const T = periodTimes(periods.length, scene.duration, (k) => {
+    const name = periodCues[k];
+    return name ? scene.cues[name] : undefined;
+  });
+  let seg = 0;
+  while (seg < periods.length - 2 && t >= T[seg + 1]) seg++;
+  const i = seg;
+  // A short swap then a hold: crossing bars overlap, so keep the crossing brief and the ranking readable.
+  const p = easeInOut(clamp01((t - T[i]) / Math.max(0.3, Math.min(1.6, (T[i + 1] - T[i]) * 0.6))));
+  const pos = i + p;
+  const rankAt = (k: number) => {
+    const order = series.map((s, idx) => ({ idx, v: s.values[k] ?? -Infinity })).sort((a, b) => b.v - a.v);
+    const r: number[] = [];
+    order.forEach((o, n) => (r[o.idx] = o.v === -Infinity ? series.length : n));
+    return r;
+  };
+  const rA = rankAt(i), rB = rankAt(i + 1);
+  const rows = series.map((s, idx) => {
+    const a = s.values[i] ?? 0, b = s.values[i + 1] ?? 0;
+    return { s, idx, value: lerp(a, b, p), rank: lerp(rA[idx], rB[idx], p) };
+  });
+  const max = Math.max(1e-9, ...rows.filter((r) => r.rank < top).map((r) => r.value));
+  // Fill what the Stage leaves after the title/unit lines, never the caption band.
+  const stageH = height - (scene.header ? headerBottom + 20 * u : pad) - bottom;
+  const areaH = Math.min((portrait ? 1100 : 700) * u, stageH - (title ? 62 * u : 0) - (unit ? 30 * u : 0) - 16 * u);
+  const rowH = areaH / top;
+  const labelW = (portrait ? 250 : 300) * u;
+  const current = periods[pos - i >= 0.5 ? i + 1 : i];
+  const groups = [...new Set(series.map((s) => s.group).filter(Boolean))] as string[];
+  return (
+    <Stage>
+      <Title text={title} />
+      {unit && <div style={{ fontSize: 22 * u, color: theme.colors.muted, marginTop: -14 * u }}>单位：{unit}</div>}
+      <div style={{ position: "relative", height: areaH, marginTop: 16 * u }}>
+        {rows.map((r) => {
+          const color = r.s.color ?? (r.s.group && groupColors[r.s.group]) ?? colorAt(theme, r.idx);
+          const visible = clamp01(top - r.rank);
+          return (
+            <div key={r.s.name} style={{ position: "absolute", top: r.rank * rowH, left: 0, right: 0, height: rowH, display: "flex", alignItems: "center", opacity: visible }}>
+              <div style={{ width: labelW, flex: "none", textAlign: "right", paddingRight: 18 * u, fontSize: Math.min(30, rowH / u * 0.45) * u, fontWeight: 600, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{r.s.name}</div>
+              <div style={{ width: `${Math.max(0.5, (r.value / max) * (portrait ? 58 : 62))}%`, height: rowH * 0.7, borderRadius: 6 * u, background: `linear-gradient(90deg, ${color}99, ${color})` }} />
+              <div style={{ marginLeft: 14 * u, fontFamily: theme.fonts.number, fontSize: Math.min(26, rowH / u * 0.4) * u, color: theme.colors.muted, whiteSpace: "nowrap" }}>{fmt(r.value, format)}</div>
+            </div>
+          );
+        })}
+        <div style={{ position: "absolute", right: 0, bottom: portrait ? -150 * u : 10 * u, textAlign: "right" }}>
+          <div style={{ fontFamily: theme.fonts.number, fontSize: (portrait ? 120 : 150) * u, fontWeight: 800, lineHeight: 1, opacity: 0.9 }}>{current}</div>
+          {groups.length > 0 && (
+            <div style={{ display: "flex", gap: 20 * u, justifyContent: "flex-end", marginTop: 14 * u }}>
+              {groups.map((g, k) => (
+                <div key={g} style={{ display: "flex", alignItems: "center", gap: 8 * u, fontSize: 22 * u, color: theme.colors.muted }}>
+                  <div style={{ width: 16 * u, height: 16 * u, borderRadius: 4 * u, background: groupColors[g] ?? colorAt(theme, k) }} />
+                  {g}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+    </Stage>
+  );
+};
+
+type Point = [number | string, number | string];
+type LineSeries = { name: string; color?: string; points: Point[] };
+type Annotation = { x: number | string; label: string; series?: number; cue?: string };
+
+export const LineChartScene: React.FC<{ title?: string; xLabel?: string; yLabel?: string; format?: Format; yMin?: number; yMax?: number; series: LineSeries[]; annotations?: Annotation[]; drawCue?: string }> = ({
+  title, xLabel, yLabel, format, yMin, yMax, series, annotations = [], drawCue,
+}) => {
+  const theme = useTheme();
+  const scene = useScene();
+  const { u, width, height, pad, portrait, top: topY, bottom } = useLayout();
+  const t = useTime();
+  const categorical = series.some((s) => s.points.some((p) => typeof p[0] === "string"));
+  const xs = categorical ? [...new Set(series.flatMap((s) => s.points.map((p) => String(p[0]))))] : [];
+  const xVal = (x: number | string) => (categorical ? xs.indexOf(String(x)) : Number(x));
+  const allX = series.flatMap((s) => s.points.map((p) => xVal(p[0])));
+  const allY = series.flatMap((s) => s.points.map((p) => Number(p[1])));
+  const x0 = Math.min(...allX), x1 = Math.max(...allX);
+  const tickVals = niceTicks(yMin ?? Math.min(0, ...allY), yMax ?? Math.max(...allY) * 1.05);
+  const lo = yMin ?? tickVals[0], hi = yMax ?? tickVals[tickVals.length - 1];
+  const W = width - pad * 2 - 120 * u;
+  const H = height - (scene.header ? topY + 20 * u : pad) - bottom - (title ? 80 : 20) * u - 70 * u;
+  const X = (x: number) => ((x - x0) / Math.max(1e-9, x1 - x0)) * W;
+  const Y = (y: number) => H - ((y - lo) / Math.max(1e-9, hi - lo)) * H;
+  const drawStart = cueOr(scene, drawCue, 0.5);
+  const drawP = easeInOut((t - drawStart) / Math.max(1.2, Math.min(4, scene.duration * 0.45)));
+  const lastLabel = (s: LineSeries) => s.points[Math.max(0, Math.ceil(drawP * (s.points.length - 1)))];
+  return (
+    <Stage>
+      <Title text={title} />
+      <svg width={W + 120 * u} height={H + 60 * u} style={{ overflow: "visible" }}>
+        <g transform={`translate(${100 * u}, ${10 * u})`}>
+          {tickVals.filter((v) => v >= lo && v <= hi).map((v, k) => {
+            return (
+              <g key={k}>
+                <line x1={0} x2={W} y1={Y(v)} y2={Y(v)} stroke={theme.colors.border} strokeDasharray={`${4 * u} ${6 * u}`} />
+                <text x={-14 * u} y={Y(v) + 8 * u} textAnchor="end" fontSize={20 * u} fill={theme.colors.muted} fontFamily={theme.fonts.number}>{fmt(v, format)}</text>
+              </g>
+            );
+          })}
+          {(categorical ? xs.map((x, k) => [k, x] as const) : [...new Set(allX)].map((x) => [x, String(x)] as const))
+            .filter((_, k, arr) => arr.length <= (portrait ? 6 : 12) || k % Math.ceil(arr.length / (portrait ? 6 : 12)) === 0)
+            .map(([x, label]) => (
+              <text key={label} x={X(x)} y={H + 36 * u} textAnchor="middle" fontSize={20 * u} fill={theme.colors.muted} fontFamily={theme.fonts.number}>{label}</text>
+            ))}
+          {series.map((s, si) => {
+            const color = s.color ?? colorAt(theme, si);
+            const pts = s.points.map((p) => [X(xVal(p[0])), Y(Number(p[1]))]);
+            const d = pts.map(([x, y], k) => `${k ? "L" : "M"}${x.toFixed(1)},${y.toFixed(1)}`).join(" ");
+            let len = 0;
+            for (let k = 1; k < pts.length; k++) len += Math.hypot(pts[k][0] - pts[k - 1][0], pts[k][1] - pts[k - 1][1]);
+            const tip = lastLabel(s);
+            return (
+              <g key={s.name}>
+                <path d={`${d} L${pts[pts.length - 1][0]},${H} L${pts[0][0]},${H} Z`} fill={color} opacity={0.08 * drawP} />
+                <path d={d} fill="none" stroke={color} strokeWidth={5 * u} strokeLinejoin="round" strokeLinecap="round" strokeDasharray={len} strokeDashoffset={len * (1 - drawP)} />
+                {drawP > 0.02 && (
+                  <text x={X(xVal(tip[0])) + 12 * u} y={Y(Number(tip[1])) - 12 * u} fontSize={24 * u} fontWeight={700} fill={color} fontFamily={theme.fonts.number}>
+                    {series.length > 1 ? `${s.name} ` : ""}{fmt(Number(tip[1]), format)}
+                  </text>
+                )}
+              </g>
+            );
+          })}
+          {annotations.map((a, k) => {
+            const s = series[a.series ?? 0];
+            const pt = s.points.find((p) => String(p[0]) === String(a.x));
+            if (!pt) return null;
+            const at = cueOr(scene, a.cue, drawStart + 1 + k * 0.8);
+            const o = easeOut((t - at) / 0.5);
+            const x = X(xVal(pt[0])), y = Y(Number(pt[1]));
+            return (
+              <g key={k} opacity={o}>
+                <circle cx={x} cy={y} r={9 * u * o} fill={theme.colors.highlight} />
+                <line x1={x} x2={x} y1={y - 14 * u} y2={y - 70 * u} stroke={theme.colors.highlight} strokeWidth={2 * u} />
+                <text x={x} y={y - 80 * u} textAnchor="middle" fontSize={24 * u} fontWeight={600} fill={theme.colors.text}>{a.label}</text>
+              </g>
+            );
+          })}
+          {yLabel && <text x={-90 * u} y={-4 * u} fontSize={20 * u} fill={theme.colors.muted}>{yLabel}</text>}
+          {xLabel && <text x={W} y={H + 64 * u} textAnchor="end" fontSize={20 * u} fill={theme.colors.muted}>{xLabel}</text>}
+        </g>
+      </svg>
+    </Stage>
+  );
+};
+
+type Segment = { label: string; value: number; color?: string; cue?: string };
+
+export const ShareScene: React.FC<{ title?: string; unit?: string; format?: Format; segments: Segment[] }> = ({ title, unit, format, segments }) => {
+  const theme = useTheme();
+  const { u, portrait } = useLayout();
+  const at = useRevealAt();
+  const t = useTime();
+  const total = segments.reduce((s, x) => s + x.value, 0) || 1;
+  // One precision for the whole chart: a decimal only when some slice is under 10%.
+  const pctDecimals = segments.some((x) => x.value / total < 0.1) ? 1 : 0;
+  const pct = (v: number) => `${((v / total) * 100).toFixed(pctDecimals)}%`;
+  const R = (portrait ? 300 : 260) * u, r = R * 0.62;
+  let acc = 0;
+  const arcs = segments.map((s, i) => {
+    const a0 = (acc / total) * Math.PI * 2;
+    acc += s.value;
+    const a1 = (acc / total) * Math.PI * 2;
+    const p = easeOut((t - at(i, segments.length, s.cue)) / 0.8);
+    return { s, i, a0, a1: a0 + (a1 - a0) * p, p, color: s.color ?? colorAt(theme, i) };
+  });
+  const arc = (a0: number, a1: number) => {
+    if (a1 - a0 < 1e-4) return "";
+    const pt = (rad: number, a: number) => [rad * Math.sin(a), -rad * Math.cos(a)];
+    const big = a1 - a0 > Math.PI ? 1 : 0;
+    const [x0, y0] = pt(R, a0), [x1, y1] = pt(R, a1), [x2, y2] = pt(r, a1), [x3, y3] = pt(r, a0);
+    return `M${x0},${y0} A${R},${R} 0 ${big} 1 ${x1},${y1} L${x2},${y2} A${r},${r} 0 ${big} 0 ${x3},${y3} Z`;
+  };
+  const lead = arcs.reduce((m, a) => (a.s.value > m.s.value ? a : m), arcs[0]);
+  return (
+    <Stage center>
+      <Title text={title} />
+      <div style={{ display: "flex", flexDirection: portrait ? "column" : "row", alignItems: "center", gap: 80 * u, justifyContent: "center" }}>
+        <svg width={R * 2 + 20 * u} height={R * 2 + 20 * u} viewBox={`${-R - 10 * u} ${-R - 10 * u} ${R * 2 + 20 * u} ${R * 2 + 20 * u}`}>
+          {arcs.map((a) => <path key={a.s.label} d={arc(a.a0, a.a1)} fill={a.color} stroke={theme.colors.bg} strokeWidth={3 * u} />)}
+          <text x={0} y={-6 * u} textAnchor="middle" fontSize={64 * u} fontWeight={800} fill={theme.colors.text} fontFamily={theme.fonts.number} opacity={lead.p}>
+            {pct(lead.s.value)}
+          </text>
+          <text x={0} y={40 * u} textAnchor="middle" fontSize={26 * u} fill={theme.colors.muted} opacity={lead.p}>{lead.s.label}</text>
+        </svg>
+        <div style={{ display: "flex", flexDirection: "column", gap: 20 * u, minWidth: 420 * u }}>
+          {arcs.map((a) => (
+            <div key={a.s.label} style={{ display: "flex", alignItems: "center", gap: 16 * u, opacity: Math.max(0.15, a.p) }}>
+              <div style={{ width: 22 * u, height: 22 * u, borderRadius: 6 * u, background: a.color }} />
+              <div style={{ flex: 1, fontSize: 32 * u }}>{a.s.label}</div>
+              <div style={{ fontFamily: theme.fonts.number, fontSize: 32 * u, fontWeight: 700 }}>{pct(a.s.value)}</div>
+              <div style={{ fontFamily: theme.fonts.number, fontSize: 22 * u, color: theme.colors.muted, minWidth: 140 * u, textAlign: "right" }}>
+                {fmt(a.s.value, format)}{unit ? ` ${unit}` : ""}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </Stage>
+  );
+};

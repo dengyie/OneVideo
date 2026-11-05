@@ -1,0 +1,48 @@
+{
+  "topic": "SpaceX 上市与估值",
+  "question": "一家造火箭的公司，凭什么站上全球市值榜前列？",
+  "audience": "关注科技与资本市场的中文观众",
+  "asOf": "2026-11-04",
+  "facts": [
+    { "id": "listing-date", "claim": "SpaceX 于 2026年6月12日 在纳斯达克开始交易，代码 SPCX", "value": "2026-06-12", "confidence": "confirmed",
+      "source": { "publisher": "SpaceX", "title": "投资者关系新闻稿：IPO 交割", "date": "2026-06-15" } },
+    { "id": "ipo-price", "claim": "IPO 发行价为每股 135美元", "value": 135, "unit": "USD", "confidence": "confirmed",
+      "source": { "publisher": "Reuters", "title": "SpaceX IPO 定价报道", "date": "2026-06-11" } },
+    { "id": "ipo-proceeds", "claim": "承销商全额行使超额配售后，募资总额约 857亿美元，为史上规模最大的 IPO", "value": 85.7e9, "unit": "USD", "confidence": "confirmed",
+      "source": { "publisher": "SpaceX", "title": "投资者关系新闻稿：IPO 交割", "date": "2026-06-15" } },
+    { "id": "ipo-valuation", "claim": "按发行价计算估值约 1.77万亿美元", "value": 1.77e12, "unit": "USD", "confidence": "reported",
+      "source": { "publisher": "Reuters", "title": "SpaceX IPO 定价报道", "date": "2026-06-11" } },
+    { "id": "day-one", "claim": "首日收盘约 160.95美元，较发行价上涨约 19%，当日市值约 2.1万亿美元", "value": 2.1e12, "unit": "USD", "confidence": "confirmed",
+      "source": { "publisher": "Nasdaq", "title": "SpaceX makes history raising $85 billion through Nasdaq listing", "date": "2026-06-16", "url": "https://www.nasdaq.com/newsroom/spacex-makes-history-raising-85-billion-through-nasdaq-listing" } },
+    { "id": "mcap-now", "claim": "2026年11月4日 收盘市值约 1.85万亿美元，在全球上市公司中排第7", "value": 1.85e12, "unit": "USD", "confidence": "reported",
+      "source": { "publisher": "StockTitan", "title": "Companies by market cap", "date": "2026-11-04", "url": "https://www.stocktitan.net/rankings/companies-market-cap" } },
+    { "id": "top-1990", "claim": "1990年 全球市值第一为日本电信电话 NTT，约 1187亿美元（Business Week Global 1000，约 1990年5月31日计价）", "value": 118.7e9, "unit": "USD", "confidence": "reported",
+      "source": { "publisher": "taz.de 转载 Business Week", "title": "Business Week Global 1000", "date": "1990-07-21", "url": "https://taz.de/!1758943/" } },
+    { "id": "top-2026", "claim": "2026年11月4日 全球市值第一为苹果，约 5.1万亿美元", "value": 5.1e12, "unit": "USD", "confidence": "reported",
+      "source": { "publisher": "StockTitan", "title": "Companies by market cap", "date": "2026-11-04", "url": "https://www.stocktitan.net/rankings/companies-market-cap" } },
+    { "id": "val-2024", "claim": "2024年12月 内部股权出售估值约 3500亿美元（二手综述）", "value": 350e9, "unit": "USD", "confidence": "reported",
+      "source": { "publisher": "Value Add VC", "title": "Starlink revenue 2025: what we know", "date": "2026-10-19", "url": "https://valueaddvc.com/blog/starlink-revenue-2025-what-we-know-about-the-satellite-business-that-could-ipo" } },
+    { "id": "val-2025", "claim": "2025年12月 内部股权出售估值约 8000亿美元（二手综述）", "value": 800e9, "unit": "USD", "confidence": "reported",
+      "source": { "publisher": "Okara", "title": "SpaceX revenue growth", "date": "2026-11-02", "url": "https://okara.ai/blog/spacex-revenue-growth" } },
+    { "id": "val-xai", "claim": "2026年2月 以全股票方式合并 xAI，合并主体估值约 1.25万亿美元", "value": 1.25e12, "unit": "USD", "confidence": "reported",
+      "source": { "publisher": "The Edge 转载 Bloomberg", "title": "SpaceX 收购 xAI 报道", "date": "2026-02-03" } },
+    { "id": "rev-2025", "claim": "2025年 集团收入约 187亿美元；以星链为主的连接业务收入约 114亿美元，约占 61%，占比超过六成", "value": 18.7e9, "unit": "USD", "confidence": "reported",
+      "source": { "publisher": "Via Satellite", "title": "SpaceX's IPO filing gives first look into company's financials", "date": "2026-05-20", "url": "https://www.satellitetoday.com/finance/2026/05/20/spacexs-ipo-filing-gives-first-look-into-companys-financials" } },
+    { "id": "segments-2025", "claim": "2025年 航天业务收入约 41亿美元，AI 分部收入约 32亿美元", "value": 4.1e9, "unit": "USD", "confidence": "reported",
+      "source": { "publisher": "Space Daily", "title": "Starlink $11.4 billion revenue bankrolls Starship", "date": "2026-08-27", "url": "https://spacedaily.com/t-starlink-11-4-billion-revenue-bankrolls-starship" } },
+    { "id": "starlink-op", "claim": "连接业务 2025年 经营利润约 44亿美元", "value": 4.4e9, "unit": "USD", "confidence": "reported",
+      "source": { "publisher": "Via Satellite", "title": "SpaceX's IPO filing gives first look into company's financials", "date": "2026-05-20", "url": "https://www.satellitetoday.com/finance/2026/05/20/spacexs-ipo-filing-gives-first-look-into-companys-financials" } },
+    { "id": "net-loss", "claim": "集团 2025年 净亏损约 49亿美元；AI 分部经营亏损约 64亿美元量级，是主要拖累", "value": -4.9e9, "unit": "USD", "confidence": "reported",
+      "source": { "publisher": "Dealroom", "title": "SpaceX's $11.4B Starlink unit drives profits while AI division loses $6.4B", "date": "2026-05", "url": "https://app.dealroom.co/news/feed/spacex-s-11-4b-starlink-unit-drives-profits-while-ai-division-loses-6-4b" } }
+  ],
+  "sources": [
+    { "publisher": "Wikiwand", "title": "FT Global 500（2000-03-31）", "url": "https://www.wikiwand.com/en/List_of_public_corporations_by_market_capitalization" },
+    { "publisher": "MBA 智库百科转载", "title": "FT Global 500（2010-03-31）", "url": "https://wiki.mbalib.com/wiki/2010%E5%B9%B4%E3%80%8A%E9%87%91%E8%9E%8D%E6%97%B6%E6%8A%A5%E3%80%8B%E5%85%A8%E7%90%83500%E5%BC%BA%E6%8E%92%E5%90%8D_%281-100%29" }
+  ],
+  "allowNumbers": ["36", "36年"],
+  "openQuestions": [
+    "私募轮估值多为二手综述转述，未核对到原始招标文件",
+    "xAI 合并时的分项估值存在口径冲突（xAI 约 2500亿 vs 1250亿美元），本片只使用合计 1.25万亿美元",
+    "各站点市值因股本口径不同存在差异（如 StockAnalysis 显示 1.82万亿美元）"
+  ]
+}

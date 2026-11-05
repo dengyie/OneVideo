@@ -1,0 +1,128 @@
+{
+  "name": "shorts",
+  "description": "Vertical short (9:16, 30–90 s): one hook, one number, one takeaway.",
+  "defaults": {
+    "style": "neon-tech",
+    "aspect": "9:16",
+    "fps": 30,
+    "targetSeconds": 60,
+    "music": {
+      "preset": "bright",
+      "volume": 0.24,
+      "duckTo": 0.09
+    },
+    "sfx": {
+      "transition": "whoosh",
+      "volume": 0.5
+    },
+    "captions": {
+      "style": "karaoke",
+      "maxChars": 13
+    }
+  },
+  "sceneMix": {
+    "prefer": [
+      "title",
+      "stat-cards",
+      "bar-compare",
+      "media",
+      "bullets"
+    ],
+    "limit": {
+      "static": 0.4
+    }
+  },
+  "stages": [
+    {
+      "id": "research",
+      "director": "stages/research.md",
+      "purpose": "3–6 facts, each with a source.",
+      "produces": [
+        "plan/research.json"
+      ],
+      "approval": true,
+      "schema": "research"
+    },
+    {
+      "id": "script",
+      "director": "stages/script.md",
+      "purpose": "Hook in the first 2 seconds; ≤ 250 characters total.",
+      "produces": [
+        "plan/script.json"
+      ],
+      "approval": true,
+      "schema": "script"
+    },
+    {
+      "id": "storyboard",
+      "director": "stages/storyboard.md",
+      "purpose": "A visual change every 2–4 seconds.",
+      "produces": [
+        "plan/storyboard.json"
+      ],
+      "approval": false,
+      "schema": "storyboard"
+    },
+    {
+      "id": "assets",
+      "director": "stages/assets.md",
+      "purpose": "Optional background media.",
+      "produces": [
+        "plan/assets.json"
+      ],
+      "approval": false,
+      "schema": "assets",
+      "optional": true
+    },
+    {
+      "id": "voice",
+      "director": "stages/voice.md",
+      "purpose": "Sentence-level TTS; measured line timings drive every frame.",
+      "produces": [
+        "plan/timings.json"
+      ],
+      "approval": false,
+      "command": "onevideo tts --sample  →  onevideo tts"
+    },
+    {
+      "id": "compose",
+      "director": "stages/compose.md",
+      "purpose": "Compile the timeline, procedural music/SFX, per-scene stills for a visual check.",
+      "produces": [
+        "plan/timeline.json"
+      ],
+      "approval": false,
+      "command": "onevideo music && onevideo timeline && onevideo stills"
+    },
+    {
+      "id": "render",
+      "director": "stages/compose.md",
+      "purpose": "Full-quality Remotion render.",
+      "produces": [
+        "out"
+      ],
+      "approval": false,
+      "command": "onevideo render"
+    },
+    {
+      "id": "review",
+      "director": "stages/review.md",
+      "purpose": "Automated QC plus a look at every sampled frame; human sign-off.",
+      "produces": [
+        "plan/review.json"
+      ],
+      "approval": true,
+      "command": "onevideo qc"
+    },
+    {
+      "id": "publish",
+      "director": "stages/publish.md",
+      "purpose": "Captions, chapters, description and credits.",
+      "produces": [
+        "plan/publish.json"
+      ],
+      "approval": false,
+      "command": "onevideo publish"
+    }
+  ]
+}

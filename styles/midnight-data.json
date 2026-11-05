@@ -1,0 +1,41 @@
+{
+  "name": "midnight-data",
+  "description": "Deep navy, electric accents; for markets, tech and finance explainers.",
+  "colors": {
+    "bg": "#060B1A",
+    "bgAlt": "#0B1430",
+    "surface": "rgba(255,255,255,0.05)",
+    "border": "rgba(255,255,255,0.12)",
+    "text": "#F2F5FF",
+    "muted": "#8C97B8",
+    "accent": "#4F8CFF",
+    "accent2": "#22D3EE",
+    "positive": "#34D399",
+    "negative": "#F87171",
+    "highlight": "#FBBF24"
+  },
+  "palette": [
+    "#4F8CFF",
+    "#22D3EE",
+    "#A78BFA",
+    "#34D399",
+    "#FBBF24",
+    "#F87171",
+    "#F472B6",
+    "#94A3B8"
+  ],
+  "fonts": {
+    "body": "\"PingFang SC\", \"Noto Sans SC\", \"Microsoft YaHei\", \"Hiragino Sans GB\", sans-serif",
+    "number": "\"SF Pro Display\", \"DIN Alternate\", \"Roboto Mono\", \"PingFang SC\", sans-serif"
+  },
+  "background": "stars",
+  "radius": 20,
+  "transition": "fade",
+  "motion": {
+    "pace": "medium",
+    "spring": {
+      "damping": 200
+    }
+  },
+  "captionBg": "rgba(6,11,26,0.72)"
+}

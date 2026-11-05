@@ -1,0 +1,139 @@
+{
+  "$id": "onevideo/assets",
+  "title": "plan/assets.json — media manifest with provenance",
+  "type": "object",
+  "required": [
+    "items"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "items": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/item"
+      }
+    }
+  },
+  "$defs": {
+    "item": {
+      "type": "object",
+      "required": [
+        "id"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[a-z0-9][a-z0-9_-]*$"
+        },
+        "kind": {
+          "enum": [
+            "image",
+            "video"
+          ]
+        },
+        "query": {
+          "type": "string"
+        },
+        "provider": {
+          "oneOf": [
+            {
+              "enum": [
+                "nasa",
+                "wikimedia",
+                "openverse",
+                "pexels"
+              ]
+            },
+            {
+              "type": "array",
+              "items": {
+                "enum": [
+                  "nasa",
+                  "wikimedia",
+                  "openverse",
+                  "pexels"
+                ]
+              }
+            }
+          ]
+        },
+        "pick": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "url": {
+          "type": "string",
+          "pattern": "^https?://"
+        },
+        "generate": {
+          "oneOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "object",
+              "required": [
+                "prompt"
+              ],
+              "properties": {
+                "prompt": {
+                  "type": "string"
+                },
+                "model": {
+                  "type": "string"
+                },
+                "size": {
+                  "type": "string"
+                }
+              }
+            }
+          ]
+        },
+        "file": {
+          "type": "string"
+        },
+        "license": {
+          "type": "string"
+        },
+        "author": {
+          "type": "string"
+        },
+        "title": {
+          "type": "string"
+        },
+        "source": {
+          "type": "string"
+        },
+        "width": {
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "height": {
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "fetchedAt": {
+          "type": "string"
+        },
+        "note": {
+          "type": "string"
+        },
+        "via": {
+          "enum": [
+            "url",
+            "generate",
+            "nasa",
+            "wikimedia",
+            "openverse",
+            "pexels"
+          ]
+        }
+      }
+    }
+  }
+}

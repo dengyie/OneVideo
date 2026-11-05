@@ -1,0 +1,41 @@
+{
+  "name": "paper-documentary",
+  "description": "Warm paper tones, serif headlines, restrained motion; for history and documentary.",
+  "colors": {
+    "bg": "#14110D",
+    "bgAlt": "#1E1A14",
+    "surface": "rgba(255,244,220,0.06)",
+    "border": "rgba(255,244,220,0.16)",
+    "text": "#F4EBDD",
+    "muted": "#A89A86",
+    "accent": "#E2A856",
+    "accent2": "#C9764B",
+    "positive": "#9BC48A",
+    "negative": "#D9735F",
+    "highlight": "#F2D27A"
+  },
+  "palette": [
+    "#E2A856",
+    "#C9764B",
+    "#9BC48A",
+    "#7FA7C9",
+    "#D9735F",
+    "#B79BD1",
+    "#F2D27A",
+    "#A89A86"
+  ],
+  "fonts": {
+    "body": "\"Songti SC\", \"Noto Serif SC\", \"STSong\", serif",
+    "number": "\"Baskerville\", \"Georgia\", \"Songti SC\", serif"
+  },
+  "background": "grid",
+  "radius": 6,
+  "transition": "fade",
+  "motion": {
+    "pace": "slow",
+    "spring": {
+      "damping": 220
+    }
+  },
+  "captionBg": "rgba(20,17,13,0.75)"
+}

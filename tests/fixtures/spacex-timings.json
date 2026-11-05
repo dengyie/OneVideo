@@ -1,0 +1,230 @@
+{
+  "sampleRate": 24000,
+  "voice": {
+    "model": "mimo-v2.5-tts",
+    "voice": "mimo_default"
+  },
+  "scenes": {
+    "hook": {
+      "file": "audio/hook.wav",
+      "duration": 11.27,
+      "lines": [
+        {
+          "text": "2026年6月12日，SpaceX在纳斯达克上市",
+          "speak": "2026年6月12日，SpaceX在纳斯达克上市",
+          "hash": "bbc6d70685fc6bbd",
+          "start": 0.15,
+          "end": 4.05
+        },
+        {
+          "text": "代码SPCX",
+          "speak": "代码S P C X",
+          "hash": "36d0da7faf9bd99d",
+          "start": 4.21,
+          "end": 7.25
+        },
+        {
+          "text": "一家造火箭的公司，凭什么值一万多亿美元",
+          "speak": "一家造火箭的公司，凭什么值一万多亿美元",
+          "hash": "4fac4f52014ad7d8",
+          "start": 7.57,
+          "end": 10.92
+        }
+      ]
+    },
+    "ipo": {
+      "file": "audio/ipo.wav",
+      "duration": 13.26,
+      "lines": [
+        {
+          "text": "发行价135美元，募资约857亿美元",
+          "speak": "发行价135美元，募资约857亿美元",
+          "hash": "d22e07a49c1dd38b",
+          "start": 0.15,
+          "end": 5.39
+        },
+        {
+          "text": "是史上规模最大的IPO",
+          "speak": "是史上规模最大的I P O",
+          "hash": "b7e3c12c70f58e0f",
+          "start": 5.55,
+          "end": 7.79
+        },
+        {
+          "text": "首日收盘上涨约19%，市值约2.1万亿美元",
+          "speak": "首日收盘上涨约百分之19，市值约2.1万亿美元",
+          "hash": "2a48580add455118",
+          "start": 8.11,
+          "end": 12.91
+        }
+      ]
+    },
+    "race": {
+      "file": "audio/race.wav",
+      "duration": 13.74,
+      "lines": [
+        {
+          "text": "1990年，全球市值第一是日本电信电话",
+          "speak": "1990年，全球市值第一是日本电信电话",
+          "hash": "d7b1fadf3fa4a1bf",
+          "start": 0.15,
+          "end": 3.9
+        },
+        {
+          "text": "约1187亿美元",
+          "speak": "约1187亿美元",
+          "hash": "c90dabb6054e00c9",
+          "start": 4.06,
+          "end": 6.9
+        },
+        {
+          "text": "36年后，苹果以约5.1万亿美元排在第一",
+          "speak": "36年后，苹果以约5.1万亿美元排在第一",
+          "hash": "74715aba5d6ce23a",
+          "start": 7.22,
+          "end": 10.87
+        },
+        {
+          "text": "而SpaceX，排在全球第7",
+          "speak": "而SpaceX，排在全球第7",
+          "hash": "45ad15ecb047f568",
+          "start": 11.03,
+          "end": 13.39
+        }
+      ]
+    },
+    "valuation": {
+      "file": "audio/valuation.wav",
+      "duration": 19.22,
+      "lines": [
+        {
+          "text": "它的估值涨得很快",
+          "speak": "它的估值涨得很快",
+          "hash": "c929881ad7eb034a",
+          "start": 0.15,
+          "end": 1.89
+        },
+        {
+          "text": "2024年12月约3500亿美元",
+          "speak": "2024年12月约3500亿美元",
+          "hash": "4f52286b8a729d26",
+          "start": 2.21,
+          "end": 5.57
+        },
+        {
+          "text": "2025年12月约8000亿",
+          "speak": "2025年12月约8000亿",
+          "hash": "c59a5e5b0c014dbd",
+          "start": 5.73,
+          "end": 8.71
+        },
+        {
+          "text": "2026年2月合并xAI后，约1.25万亿美元",
+          "speak": "2026年2月合并x A I后，约1.25万亿美元",
+          "hash": "1bbb33e113f885f4",
+          "start": 9.03,
+          "end": 13.79
+        },
+        {
+          "text": "IPO定价对应约1.77万亿",
+          "speak": "I P O定价对应约1.77万亿",
+          "hash": "a0e44d6bc0c2f3a0",
+          "start": 13.95,
+          "end": 18.87
+        }
+      ]
+    },
+    "revenue": {
+      "file": "audio/revenue.wav",
+      "duration": 11.24,
+      "lines": [
+        {
+          "text": "撑起估值的是星链",
+          "speak": "撑起估值的是星链",
+          "hash": "434a1403ef698c7c",
+          "start": 0.15,
+          "end": 1.78
+        },
+        {
+          "text": "2025年收入约187亿美元",
+          "speak": "2025年收入约187亿美元",
+          "hash": "ca3166e4cdb545a9",
+          "start": 2.1,
+          "end": 5.39
+        },
+        {
+          "text": "以星链为主的连接业务贡献约114亿",
+          "speak": "以星链为主的连接业务贡献约114亿",
+          "hash": "2421ed59f0017dd3",
+          "start": 5.55,
+          "end": 9.18
+        },
+        {
+          "text": "占比超过六成",
+          "speak": "占比超过六成",
+          "hash": "97b5101a812ae3f7",
+          "start": 9.34,
+          "end": 10.89
+        }
+      ]
+    },
+    "profit": {
+      "file": "audio/profit.wav",
+      "duration": 8.93,
+      "lines": [
+        {
+          "text": "连接业务的经营利润约44亿美元",
+          "speak": "连接业务的经营利润约44亿美元",
+          "hash": "b57827f4ef25b9fe",
+          "start": 0.15,
+          "end": 3.05
+        },
+        {
+          "text": "但整个集团仍净亏损约49亿",
+          "speak": "但整个集团仍净亏损约49亿",
+          "hash": "1adf225f2cca879d",
+          "start": 3.21,
+          "end": 6.36
+        },
+        {
+          "text": "AI业务是主要拖累",
+          "speak": "AI业务是主要拖累",
+          "hash": "4e1e1b11d9390d15",
+          "start": 6.52,
+          "end": 8.58
+        }
+      ]
+    },
+    "landing": {
+      "file": "audio/landing.wav",
+      "duration": 5.45,
+      "lines": [
+        {
+          "text": "市场为它支付的，不是今天的利润",
+          "speak": "市场为它支付的，不是今天的利润",
+          "hash": "87cce3c60f182ae8",
+          "start": 0.15,
+          "end": 3.03
+        },
+        {
+          "text": "而是对太空互联网的想象",
+          "speak": "而是对太空互联网的想象",
+          "hash": "69440862e6b81cdb",
+          "start": 3.19,
+          "end": 5.1
+        }
+      ]
+    },
+    "credits": {
+      "file": null,
+      "duration": 0,
+      "lines": []
+    }
+  },
+  "loudness": {
+    "measured": -20.058,
+    "target": -16,
+    "gainDb": 4.058
+  },
+  "totalNarration": 83.11
+}

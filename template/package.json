@@ -1,0 +1,22 @@
+{
+  "name": "onevideo-template",
+  "private": true,
+  "type": "module",
+  "description": "Shared Remotion renderer for OneVideo projects; driven entirely by plan/timeline.json props.",
+  "scripts": {
+    "typecheck": "tsc -p tsconfig.json"
+  },
+  "dependencies": {
+    "@remotion/cli": "4.0.541",
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1",
+    "remotion": "4.0.541"
+  },
+  "devDependencies": {
+    "@types/react": "^19.3.0",
+    "typescript": "^7.0.2"
+  },
+  "allowScripts": {
+    "esbuild@0.28.1": true
+  }
+}
