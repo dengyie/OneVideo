@@ -23,7 +23,7 @@ export const PROVIDERS = {
   },
   async wikimedia(query, { limit = 12, kind = "image" } = {}) {
     if (kind === "video") return wikimediaVideo(query, limit);
-    const url = `https://commons.wikimedia.org/w/api.php?action=query&format=json&generator=search&gsrnamespace=6&gsrlimit=${limit}&gsrsearch=${enc(`${query} filetype:bitmap`)}&prop=imageinfo&iiprop=url|size|mime|extmetadata&iiurlwidth=2400`;
+    const url = `https://commons.wikimedia.org/w/api.php?action=query&format=json&generator=search&gsrnamespace=6&gsrlimit=${limit}&gsrsearch=${enc(`${query} filetype:bitmap`)}&prop=imageinfo&iiprop=url|size|mime|extmetadata&iiurlwidth=3840`;
     const j = await getJson(url);
     return Object.values(j.query?.pages ?? {})
       .sort((a, b) => a.index - b.index)
