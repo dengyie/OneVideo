@@ -6,7 +6,7 @@ import { normalizeForMatch, spokenLength } from "./text.mjs";
 import { styleDef } from "./project.mjs";
 import { collectIcons, resolveIcon } from "./icons.mjs";
 import { resolveCountry } from "./geo.mjs";
-import { entryPath, isMonoDark, loadCatalog, resolveEntry, tintLottie } from "./library.mjs";
+import { entryAvailable, entryPath, isMonoDark, loadCatalog, resolveEntry, tintLottie } from "./library.mjs";
 import { parseWav } from "./wav.mjs";
 import { countFrames, depthPath, framesDir } from "./assets.mjs";
 import { beatsFile, snapToBeat } from "./beats.mjs";
@@ -92,6 +92,41 @@ export function overlaySound(ov, cfg) {
   if (!s) return null;
   const name = typeof s === "object" ? s.sound : s;
   return { sound: name === "auto" ? OVERLAY_SFX[ov.type] ?? null : name, volume: typeof s === "object" ? s.volume : undefined };
+}
+
+// config.sfx.motion = "auto": the picture's own moves make sound. A canvas flight whooshes (a long
+// one cinematically), a hard cut or a slammed word lands with an impact, a push-in breathes a soft
+// whoosh, footage ramping back up to speed rushes. Each role's variants rotate through the library.
+export const MOTION_SFX = { fly: "whoosh-soft", flyLong: "whoosh-cinematic", cut: "impact", push: "whoosh-soft", slam: "impact", ramp: "whoosh-cinematic" };
+const MOTION_GAIN = { fly: 0.8, flyLong: 0.9, cut: 0.5, push: 0.45, slam: 0.7, ramp: 0.85 };
+const slamWord = (ov) => ov.type === "word" && (ov.style ?? "slam") === "slam";
+
+// Motion events of a compiled scene, in absolute seconds.
+export function motionCues(sc) {
+  const out = [];
+  const at = (t, role) => out.push({ role, at: r3(sc.start + Math.max(0, t)) });
+  // Stop 0 frames the opening (and an inherited canvas's join), so it makes no sound.
+  if (sc.type === "canvas") for (const [i, st] of (sc.props.path ?? []).entries()) {
+    if (i === 0 || !((st.t ?? 0) > 0)) continue;
+    if (st.cut) at(st.t, "cut"); else at(st.t - 0.05, (st.fly ?? 0.9) >= 1.3 ? "flyLong" : "fly");
+  }
+  for (const [i, sh] of (sc.shots ?? []).entries()) {
+    if (i === 0 || sh.t <= 0) continue;
+    if (sh.cut) at(sh.t, "cut");
+    else if (Math.abs(sh.zoom - sc.shots[i - 1].zoom) >= 0.12) at(sh.t, "push");
+  }
+  for (const ov of sc.overlays ?? []) if (slamWord(ov)) at(ov.t, "slam");
+  if (sc.type === "footage") {
+    let speed = 1;
+    for (const r of sc.props.ramp ?? []) { if (speed < 1 && r.speed > 1.3) at((r.t ?? 0) - 0.15, "ramp"); speed = r.speed; }
+  }
+  return out.sort((a, b) => a.at - b.at);
+}
+
+// The library variants of a sound category present on this host, else the category itself.
+export function sfxVariants(cat, catalog) {
+  const ids = catalog.entries.filter((e) => (e.kind ?? "sfx") === "sfx" && e.category === cat && entryAvailable(e)).map((e) => e.id).sort();
+  return ids.length ? ids : [cat];
 }
 
 // Scene types that paint the whole frame themselves (no theme background shows through).
@@ -255,7 +290,8 @@ export function compileTimeline({ config, script, storyboard, timings, assets, r
           delete o.tint;
         }
       }
-      const snd = overlaySound(ov, sfxCfg);
+      // With motion sounds on, a slammed word lands on an impact from the motion pass instead.
+      const snd = sfxCfg.motion === "auto" && slamWord(ov) && ov.sfx === undefined ? null : overlaySound(ov, sfxCfg);
       if (snd?.sound) sfx.push({ sound: snd.sound, src: sfxFile(snd.sound), at: r3(start + t), volume: snd.volume ?? sfxCfg.volume });
       overlays.push(o);
     }
@@ -360,6 +396,20 @@ export function compileTimeline({ config, script, storyboard, timings, assets, r
   });
   const last = scenes[scenes.length - 1];
   if (last) last.transitionOut = { type: normTransition(last.exit)?.type === "cut" ? "cut" : "fade", frames: normTransition(last.exit)?.type === "cut" ? 0 : Math.round(0.6 * fps), tail: 0, direction: "left", nextOpaque: false };
+  if (sfxCfg.motion === "auto") {
+    // Motion sounds yield to every authored / transition / overlay sound within 0.2 s, and to each other within 0.25 s.
+    catalog ??= loadCatalog();
+    const turn = {}, variants = {};
+    let last = -Infinity;
+    for (const c of scenes.flatMap(motionCues)) {
+      if (c.at - last < 0.25 || sfx.some((s) => Math.abs(s.at - c.at) < 0.2)) continue;
+      const cat = MOTION_SFX[c.role];
+      const v = (variants[cat] ??= sfxVariants(cat, catalog));
+      const sound = v[(turn[cat] = (turn[cat] ?? -1) + 1) % v.length];
+      sfx.push({ sound, src: sfxFile(sound), at: c.at, volume: r3(sfxCfg.volume * MOTION_GAIN[c.role]), motion: c.role });
+      last = c.at;
+    }
+  }
   sfx.sort((a, b) => a.at - b.at);
   // music.file is a path under public/ (own or licensed track); otherwise the synthesized bgm.wav.
   const music = config.music?.enabled === false ? null : root && existsSync(join(root, "public", musicSrc))

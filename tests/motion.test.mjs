@@ -2,7 +2,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { writeFileSync } from "node:fs";
 import { join } from "node:path";
-import { AUTO_SHOTS, compileShots, compileTimeline, resolveWhen } from "../cli/lib/timeline.mjs";
+import { AUTO_SHOTS, MOTION_SFX, compileShots, compileTimeline, motionCues, resolveWhen, sfxVariants } from "../cli/lib/timeline.mjs";
 import { beatsFile, detectBeats, gridBeats, snapToBeat } from "../cli/lib/beats.mjs";
 import { schemaGate } from "../cli/lib/gates.mjs";
 import { example } from "./helpers.mjs";
@@ -60,11 +60,14 @@ test("schema accepts shots, word overlays and the footage / parallax / canvas sc
     { id: "a", type: "footage", shots: "auto", overlays: [{ type: "word", text: "IPO", style: "slam", at: 1 }], props: { asset: "v", ramp: [{ at: 1, speed: 0.35 }, { at: { beat: 4 }, speed: 1.6 }], title: { text: "SpaceX", behind: true, matte: { mode: "subject" } } } },
     { id: "b", type: "parallax", shots: [{ at: 0, focus: [0.2, 0.2, 0.4, 0.4] }, { at: 2, zoom: 1.2, cut: true }], props: { asset: "p", move: "orbit" } },
     { id: "c", type: "canvas", props: { items: [{ id: "x", type: "stat", x: 960, y: 540, value: 1.75, morph: [{ at: 2, type: "bar", max: 2 }] }], path: [{ focus: "x" }, { at: 3, focus: { x: 2400, y: 540 }, fly: 1.2 }], links: [{ from: "x", to: "x" }] } },
-    { id: "d", type: "canvas", props: { inherit: true } },
+    { id: "d", type: "canvas", props: { inherit: true, floor: false } },
   ];
   assert.deepEqual(schemaGate("storyboard", { scenes }), []);
   const bad = schemaGate("storyboard", { scenes: [{ id: "x", type: "parallax", props: { asset: "p", move: "spin" } }] });
   assert.ok(bad.some((i) => /move/.test(i.msg)));
+  const ex = example();
+  assert.deepEqual(schemaGate("project", { ...ex.config, captions: { style: "kinetic" }, sfx: { motion: "auto" } }), []);
+  assert.ok(schemaGate("project", { ...ex.config, sfx: { motion: "loud" } }).length);
 });
 
 test("compileTimeline: shot track, prop times, beats, canvas inherit", () => {
@@ -91,4 +94,30 @@ test("compileTimeline: shot track, prop times, beats, canvas inherit", () => {
   assert.equal(b.props.path[0].cut, true);
   assert.equal(b.props.path[0].t, 0);
   assert.deepEqual(b.props.path[0].focus, { x: 2400, y: 540 });
+});
+
+test("motionCues: flights, cuts, push-ins, slammed words and ramps back up to speed", () => {
+  const canvas = { type: "canvas", start: 10, props: { path: [{ t: 0 }, { t: 1, fly: 0.9 }, { t: 3, fly: 1.6 }, { t: 5, cut: true }] }, overlays: [{ type: "word", t: 2 }, { type: "word", t: 4, style: "rise" }] };
+  assert.deepEqual(motionCues(canvas), [{ role: "fly", at: 10.95 }, { role: "slam", at: 12 }, { role: "flyLong", at: 12.95 }, { role: "cut", at: 15 }]);
+  const footage = { type: "footage", start: 0, shots: [{ t: 0, zoom: 1 }, { t: 1, zoom: 1.05 }, { t: 2, zoom: 1.3 }, { t: 3, zoom: 1, cut: true }], props: { ramp: [{ t: 0.5, speed: 0.35 }, { t: 4, speed: 1.6 }] } };
+  assert.deepEqual(motionCues(footage).map((c) => [c.role, c.at]), [["push", 2], ["cut", 3], ["ramp", 3.85]]);
+  assert.deepEqual(sfxVariants("whoosh-soft", { entries: [] }), ["whoosh-soft"]);
+});
+
+test("compileTimeline: sfx.motion auto adds motion sounds that yield to authored ones", () => {
+  const ex = example({ media: ["sfx/whoosh.wav", "sfx/pop.wav", "music/inspired.mp3"] });
+  const sb = structuredClone(ex.storyboard);
+  sb.scenes[0] = {
+    ...sb.scenes[0], type: "canvas", backdrop: undefined, overlays: [{ type: "word", text: "IPO", at: 0.6 }],
+    props: { items: [{ id: "a", type: "stat", value: 1 }, { id: "b", type: "stat", value: 2, x: 2400, y: 540 }], path: [{ focus: "a" }, { at: 1.2, focus: "b", fly: 1.5 }, { at: 1.3, focus: "a" }] },
+  };
+  const config = { ...ex.config, sfx: { ...(ex.config.sfx ?? {}), overlays: "auto", motion: "auto", volume: 0.5 } };
+  const { timeline, errors } = compileTimeline({ ...ex, config, storyboard: sb, assets: ex.fetchedAssets });
+  assert.deepEqual(errors.filter((e) => !/^sfx ".*" missing/.test(e)), []);
+  const motion = timeline.sfx.filter((s) => s.motion);
+  // The slammed word takes an impact instead of ui-pop; the 1.3 s stop is too close to the 1.2 s flight.
+  assert.deepEqual(motion.map((s) => s.motion), ["slam", "flyLong"]);
+  assert.ok(!timeline.sfx.some((s) => s.sound.startsWith("ui-pop")));
+  assert.ok(motion[0].sound.startsWith(MOTION_SFX.slam) && motion[1].sound.startsWith(MOTION_SFX.flyLong));
+  assert.equal(motion[1].volume, 0.45);
 });

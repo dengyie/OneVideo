@@ -9,7 +9,7 @@ import { writeWav } from "../lib/wav.mjs";
 import { checkProject, printIssues } from "../lib/check.mjs";
 import { search, fetchAsset, scoreCandidate, assetFileExists, depthPath, framesDir, countFrames } from "../lib/assets.mjs";
 import { run } from "../lib/ffmpeg.mjs";
-import { AUTO_TRANSITION_SFX, DIMENSIONS, overlaySound, sfxFile } from "../lib/timeline.mjs";
+import { AUTO_TRANSITION_SFX, DIMENSIONS, MOTION_SFX, overlaySound, sfxFile, sfxVariants } from "../lib/timeline.mjs";
 import { categories, entryPath, loadCatalog, resolveSfx } from "../lib/library.mjs";
 import { spokenLength } from "../lib/text.mjs";
 import { beatsFile, ensureBeats, gridBeats } from "../lib/beats.mjs";
@@ -56,6 +56,8 @@ export async function music(args) {
   }
   // Library entries first (recorded, normalized), then procedural sounds; synth:<name> forces procedural.
   const catalog = loadCatalog();
+  // Motion sounds rotate through every variant of their categories (see timeline motionCues).
+  if (config.sfx?.motion === "auto") for (const cat of new Set(Object.values(MOTION_SFX))) for (const id of sfxVariants(cat, catalog)) sfxNames.add(id);
   const used = [];
   for (const name of sfxNames) {
     const file = join(project.p("public"), sfxFile(name));

@@ -30,7 +30,7 @@
 | `photo-stack` | 多张照片像相纸一样逐张落到桌面 | `items[{asset}]`（≤8） | `caption`、`cue`、`title` |
 | `footage` | 实拍做主角：全屏、变速、标题压在主体后面 | `asset` | `startFrom`、`ramp[{at,speed}]`（如 0.35 慢动作再回 1.6 倍）、`title{text,behind,matte,style,kicker}`（`behind` 需先 `onevideo depth`）、`dim`、`tint` |
 | `parallax` | 一张照片做 2.5D 视差推拉 | `asset`（图片） | `move`（dolly-in/dolly-out/truck-left/truck-right/crane-up/orbit）、`amount`、`title`；有深度图时按深度分层，否则按“下近上远”渐变 |
-| `canvas` | 无限画布：元素变形 + 镜头连续飞行，代替翻页 | — | `items[{id,type,x,y,w,h,value,label,at,morph[{at,type,…}]}]`（stat/text/bar/dot/image，坐标为布局单位，首屏 0–1920×0–1080）、`path[{at,focus,zoom,cut,fly}]`、`links[{from,to,at}]`、`inherit`（接着上一个 canvas 的世界和镜头） |
+| `canvas` | 无限画布：元素变形 + 镜头连续飞行，代替翻页 | — | `items[{id,type,x,y,w,h,value,label,at,morph[{at,type,…}]}]`（stat/text/bar/dot/image，坐标为布局单位，首屏 0–1920×0–1080）、`path[{at,focus,zoom,cut,fly}]`、`links[{from,to,at}]`、`inherit`（接着上一个 canvas 的世界和镜头）、`floor`（随镜头移动的点阵地面，近层 1:1、远层 0.35 视差；有 backdrop 时默认关）。卡片会随镜头速度惯性倾斜，最多 9° |
 
 ## 场景通用字段
 
@@ -77,6 +77,8 @@
 | `word` | 关键词弹字（配 `shots` 做每句一个关键词） | `text`、`style: slam|rise|type`、`color` | ui-pop |
 
 - 项目级 `sfx.overlays: "auto"`：所有没写 `sfx` 的叠层都配默认音效。
+- 项目级 `sfx.motion: "auto"`：画面运动自己出声。canvas 飞行配 whoosh-soft，飞行 ≥1.3s 换成 whoosh-cinematic；硬切和 slam 关键词配 impact（slam 词不再配 ui-pop）；镜头推拉（Δzoom ≥0.12）配 whoosh-soft；footage 变速从慢放提回快速时配 whoosh-cinematic。同一类别的音效变体轮换使用。离已有音效不到 0.2s 的运动音效跳过，运动音效之间至少间隔 0.25s。`onevideo music` 会把这些类别的全部变体都放进 `public/sfx/`。
+- 字幕 `captions.style: "kinetic"`：在 karaoke 逐字点亮的基础上，数字和英文词用强调色，刚念到的字轻微弹起，整行上浮入场，底板改成浅色毛玻璃。
 - Lottie 里的黑色线性图标会自动着色为主题文字色；`tint: "#rrggbb"` 手动指定。用到 CC BY 素材（Noto 动画表情）时，sources 场景和发布文案会自动加署名。
 - `mark.rect`、`arrow.from/to` 是比例坐标，写完一定跑 `onevideo stills --scene <id> --at 0.7` 核对位置。
 

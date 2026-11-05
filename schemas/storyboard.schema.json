@@ -2377,6 +2377,10 @@
           "type": "boolean",
           "description": "continue the previous canvas scene's world and camera"
         },
+        "floor": {
+          "type": "boolean",
+          "description": "dot-lattice floor that moves with the camera (default: on unless the scene has a backdrop)"
+        },
         "items": {
           "type": "array",
           "items": {

@@ -86,7 +86,7 @@ export type Timeline = {
   duration: number;
   theme: Theme;
   watermark: string | null;
-  captions: { enabled: boolean; style: "line" | "karaoke" | "none"; items: { scene: string; text: string; start: number; end: number }[] };
+  captions: { enabled: boolean; style: "line" | "karaoke" | "kinetic" | "none"; items: { scene: string; text: string; start: number; end: number }[] };
   narration: [number, number][];
   music: { src: string; volume: number; duckTo: number; fade: number; credit?: string | null } | null;
   sfx: { sound: string; src: string; at: number; volume: number; duration?: number }[];

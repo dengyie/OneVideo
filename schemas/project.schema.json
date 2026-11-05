@@ -167,7 +167,8 @@
         "style": {
           "enum": [
             "line",
-            "karaoke"
+            "karaoke",
+            "kinetic"
           ]
         }
       }
@@ -243,6 +244,13 @@
             "none"
           ],
           "description": "auto: every overlay without its own sfx plays the sound for its type"
+        },
+        "motion": {
+          "enum": [
+            "auto",
+            "none"
+          ],
+          "description": "auto: camera flights, cuts, push-ins, slammed words and footage ramps make their own sounds"
         }
       }
     },

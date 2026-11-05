@@ -149,7 +149,37 @@ const Content: React.FC<{ s: State; scale: number; theme: ReturnType<typeof useT
 
 const boxed = (k?: Kind) => k === "stat" || k === "bar";
 
-export const CanvasScene: React.FC<{ items?: Item[]; path?: Stop[]; links?: Link[]; inherit?: boolean }> = ({ items = [], path = [], links = [] }) => {
+// The world's floor: a dot lattice that moves 1:1 with the camera, plus a sparser, dimmer one
+// that travels at `far` of the speed, so even an empty stretch of the flight reads as depth.
+const Floor: React.FC<{ cam: Cam; u: number; width: number; height: number; color: string; id: string }> = ({ cam, u, width, height, color, id }) => {
+  const layers = [{ gap: 90, r: 2.2, o: 0.32, far: 1 }, { gap: 220, r: 3.2, o: 0.14, far: 0.35 }];
+  return (
+    <svg width={width} height={height} style={{ position: "absolute", inset: 0 }}>
+      <defs>
+        {layers.map((l, i) => {
+          const k = Math.pow(cam.zoom, l.far) * u, g = l.gap * k;
+          // Pattern origin sits where world (0,0) lands on screen, scaled down for the far layer.
+          const ox = width / 2 - cam.x * l.far * k, oy = height / 2 - cam.y * l.far * k;
+          return (
+            <pattern key={i} id={`${id}-floor${i}`} width={g} height={g} patternUnits="userSpaceOnUse" x={ox % g} y={oy % g}>
+              <circle cx={g / 2} cy={g / 2} r={Math.max(0.6, l.r * k)} fill={color} opacity={l.o} />
+            </pattern>
+          );
+        })}
+        <radialGradient id={`${id}-fade`} cx="50%" cy="50%" r="65%">
+          <stop offset="0%" stopColor="#fff" stopOpacity={1} />
+          <stop offset="100%" stopColor="#fff" stopOpacity={0} />
+        </radialGradient>
+        <mask id={`${id}-mask`}><rect width={width} height={height} fill={`url(#${id}-fade)`} /></mask>
+      </defs>
+      <g mask={`url(#${id}-mask)`}>
+        {layers.map((_, i) => <rect key={i} width={width} height={height} fill={`url(#${id}-floor${i})`} />)}
+      </g>
+    </svg>
+  );
+};
+
+export const CanvasScene: React.FC<{ items?: Item[]; path?: Stop[]; links?: Link[]; inherit?: boolean; floor?: boolean }> = ({ items = [], path = [], links = [], floor }) => {
   const theme = useTheme();
   const scene = useScene();
   const { fps } = useVideoConfig();
@@ -163,6 +193,9 @@ export const CanvasScene: React.FC<{ items?: Item[]; path?: Stop[]; links?: Link
   const toScreen = (x: number, y: number) => ({ x: (x - cam.x) * k + width / 2, y: (y - cam.y) * k + height / 2 });
   const vx = jumped ? 0 : (cam.x - before.x) * k, vy = jumped ? 0 : (cam.y - before.y) * k;
   const radial = jumped ? 0 : (Math.abs(cam.zoom - before.zoom) / cam.zoom) * Math.hypot(width, height) * 0.5;
+  // Inertia: cards lean against the camera's travel (up to 9°) and straighten as it lands.
+  const lean = (v: number) => Math.max(-9, Math.min(9, v * 0.18));
+  const tilt = `perspective(${1600 * u}px) rotateY(${lean(vx).toFixed(2)}deg) rotateX(${lean(-vy).toFixed(2)}deg)`;
 
   // Counting: a stat counts from 0 when it enters; a morph's value change already interpolates.
   const shown = items.map((it) => {
@@ -179,6 +212,7 @@ export const CanvasScene: React.FC<{ items?: Item[]; path?: Stop[]; links?: Link
 
   return (
     <MotionBlur id={`${scene.id}-canvas`} vx={vx} vy={vy} radial={radial}>
+      {(floor ?? !scene.backdrop) && <Floor cam={cam} u={u} width={width} height={height} color={theme.colors.muted} id={`${scene.id}-cv`.replace(/[^a-zA-Z0-9_-]/g, "_")} />}
       <svg width={width} height={height} style={{ position: "absolute", inset: 0 }}>
         {links.map((l, i) => {
           const a = pos.get(l.from), b = pos.get(l.to);
@@ -206,7 +240,7 @@ export const CanvasScene: React.FC<{ items?: Item[]; path?: Stop[]; links?: Link
         return (
           <div key={it.id} style={{
             position: "absolute", left: c.x - w / 2, top: c.y - h / 2, width: w, height: h,
-            transform: `scale(${pop})`, opacity: e * (s.opacity ?? 1),
+            transform: `${card ? tilt + " " : ""}scale(${pop})`, opacity: e * (s.opacity ?? 1),
           }}>
             {card && (
               <div style={{
