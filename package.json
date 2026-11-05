@@ -8,7 +8,7 @@
   "bin": { "onevideo": "cli/onevideo.mjs" },
   "engines": { "node": ">=20" },
   "scripts": {
-    "test": "node --test tests/",
+    "test": "node --test",
     "setup": "npm install --prefix template",
     "typecheck": "cd template && npx tsc -p . --noEmit"
   },
