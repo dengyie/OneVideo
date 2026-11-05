@@ -12,6 +12,7 @@ import { resolveApiKey, trustedKeyHost } from "../lib/http.mjs";
 import { ttsConfig } from "../lib/tts.mjs";
 import * as media from "./media.mjs";
 import { clipFrames, countFrames, framesDir } from "../lib/assets.mjs";
+import { ensureBeats } from "../lib/beats.mjs";
 
 const ENTRY = "src/index.ts";
 const COMPOSITION = "OneVideo";
@@ -28,6 +29,14 @@ async function ensureClipFrames(project) {
     log(`extracting frames: ${a.id} → public/${framesDir(a.file)}/`);
     await clipFrames(mp4, dir);
   }
+}
+
+// Beat grid for shot snapping; synthesized music writes its own, a provided track is analysed once.
+async function ensureMusicBeats(project) {
+  const m = project.config.music;
+  if (m?.enabled === false) return;
+  const b = await ensureBeats(project.root, { src: m?.file ?? "music/bgm.wav" });
+  if (b) log(`beats: ~${b.bpm} BPM (${b.source})`);
 }
 
 // Compile + gate the timeline; renders never start from a stale or failing plan.
@@ -47,6 +56,7 @@ export async function render(args) {
   requireRemotion();
   const project = loadProject();
   await ensureClipFrames(project);
+  await ensureMusicBeats(project);
   const tl = freshTimeline(project, { force: Boolean(args.force) });
   mkdirSync(project.paths.out, { recursive: true });
   const draft = Boolean(args.draft);
@@ -77,6 +87,7 @@ export async function stills(args) {
   requireRemotion();
   const project = loadProject();
   await ensureClipFrames(project);
+  await ensureMusicBeats(project);
   const tl = freshTimeline(project, { force: Boolean(args.force) });
   const dir = join(project.paths.out, "stills");
   mkdirSync(dir, { recursive: true });
@@ -95,6 +106,7 @@ export async function studio(args) {
   requireRemotion();
   const project = loadProject();
   await ensureClipFrames(project);
+  await ensureMusicBeats(project);
   freshTimeline(project, { force: true });
   await run(REMOTION_BIN, ["studio", ENTRY, ...commonFlags(project), ...(args.port ? [`--port=${args.port}`] : [])], { cwd: TEMPLATE_DIR, stdio: "inherit" });
 }

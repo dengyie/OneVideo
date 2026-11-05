@@ -1,6 +1,6 @@
 # 场景目录
 
-22 种场景类型，props 的权威定义在 `schemas/storyboard.schema.json` 的 `props.<type>`；`onevideo validate` 按类型校验。`STATIC_TYPES`（quote、bullets、title、chapter、sources）在整片中占比不超过 40%（`gates.staticRatioMax`），同类型连续不超过 2 个（`gates.maxSameTypeRun`）。
+25 种场景类型，props 的权威定义在 `schemas/storyboard.schema.json` 的 `props.<type>`；`onevideo validate` 按类型校验。`STATIC_TYPES`（quote、bullets、title、chapter、sources）在整片中占比不超过 40%（`gates.staticRatioMax`），同类型连续不超过 2 个（`gates.maxSameTypeRun`）。
 
 ## 何时用哪种
 
@@ -28,6 +28,9 @@
 | `focus` | 一张照片里逐个推近细节并手绘圈出 | `asset`、`regions[{x,y,w,h}]`（0–1 坐标） | 区域 `label`、`shape`（box/circle）、`zoom`、`cue`；`hold` 结尾拉回全图 |
 | `split` | 左右（竖屏为上下）对照，或 `mode:"pip"` 画中画 | `left`、`right`（`{asset,title,text,value,format,caption}`） | `ratio`、`corner`、各侧 `cue` |
 | `photo-stack` | 多张照片像相纸一样逐张落到桌面 | `items[{asset}]`（≤8） | `caption`、`cue`、`title` |
+| `footage` | 实拍做主角：全屏、变速、标题压在主体后面 | `asset` | `startFrom`、`ramp[{at,speed}]`（如 0.35 慢动作再回 1.6 倍）、`title{text,behind,matte,style,kicker}`（`behind` 需先 `onevideo depth`）、`dim`、`tint` |
+| `parallax` | 一张照片做 2.5D 视差推拉 | `asset`（图片） | `move`（dolly-in/dolly-out/truck-left/truck-right/crane-up/orbit）、`amount`、`title`；有深度图时按深度分层，否则按“下近上远”渐变 |
+| `canvas` | 无限画布：元素变形 + 镜头连续飞行，代替翻页 | — | `items[{id,type,x,y,w,h,value,label,at,morph[{at,type,…}]}]`（stat/text/bar/dot/image，坐标为布局单位，首屏 0–1920×0–1080）、`path[{at,focus,zoom,cut,fly}]`、`links[{from,to,at}]`、`inherit`（接着上一个 canvas 的世界和镜头） |
 
 ## 场景通用字段
 
@@ -40,10 +43,13 @@
 - `hold`：旁白结束后停留的时间（默认 0.5s）；`duration` / `minDuration` 给无旁白或需要更长停留的场景。
 - `sfx: [{sound, at}]`：`at` 同 cue 语法。
 - `intent`：一句话写明这个画面要让观众记住什么，方便审稿。
+- `shots`：场景的镜头轨，作用于内容和叠层（背景以 0.55 倍弱跟随，产生视差）。`"auto"` = 每句字幕一个机位，推/切交替；或写列表 `[{at, zoom, x, y | focus:[x,y,w,h], rotate, cut, ease}]`。运动帧按镜头速度加方向性动态模糊，硬切帧不加。
+- 卡点：有音乐时编译器读取 `public/<music>.beats.json`（`onevideo music` 生成：合成乐按 BPM 出网格，外部音轨用 onset 检测），镜头时间吸附到 0.12s 内最近的拍点；`onevideo.json` 里 `beats.snap: false` 关闭。`at: {beat: n}` 直接指定场景内第 n 拍（shots、canvas、footage 可用）。
+- 深度图：`onevideo depth [asset ids] [--step 2]` 在 VM 上用 Depth Anything V2（ONNX，CPU）生成，图片 → `<file>.depth.png`，视频 → `<file>.depth/NNNN.png`；parallax 和 footage 的 `title.behind` 使用。
 
 ## 叠层动效 `overlays`
 
-任意场景都可以挂一组叠层，在旁白说到某句时弹出，给静态画面加“动作”。叠层跟随场景转场，但不跟随镜头运动。
+任意场景都可以挂一组叠层，在旁白说到某句时弹出，给静态画面加“动作”。叠层跟随场景转场和 `shots` 镜头轨，但不跟随 `camera` 漂移。
 
 ```json
 "overlays": [
@@ -68,6 +74,7 @@
 | `spotlight` | 聚光压暗四周 | `x`/`y`、`size` | swell |
 | `flash` | 闪白 | — | boom |
 | `image` | 图片贴纸 | `asset`、`shape`、`rotate` | ui-pop |
+| `word` | 关键词弹字（配 `shots` 做每句一个关键词） | `text`、`style: slam|rise|type`、`color` | ui-pop |
 
 - 项目级 `sfx.overlays: "auto"`：所有没写 `sfx` 的叠层都配默认音效。
 - Lottie 里的黑色线性图标会自动着色为主题文字色；`tint: "#rrggbb"` 手动指定。用到 CC BY 素材（Noto 动画表情）时，sources 场景和发布文案会自动加署名。

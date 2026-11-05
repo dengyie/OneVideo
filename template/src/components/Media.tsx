@@ -3,15 +3,38 @@ import { AbsoluteFill, Img, OffthreadVideo, staticFile, useCurrentFrame } from "
 import { useLayout, useScene, useTheme, useTime, useTimeline } from "../engine/context";
 import type { Asset } from "../engine/types";
 
+// 1-based index into a clip's frame sequence at source time `s` seconds (held at the last frame).
+export const seqIndex = (a: Asset, s: number) => Math.min(a.frames ?? 1, Math.max(1, Math.floor(s * (a.fps ?? 30)) + 1));
+export const seqSrc = (a: Asset, s: number) => staticFile(`${a.seq}/${String(seqIndex(a, s)).padStart(4, "0")}.jpg`);
+
+// Speed ramp: source seconds played by scene time t, integrating speed keyframes ({ t, speed },
+// eased over `blend` s between values) frame by frame so it is identical on every render.
+export type Ramp = { t?: number; speed: number }[];
+export function rampTime(t: number, ramp: Ramp | undefined, fps: number, blend = 0.3): number {
+  if (!ramp?.length) return t;
+  const speedAt = (x: number) => {
+    let v = 1;
+    for (const k of ramp) {
+      const at = k.t ?? 0;
+      if (x < at) break;
+      const p = Math.min(1, (x - at) / blend);
+      v = v + (k.speed - v) * (p * p * (3 - 2 * p));
+    }
+    return v;
+  };
+  const n = Math.round(t * fps);
+  let s = 0;
+  for (let i = 0; i < Math.abs(n); i++) s += speedAt((i + 0.5) / fps) / fps;
+  return n < 0 ? -s : s;
+}
+
 // A video clip: its JPEG sequence frame by frame when extracted (light, deterministic), otherwise
-// <OffthreadVideo>. Holds the last frame once the clip runs out. `startFrom` is in seconds.
-export const ClipVideo: React.FC<{ a: Asset; style: React.CSSProperties; startFrom?: number; muted?: boolean }> = ({ a, style, startFrom = 0, muted = true }) => {
+// <OffthreadVideo>. Holds the last frame once the clip runs out. `startFrom` is in seconds;
+// `time` (seconds into the clip) overrides the frame clock, e.g. for a speed ramp.
+export const ClipVideo: React.FC<{ a: Asset; style: React.CSSProperties; startFrom?: number; muted?: boolean; time?: number }> = ({ a, style, startFrom = 0, muted = true, time }) => {
   const frame = useCurrentFrame();
   const tl = useTimeline();
-  if (a.seq && a.frames) {
-    const i = Math.min(a.frames, Math.max(1, Math.floor((startFrom + frame / tl.fps) * (a.fps ?? 30)) + 1));
-    return <Img src={staticFile(`${a.seq}/${String(i).padStart(4, "0")}.jpg`)} style={style} />;
-  }
+  if (a.seq && a.frames) return <Img src={seqSrc(a, time ?? startFrom + frame / tl.fps)} style={style} />;
   return <OffthreadVideo src={staticFile(a.src)} style={style} muted={muted} startFrom={Math.round(startFrom * tl.fps)} />;
 };
 

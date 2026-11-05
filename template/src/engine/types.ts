@@ -28,7 +28,7 @@ export type Camera = { move: CameraMove; amount?: number };
 export type Background = "default" | "plain" | "grid" | "stars" | "media";
 
 export type Overlay = {
-  type: "lottie" | "icon" | "burst" | "confetti" | "arrow" | "mark" | "callout" | "stamp" | "lower-third" | "spotlight" | "flash" | "image";
+  type: "lottie" | "icon" | "burst" | "confetti" | "arrow" | "mark" | "callout" | "stamp" | "lower-third" | "spotlight" | "flash" | "image" | "word";
   t: number; end: number;
   x?: number; y?: number; size?: number; color?: string;
   src?: string; loop?: boolean; speed?: number;
@@ -36,11 +36,15 @@ export type Overlay = {
   from?: [number, number]; to?: [number, number]; curve?: number;
   kind?: "circle" | "box" | "underline" | "highlight" | "strike"; rect?: [number, number, number, number];
   text?: string; subtitle?: string; side?: "left" | "right"; rotate?: number;
-  asset?: string; shape?: "circle" | "rounded";
+  asset?: string; shape?: "circle" | "rounded"; style?: "slam" | "rise" | "type";
 };
 export type Look = { grain?: number; vignette?: number; leak?: number };
 
 export type Line = { text: string; start: number; end: number };
+
+// One framing of a scene's shot track: the camera is centred on (x, y) (0–1 of the frame) at
+// `zoom`, reached at scene time `t` either by a hard cut or an `ease`-second move.
+export type Shot = { t: number; zoom: number; x: number; y: number; rotate: number; cut: boolean; ease: number };
 
 export type Scene = {
   id: string;
@@ -64,10 +68,12 @@ export type Scene = {
   lines: Line[];
   props: Record<string, any>;
   overlays?: Overlay[];
+  shots?: Shot[];
 };
 
 // Video assets carry a JPEG sequence (seq/0001.jpg…, `frames` long at `fps`) when one was extracted.
-export type Asset = { src: string; kind: "image" | "video"; credit: string; seq?: string; frames?: number; fps?: number };
+// `depth` is a near-is-white depth map (an image, or a sequence dir for a video) when one was made.
+export type Asset = { src: string; kind: "image" | "video"; credit: string; seq?: string; frames?: number; fps?: number; depth?: string; depthStep?: number; depthFrames?: number };
 
 export type Timeline = {
   version: number;
@@ -90,5 +96,7 @@ export type Timeline = {
   lottie?: Record<string, any>;
   libraryCredits?: string[];
   look?: Look | null;
+  // Music beat times in seconds (empty without music); shots and cues can snap to them.
+  beats?: number[];
   scenes: Scene[];
 };

@@ -4,6 +4,8 @@ import { noise2D } from "@remotion/noise";
 import type { Camera, Direction, Scene, Timeline, Transition } from "./types";
 import { SceneContext, TimelineContext } from "./context";
 import { clamp01, easeInOut } from "./motion";
+import { cutBetween, farther, viewAt, viewTransform, viewVelocity } from "./camera";
+import { MotionBlur } from "../components/MotionBlur";
 import { Backdrop } from "../components/Backdrop";
 import { Credit, MediaFill } from "../components/Media";
 import { Header } from "../components/Header";
@@ -121,6 +123,11 @@ const SceneFrame: React.FC<{ scene: Scene; length: number; children: React.React
   const solid = !scene.opaque && active !== null && SOLID.includes(active);
   const t = (frame - (tin?.lead ?? 0)) / fps;
   const cam = cameraTransform(scene.camera ?? { move: "drift" }, clamp01(t / Math.max(0.1, scene.duration)), t, width, scene.id);
+  // Shot track: the foreground is filmed through the current framing, the backdrop through a
+  // weaker one, and a move between framings smears by its per-frame travel.
+  const shots = scene.shots?.length ? scene.shots : undefined;
+  const view = viewAt(shots, t);
+  const vel = shots && !cutBetween(shots, t - 1 / fps, t) ? viewVelocity(viewAt(shots, t - 1 / fps), view, width, height) : { vx: 0, vy: 0, radial: 0 };
   const filterId = `whip-${scene.id}`;
   let style: React.CSSProperties = { ...look.style };
   if (look.whip) style.filter = `url(#${filterId})`;
@@ -140,9 +147,11 @@ const SceneFrame: React.FC<{ scene: Scene; length: number; children: React.React
           </svg>
         ) : null}
         {solid && base}
-        {children}
-        <AbsoluteFill style={{ transform: cam || undefined }}>{content}</AbsoluteFill>
-        <Overlays />
+        {shots ? <AbsoluteFill style={{ transform: viewTransform(farther(view, 0.55), width, height) }}>{children}</AbsoluteFill> : children}
+        <MotionBlur id={scene.id} vx={vel.vx} vy={vel.vy} radial={vel.radial} style={{ transform: viewTransform(view, width, height) }}>
+          <AbsoluteFill style={{ transform: cam || undefined }}>{content}</AbsoluteFill>
+          <Overlays />
+        </MotionBlur>
       </AbsoluteFill>
     </>
   );

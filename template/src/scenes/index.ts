@@ -5,6 +5,8 @@ import { CompareScene, MediaScene, TimelineScene } from "./Story";
 import { HeadlineScene, KineticScene, PriceChartScene, ScaleCompareScene, UnitGridScene } from "./Motion";
 import { MapScene } from "./Map";
 import { FocusScene, PhotoStackScene, SplitScene } from "./Frame";
+import { FootageScene, ParallaxScene } from "./Footage";
+import { CanvasScene } from "./Canvas";
 
 // Scene registry: keys must match the storyboard schema's scene type enum.
 export const SCENES: Record<string, React.FC<any>> = {
@@ -30,4 +32,7 @@ export const SCENES: Record<string, React.FC<any>> = {
   focus: FocusScene,
   split: SplitScene,
   "photo-stack": PhotoStackScene,
+  footage: FootageScene,
+  parallax: ParallaxScene,
+  canvas: CanvasScene,
 };

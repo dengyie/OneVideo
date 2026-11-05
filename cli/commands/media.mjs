@@ -1,16 +1,18 @@
 // tts / music / timeline / assets / decide
-import { appendFileSync, copyFileSync, existsSync, mkdirSync, writeFileSync } from "node:fs";
+import { appendFileSync, copyFileSync, existsSync, mkdirSync, rmSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { download } from "../lib/http.mjs";
-import { UserError, loadProject, readJson, writeJson, log, warn } from "../lib/project.mjs";
+import { UserError, loadProject, readJson, writeJson, log, warn, ONEVIDEO_ROOT } from "../lib/project.mjs";
 import { runTts, ttsConfig, sceneLines } from "../lib/tts.mjs";
 import { writeMusic, synthSfx, SFX, MUSIC_PRESETS } from "../lib/synth.mjs";
 import { writeWav } from "../lib/wav.mjs";
 import { checkProject, printIssues } from "../lib/check.mjs";
-import { search, fetchAsset, scoreCandidate, assetFileExists } from "../lib/assets.mjs";
+import { search, fetchAsset, scoreCandidate, assetFileExists, depthPath, framesDir, countFrames } from "../lib/assets.mjs";
+import { run } from "../lib/ffmpeg.mjs";
 import { AUTO_TRANSITION_SFX, DIMENSIONS, overlaySound, sfxFile } from "../lib/timeline.mjs";
 import { categories, entryPath, loadCatalog, resolveSfx } from "../lib/library.mjs";
 import { spokenLength } from "../lib/text.mjs";
+import { beatsFile, ensureBeats, gridBeats } from "../lib/beats.mjs";
 
 const list = (v) => (typeof v === "string" ? v.split(",").map((s) => s.trim()).filter(Boolean) : []);
 
@@ -84,14 +86,20 @@ export async function music(args) {
       writeFileSync(file, await download(config.music.url));
       log(`music: downloaded ${config.music.url} → public/${config.music.file}`);
     }
-    return log(`using provided music file ${config.music.file}${config.music.credit ? ` (${config.music.credit})` : ""}`);
+    if (args.force) rmSync(beatsFile(file), { force: true });
+    const b = await ensureBeats(project.root, config.music);
+    log(`using provided music file ${config.music.file}${config.music.credit ? ` (${config.music.credit})` : ""}${b ? `, ~${b.bpm} BPM, ${b.beats.length} beats` : ""}`);
+    return;
   }
   const preset = args.preset ?? config.music?.preset ?? "ambient";
   if (!MUSIC_PRESETS[preset]) throw new UserError(`unknown preset "${preset}" (${Object.keys(MUSIC_PRESETS).join(", ")})`);
   const duration = args.duration ? Number(args.duration) : pre.timeline ? pre.timeline.duration + 2 : null;
   if (!duration) throw new UserError("need timings to size the music; run: onevideo tts (or pass --duration <sec>)");
   mkdirSync(paths.musicDir, { recursive: true });
-  writeMusic(join(paths.musicDir, "bgm.wav"), duration, { preset, seed: config.music?.seed ?? 7 });
+  const bgm = join(paths.musicDir, "bgm.wav");
+  writeMusic(bgm, duration, { preset, seed: config.music?.seed ?? 7 });
+  // The synth knows its own tempo: the beat grid is exact, no detection needed.
+  writeFileSync(beatsFile(bgm), JSON.stringify({ bpm: MUSIC_PRESETS[preset].bpm, beats: gridBeats(MUSIC_PRESETS[preset].bpm, duration), source: `synth:${preset}` }));
   log(`music: ${preset}, ${duration.toFixed(1)}s → public/music/bgm.wav`);
 }
 
@@ -154,4 +162,35 @@ export async function decide(args) {
   const entry = { at: new Date().toISOString(), category, subject, selected: args.selected, options: list(args.options), reason: args.reason ?? "" };
   appendFileSync(project.p("plan", "decisions.jsonl"), JSON.stringify(entry) + "\n");
   log(`decision recorded: ${category}/${subject} = ${args.selected}`);
+}
+
+// Depth maps for parallax and text-behind-subject: Depth Anything V2 (ONNX, CPU) through the
+// helper venv. Images → <file>.depth.png; videos → <file>.depth/NNNN.png every --step frames.
+export async function depth(args) {
+  const project = loadProject();
+  const items = existsSync(project.paths.assets) ? readJson(project.paths.assets).items ?? [] : [];
+  const ids = args._.length ? args._.flatMap((x) => String(x).split(",")) : null;
+  const py = process.env.ONEVIDEO_PY ?? "/opt/onevideo-py/bin/python";
+  const model = process.env.ONEVIDEO_DEPTH_MODEL ?? "/srv/onevideo/library/models/depth-anything-v2-small.onnx";
+  if (!existsSync(py)) throw new UserError(`python not found at ${py} (set ONEVIDEO_PY; needs numpy, pillow, onnxruntime)`);
+  if (!existsSync(model)) throw new UserError(`depth model not found at ${model} (set ONEVIDEO_DEPTH_MODEL)`);
+  const todo = items.filter((a) => a.file && (a.kind === "image" || a.kind === "video") && (!ids || ids.includes(a.id)));
+  for (const id of ids ?? []) if (!items.some((a) => a.id === id)) throw new UserError(`unknown asset "${id}"`);
+  if (!todo.length) return log("no image/video assets to process");
+  const script = join(ONEVIDEO_ROOT, "cli", "py", "depth.py");
+  for (const a of todo) {
+    const out = project.p("public", depthPath(a));
+    if (existsSync(out) && !args.force) { log(`✓ ${a.id}: public/${depthPath(a)} (exists; --force to redo)`); continue; }
+    let src = project.p("public", a.file);
+    const extra = [];
+    if (a.kind === "video") {
+      src = project.p("public", framesDir(a.file));
+      if (!countFrames(src)) throw new UserError(`asset "${a.id}" has no frame sequence yet; run: onevideo stills (or render) once to extract it`);
+      extra.push("--step", String(args.step ?? 2));
+    }
+    log(`depth: ${a.id} → public/${depthPath(a)}`);
+    const t0 = Date.now();
+    await run(py, [script, model, src, out, ...extra], { cwd: project.root, stdio: "inherit" });
+    log(`✓ ${a.id} in ${((Date.now() - t0) / 1000).toFixed(0)}s`);
+  }
 }

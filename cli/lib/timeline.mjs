@@ -8,7 +8,8 @@ import { collectIcons, resolveIcon } from "./icons.mjs";
 import { resolveCountry } from "./geo.mjs";
 import { entryPath, isMonoDark, loadCatalog, resolveEntry, tintLottie } from "./library.mjs";
 import { parseWav } from "./wav.mjs";
-import { countFrames, framesDir } from "./assets.mjs";
+import { countFrames, depthPath, framesDir } from "./assets.mjs";
+import { beatsFile, snapToBeat } from "./beats.mjs";
 
 export const DIMENSIONS = { "16:9": [1920, 1080], "9:16": [1080, 1920], "1:1": [1080, 1080], "4:5": [1080, 1350] };
 export const DEFAULT_HOLD = 0.5;
@@ -85,7 +86,7 @@ export function transitionSfx(cfg, type) {
 
 // Overlay sounds: an overlay's `sfx` names one, "auto" picks by type, null mutes; with
 // config.sfx.overlays = "auto" every overlay without its own `sfx` gets the auto sound.
-export const OVERLAY_SFX = { icon: "ui-pop", burst: "ui-pop", confetti: "success-sting", arrow: "swish", mark: "marker", callout: "click", stamp: "impact", "lower-third": "whoosh-soft", spotlight: "swell", flash: "boom", image: "ui-pop", lottie: "ui-pop" };
+export const OVERLAY_SFX = { word: "ui-pop", icon: "ui-pop", burst: "ui-pop", confetti: "success-sting", arrow: "swish", mark: "marker", callout: "click", stamp: "impact", "lower-third": "whoosh-soft", spotlight: "swell", flash: "boom", image: "ui-pop", lottie: "ui-pop" };
 export function overlaySound(ov, cfg) {
   const s = ov.sfx === undefined ? (cfg?.overlays === "auto" ? "auto" : null) : ov.sfx;
   if (!s) return null;
@@ -94,7 +95,81 @@ export function overlaySound(ov, cfg) {
 }
 
 // Scene types that paint the whole frame themselves (no theme background shows through).
-const OPAQUE_TYPES = new Set(["media", "focus", "split"]);
+const OPAQUE_TYPES = new Set(["media", "focus", "split", "footage", "parallax"]);
+
+// Auto shot track: one framing per caption line, alternating moves and hard cuts, never far
+// enough in to lose a header or a card at the edge.
+export const AUTO_SHOTS = [
+  { zoom: 1, x: 0.5, y: 0.5 },
+  { zoom: 1.12, x: 0.44, y: 0.47 },
+  { zoom: 1.07, x: 0.56, y: 0.53, rotate: 0.4 },
+  { zoom: 1.16, x: 0.5, y: 0.45 },
+];
+
+// When something happens inside a scene: a named cue, a phrase / seconds (`at`), or the nth
+// music beat counted from the scene start ({ beat: n }). Returns scene-relative seconds.
+export function resolveWhen(spec, { cues, lines, duration, start = 0, beats = [] }) {
+  if (spec?.cue !== undefined) return cues[spec.cue] !== undefined ? { t: cues[spec.cue] + (spec.offset ?? 0) } : { error: `unknown cue "${spec.cue}"` };
+  const at = spec?.at ?? 0;
+  if (at && typeof at === "object" && at.beat !== undefined) {
+    const local = beats.filter((b) => b >= start - 1e-3).map((b) => b - start);
+    return local[at.beat] !== undefined ? { t: local[at.beat] + (at.offset ?? 0) } : { error: `beat ${at.beat} is past the music` };
+  }
+  return resolveAt(at, lines, duration);
+}
+
+// Storyboard shots → compiled Shot[]: `focus: [x, y, w, h]` frames a region (zoom to fit it with
+// a margin), otherwise x/y/zoom directly. Times snap to a beat within 0.12 s when beats exist.
+export function compileShots(spec, ctx) {
+  const { lines, duration, start, beats, snap } = ctx;
+  const out = [];
+  const errors = [];
+  const list = spec === "auto" || spec?.auto
+    ? lines.map((l, i) => ({ ...AUTO_SHOTS[i % AUTO_SHOTS.length], at: i ? Math.max(0, l.start - CUE_LEAD) : 0, cut: i % 2 === 0 && i > 0, ...(typeof spec === "object" ? spec.each ?? {} : {}) }))
+    : Array.isArray(spec) ? spec : [];
+  for (const [k, sh] of list.entries()) {
+    const res = resolveWhen(sh, ctx);
+    if (res.error) { errors.push(`shot ${k}: ${res.error}`); continue; }
+    let t = clampT(res.t, duration);
+    if (snap && beats.length && sh.snap !== false) t = snapToBeat(start + t, beats, 0.12) - start;
+    let { zoom = 1, x = 0.5, y = 0.5 } = sh;
+    if (Array.isArray(sh.focus)) {
+      const [fx, fy, fw, fh] = sh.focus;
+      zoom = sh.zoom ?? Math.min(3, Math.max(1, 0.8 / Math.max(fw, fh)));
+      x = fx + fw / 2; y = fy + fh / 2;
+    }
+    out.push({ t: r3(clampT(t, duration)), zoom: r3(zoom), x: r3(x), y: r3(y), rotate: r3(sh.rotate ?? 0), cut: Boolean(sh.cut), ease: r3(sh.ease ?? 0.6) });
+  }
+  out.sort((a, b) => a.t - b.t);
+  return { shots: out, errors };
+}
+
+// An inherited canvas item arrives in its final form: already shown, morphs applied.
+const settled = (it) => {
+  const { morph = [], at: _a, cue: _c, ...rest } = it;
+  const last = morph.length ? morph[morph.length - 1] : {};
+  const { at: _ma, cue: _mc, t: _mt, ...state } = last;
+  return { ...rest, ...state, t: 0, settled: true };
+};
+
+// Resolve every `at`/`cue` in a canvas / footage scene's props to `t` (scene seconds).
+function resolvePropTimes(type, props, ctx, errors, where) {
+  const fix = (o, label) => {
+    if (!o || (o.at === undefined && o.cue === undefined)) return;
+    const res = resolveWhen(o, ctx);
+    if (res.error) errors.push(`${where} ${label}: ${res.error}`); else o.t = r3(clampT(res.t, ctx.duration));
+  };
+  if (type === "canvas") {
+    for (const [i, it] of (props.items ?? []).entries()) { fix(it, `item ${it.id ?? i}`); for (const [j, m] of (it.morph ?? []).entries()) fix(m, `item ${it.id ?? i} morph ${j}`); }
+    for (const [i, v] of (props.path ?? []).entries()) fix(v, `path ${i}`);
+    for (const [i, l] of (props.links ?? []).entries()) fix(l, `link ${i}`);
+  }
+  if (type === "footage") {
+    for (const [i, r] of (props.ramp ?? []).entries()) fix(r, `ramp ${i}`);
+    fix(props.title, "title");
+  }
+  if (type === "parallax") fix(props.title, "title");
+}
 
 export function compileTimeline({ config, script, storyboard, timings, assets, research, root }) {
   const errors = [];
@@ -117,6 +192,12 @@ export function compileTimeline({ config, script, storyboard, timings, assets, r
   let frame = 0;
 
   const sfxCfg = { transition: null, volume: 0.5, ...(config.sfx ?? {}) };
+  // Beat grid of the music, cached by `onevideo music` / render (see beats.mjs).
+  const musicSrc = config.music?.file ?? "music/bgm.wav";
+  const beatsAt = root ? beatsFile(join(root, "public", musicSrc)) : null;
+  const beats = config.music?.enabled !== false && beatsAt && existsSync(beatsAt) ? JSON.parse(readFileSync(beatsAt, "utf8")).beats ?? [] : [];
+  const snap = config.beats?.snap !== false;
+  let lastCanvas = null;
 
   for (const sb of storyboard.scenes) {
     const sc = scriptById.get(sb.id);
@@ -180,6 +261,26 @@ export function compileTimeline({ config, script, storyboard, timings, assets, r
     }
 
     const props = structuredClone(sb.props ?? {});
+    const ctx = { cues, lines, duration, start, beats, snap };
+    // A canvas scene with `inherit` continues the previous canvas: same world, camera picks up
+    // where it left off (cut into it for a seamless join).
+    if (sb.type === "canvas" && props.inherit) {
+      if (!lastCanvas) errors.push(`scene "${sb.id}": canvas inherit needs an earlier canvas scene`);
+      else {
+        const own = new Map((props.items ?? []).map((it) => [it.id, it]));
+        props.items = [...lastCanvas.items.filter((it) => !own.has(it.id)).map(settled), ...(props.items ?? [])];
+        const end = lastCanvas.path?.[lastCanvas.path.length - 1];
+        if (end) props.path = [{ ...end, at: 0, cue: undefined, cut: true }, ...(props.path ?? [])];
+      }
+    }
+    resolvePropTimes(sb.type, props, ctx, errors, `scene "${sb.id}"`);
+    if (sb.type === "canvas") lastCanvas = { items: props.items ?? [], path: props.path ?? [] };
+    let shots;
+    if (sb.shots) {
+      const res = compileShots(sb.shots, ctx);
+      res.errors.forEach((e) => errors.push(`scene "${sb.id}" ${e}`));
+      if (res.shots.length) shots = res.shots;
+    }
     if (sb.type === "sources" && !props.items?.length && props.auto !== false) props.items = sourceList(research, assets, libraryCredits);
     if (sb.type === "map") for (const h of props.highlight ?? []) {
       const id = resolveCountry(h.id);
@@ -199,6 +300,11 @@ export function compileTimeline({ config, script, storyboard, timings, assets, r
       if (!a.file) { errors.push(`asset "${id}" not fetched yet; run: onevideo assets fetch`); continue; }
       if (root && !existsSync(join(root, "public", a.file))) errors.push(`asset "${id}" file missing: public/${a.file}; run: onevideo assets fetch`);
       usedAssets[id] = { src: a.file, kind: a.kind, credit: credit(a) };
+      if (root && existsSync(join(root, "public", depthPath(a)))) {
+        usedAssets[id].depth = depthPath(a);
+        const meta = join(root, "public", depthPath(a), "meta.json");
+        if (a.kind === "video" && existsSync(meta)) { const m = JSON.parse(readFileSync(meta, "utf8")); Object.assign(usedAssets[id], { depthStep: m.step, depthFrames: m.frames }); }
+      }
       if (a.kind === "video" && root) {
         const frames = countFrames(join(root, "public", framesDir(a.file)));
         if (frames) Object.assign(usedAssets[id], { seq: framesDir(a.file), frames, fps: 30 });
@@ -235,6 +341,7 @@ export function compileTimeline({ config, script, storyboard, timings, assets, r
       lines: lines.map((l) => ({ text: l.text, start: l.start, end: l.end })),
       props,
       ...(overlays.length ? { overlays } : {}),
+      ...(shots ? { shots } : {}),
     });
     frame += durationInFrames;
   }
@@ -255,7 +362,6 @@ export function compileTimeline({ config, script, storyboard, timings, assets, r
   if (last) last.transitionOut = { type: normTransition(last.exit)?.type === "cut" ? "cut" : "fade", frames: normTransition(last.exit)?.type === "cut" ? 0 : Math.round(0.6 * fps), tail: 0, direction: "left", nextOpaque: false };
   sfx.sort((a, b) => a.at - b.at);
   // music.file is a path under public/ (own or licensed track); otherwise the synthesized bgm.wav.
-  const musicSrc = config.music?.file ?? "music/bgm.wav";
   const music = config.music?.enabled === false ? null : root && existsSync(join(root, "public", musicSrc))
     ? { src: musicSrc, volume: config.music?.volume ?? 0.22, duckTo: config.music?.duckTo ?? 0.07, fade: 1.2, credit: config.music?.file ? config.music?.credit ?? null : "OneVideo 程序化合成" }
     : null;
@@ -293,6 +399,7 @@ export function compileTimeline({ config, script, storyboard, timings, assets, r
     lottie: Object.fromEntries(Object.entries(lottie).filter(([k]) => scenes.some((sc) => sc.overlays?.some((o) => o.src === k)))),
     libraryCredits,
     look: config.look ?? theme.look ?? null,
+    beats: music ? beats.filter((b) => b <= totalFrames / fps) : [],
     scenes,
   };
   return { timeline, errors, warnings };

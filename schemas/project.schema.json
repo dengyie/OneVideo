@@ -312,6 +312,16 @@
           "maximum": 1
         }
       }
+    },
+    "beats": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "snap": {
+          "type": "boolean",
+          "description": "snap shot times to music beats within 0.12 s (default true)"
+        }
+      }
     }
   }
 }

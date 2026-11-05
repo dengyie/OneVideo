@@ -223,7 +223,10 @@
             "map",
             "focus",
             "split",
-            "photo-stack"
+            "photo-stack",
+            "footage",
+            "parallax",
+            "canvas"
           ]
         },
         "props": {
@@ -358,6 +361,57 @@
           "items": {
             "$ref": "#/$defs/overlay"
           }
+        },
+        "shots": {
+          "description": "camera shot track over the whole scene (content + overlays): \"auto\" = one framing per caption line alternating moves and cuts, or a list of shots",
+          "oneOf": [
+            {
+              "const": "auto"
+            },
+            {
+              "type": "object",
+              "required": [
+                "auto"
+              ],
+              "additionalProperties": false,
+              "properties": {
+                "auto": {
+                  "const": true
+                },
+                "each": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "zoom": {
+                      "type": "number",
+                      "minimum": 0.5,
+                      "maximum": 3
+                    },
+                    "rotate": {
+                      "type": "number",
+                      "minimum": -10,
+                      "maximum": 10
+                    },
+                    "ease": {
+                      "type": "number",
+                      "minimum": 0.05,
+                      "maximum": 4
+                    },
+                    "cut": {
+                      "type": "boolean"
+                    }
+                  }
+                }
+              }
+            },
+            {
+              "type": "array",
+              "minItems": 1,
+              "items": {
+                "$ref": "#/$defs/shot"
+              }
+            }
+          ]
         }
       }
     },
@@ -410,7 +464,8 @@
             "lower-third",
             "spotlight",
             "flash",
-            "image"
+            "image",
+            "word"
           ]
         },
         "at": {
@@ -575,6 +630,95 @@
             "circle",
             "rounded"
           ]
+        },
+        "style": {
+          "enum": [
+            "slam",
+            "rise",
+            "type"
+          ],
+          "description": "word overlay entrance"
+        }
+      }
+    },
+    "when": {
+      "description": "like `at`, plus {beat: n} = the nth music beat counted from the scene start",
+      "oneOf": [
+        {
+          "$ref": "#/$defs/at"
+        },
+        {
+          "type": "object",
+          "required": [
+            "beat"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "beat": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "offset": {
+              "type": "number"
+            }
+          }
+        }
+      ]
+    },
+    "shot": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "one framing on the scene's shot track; cut = jump on this frame, else travel in `ease` s",
+      "properties": {
+        "at": {
+          "$ref": "#/$defs/when"
+        },
+        "cue": {
+          "type": "string",
+          "minLength": 1
+        },
+        "zoom": {
+          "type": "number",
+          "minimum": 0.5,
+          "maximum": 3
+        },
+        "x": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "y": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "focus": {
+          "type": "array",
+          "minItems": 4,
+          "maxItems": 4,
+          "items": {
+            "type": "number",
+            "minimum": -0.5,
+            "maximum": 1.5
+          },
+          "description": "[x, y, w, h] region (frame fractions) to frame"
+        },
+        "rotate": {
+          "type": "number",
+          "minimum": -10,
+          "maximum": 10
+        },
+        "cut": {
+          "type": "boolean"
+        },
+        "ease": {
+          "type": "number",
+          "minimum": 0.05,
+          "maximum": 4
+        },
+        "snap": {
+          "type": "boolean",
+          "description": "false = do not snap to a beat"
         }
       }
     }
@@ -1964,6 +2108,496 @@
               "cue": {
                 "type": "string",
                 "minLength": 1
+              }
+            }
+          }
+        }
+      }
+    },
+    "footage": {
+      "type": "object",
+      "required": [
+        "asset"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "asset": {
+          "type": "string"
+        },
+        "startFrom": {
+          "type": "number",
+          "minimum": 0
+        },
+        "ramp": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "speed"
+            ],
+            "additionalProperties": false,
+            "properties": {
+              "at": {
+                "$ref": "#/$defs/when"
+              },
+              "cue": {
+                "type": "string",
+                "minLength": 1
+              },
+              "speed": {
+                "type": "number",
+                "minimum": 0.05,
+                "maximum": 8
+              }
+            }
+          },
+          "description": "speed ramp: from each point the clip plays at `speed` (blended over 0.3 s)"
+        },
+        "dim": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "tint": {
+          "type": "string"
+        },
+        "title": {
+          "type": "object",
+          "required": [
+            "text"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "text": {
+              "type": "string",
+              "minLength": 1
+            },
+            "at": {
+              "$ref": "#/$defs/when"
+            },
+            "cue": {
+              "type": "string",
+              "minLength": 1
+            },
+            "x": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1
+            },
+            "y": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1
+            },
+            "size": {
+              "type": "number",
+              "minimum": 20,
+              "maximum": 600
+            },
+            "color": {
+              "$ref": "#/$defs/color"
+            },
+            "kicker": {
+              "type": "string"
+            },
+            "behind": {
+              "type": "boolean",
+              "description": "put the title behind the subject (needs onevideo depth on the asset)"
+            },
+            "matte": {
+              "type": "object",
+              "additionalProperties": false,
+              "description": "which pixels count as the subject: subject = nearer than surroundings, near = absolute depth above threshold",
+              "properties": {
+                "mode": {
+                  "enum": [
+                    "subject",
+                    "near"
+                  ]
+                },
+                "threshold": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 1
+                },
+                "soft": {
+                  "type": "number",
+                  "minimum": 0.005,
+                  "maximum": 0.5
+                }
+              }
+            },
+            "style": {
+              "enum": [
+                "rise",
+                "slam"
+              ]
+            }
+          }
+        }
+      }
+    },
+    "parallax": {
+      "type": "object",
+      "required": [
+        "asset"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "asset": {
+          "type": "string"
+        },
+        "move": {
+          "enum": [
+            "dolly-in",
+            "dolly-out",
+            "truck-left",
+            "truck-right",
+            "crane-up",
+            "orbit"
+          ]
+        },
+        "amount": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 3
+        },
+        "dim": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "title": {
+          "type": "object",
+          "required": [
+            "text"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "text": {
+              "type": "string",
+              "minLength": 1
+            },
+            "at": {
+              "$ref": "#/$defs/when"
+            },
+            "cue": {
+              "type": "string",
+              "minLength": 1
+            },
+            "x": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1
+            },
+            "y": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1
+            },
+            "size": {
+              "type": "number",
+              "minimum": 20,
+              "maximum": 600
+            },
+            "color": {
+              "$ref": "#/$defs/color"
+            },
+            "kicker": {
+              "type": "string"
+            },
+            "behind": {
+              "type": "boolean",
+              "description": "put the title behind the subject (needs onevideo depth on the asset)"
+            },
+            "matte": {
+              "type": "object",
+              "additionalProperties": false,
+              "description": "which pixels count as the subject: subject = nearer than surroundings, near = absolute depth above threshold",
+              "properties": {
+                "mode": {
+                  "enum": [
+                    "subject",
+                    "near"
+                  ]
+                },
+                "threshold": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 1
+                },
+                "soft": {
+                  "type": "number",
+                  "minimum": 0.005,
+                  "maximum": 0.5
+                }
+              }
+            },
+            "style": {
+              "enum": [
+                "rise",
+                "slam"
+              ]
+            }
+          }
+        }
+      }
+    },
+    "canvas": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "inherit": {
+          "type": "boolean",
+          "description": "continue the previous canvas scene's world and camera"
+        },
+        "items": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "id"
+            ],
+            "additionalProperties": false,
+            "description": "world item; x/y = centre, w/h = size, in layout units (1u = 1px at 1080 short edge; the first screen spans 0–1920 × 0–1080 in 16:9)",
+            "properties": {
+              "id": {
+                "type": "string",
+                "minLength": 1
+              },
+              "at": {
+                "$ref": "#/$defs/when"
+              },
+              "cue": {
+                "type": "string",
+                "minLength": 1
+              },
+              "type": {
+                "enum": [
+                  "stat",
+                  "text",
+                  "bar",
+                  "dot",
+                  "image"
+                ]
+              },
+              "x": {
+                "type": "number"
+              },
+              "y": {
+                "type": "number"
+              },
+              "w": {
+                "type": "number",
+                "minimum": 1
+              },
+              "h": {
+                "type": "number",
+                "minimum": 1
+              },
+              "radius": {
+                "type": "number",
+                "minimum": 0
+              },
+              "color": {
+                "$ref": "#/$defs/color"
+              },
+              "opacity": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 1
+              },
+              "value": {
+                "type": "number"
+              },
+              "max": {
+                "type": "number"
+              },
+              "label": {
+                "type": "string"
+              },
+              "text": {
+                "type": "string"
+              },
+              "size": {
+                "type": "number",
+                "minimum": 8
+              },
+              "asset": {
+                "type": "string"
+              },
+              "format": {
+                "$ref": "#/$defs/format"
+              },
+              "morph": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "at": {
+                      "$ref": "#/$defs/when"
+                    },
+                    "cue": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "dur": {
+                      "type": "number",
+                      "minimum": 0.05,
+                      "maximum": 4
+                    },
+                    "type": {
+                      "enum": [
+                        "stat",
+                        "text",
+                        "bar",
+                        "dot",
+                        "image"
+                      ]
+                    },
+                    "x": {
+                      "type": "number"
+                    },
+                    "y": {
+                      "type": "number"
+                    },
+                    "w": {
+                      "type": "number",
+                      "minimum": 1
+                    },
+                    "h": {
+                      "type": "number",
+                      "minimum": 1
+                    },
+                    "radius": {
+                      "type": "number",
+                      "minimum": 0
+                    },
+                    "color": {
+                      "$ref": "#/$defs/color"
+                    },
+                    "opacity": {
+                      "type": "number",
+                      "minimum": 0,
+                      "maximum": 1
+                    },
+                    "value": {
+                      "type": "number"
+                    },
+                    "max": {
+                      "type": "number"
+                    },
+                    "label": {
+                      "type": "string"
+                    },
+                    "text": {
+                      "type": "string"
+                    },
+                    "size": {
+                      "type": "number",
+                      "minimum": 8
+                    },
+                    "asset": {
+                      "type": "string"
+                    },
+                    "format": {
+                      "$ref": "#/$defs/format"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "path": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "camera stop: frame item id(s) or a point; fly = travel seconds",
+            "properties": {
+              "at": {
+                "$ref": "#/$defs/when"
+              },
+              "cue": {
+                "type": "string",
+                "minLength": 1
+              },
+              "focus": {
+                "oneOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "array",
+                    "minItems": 1,
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  {
+                    "type": "object",
+                    "required": [
+                      "x",
+                      "y"
+                    ],
+                    "additionalProperties": false,
+                    "properties": {
+                      "x": {
+                        "type": "number"
+                      },
+                      "y": {
+                        "type": "number"
+                      }
+                    }
+                  }
+                ]
+              },
+              "zoom": {
+                "type": "number",
+                "minimum": 0.2,
+                "maximum": 4
+              },
+              "cut": {
+                "type": "boolean"
+              },
+              "fly": {
+                "type": "number",
+                "minimum": 0.05,
+                "maximum": 5
+              }
+            }
+          }
+        },
+        "links": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "from",
+              "to"
+            ],
+            "additionalProperties": false,
+            "properties": {
+              "from": {
+                "type": "string"
+              },
+              "to": {
+                "type": "string"
+              },
+              "at": {
+                "$ref": "#/$defs/when"
+              },
+              "cue": {
+                "type": "string",
+                "minLength": 1
+              },
+              "color": {
+                "$ref": "#/$defs/color"
+              },
+              "dashed": {
+                "type": "boolean"
               }
             }
           }

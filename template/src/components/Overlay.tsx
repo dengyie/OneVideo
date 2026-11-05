@@ -9,7 +9,7 @@ import { Icon } from "./Icon";
 
 // Overlay layer: motion graphics placed on top of any scene at a cue (compiled to `t`, seconds
 // scene-relative, and `end`). Positions are fractions of the frame; sizes are layout units.
-// They ride with the scene through transitions but ignore its camera move.
+// They ride with the scene through transitions and its shot track, but ignore its slow camera drift.
 const FADE = 0.3;
 
 export const Overlays: React.FC = () => {
@@ -95,6 +95,7 @@ const OverlayView: React.FC<{ o: Overlay; i: number; local: number; out: number 
       return <AbsoluteFill style={{ background: o.color ?? "#fff", opacity: clamp01(k) * 0.85, mixBlendMode: "screen" }} />;
     }
     case "image": return <ImageSticker o={o} x={x} y={y} size={size} local={local} out={out} />;
+    case "word": return <Word o={o} x={x} y={y} color={o.color ?? theme.colors.text} local={local} out={out} />;
     default: return null;
   }
 };
@@ -319,4 +320,30 @@ export const FilmLook: React.FC = () => {
       )}
     </AbsoluteFill>
   );
+};
+
+// Keyword pop: the word the narrator is saying, set huge for a beat. "slam" drops in from 1.6×
+// with a blur that clears on impact, "rise" slides up out of a mask, "type" types it out.
+const Word: React.FC<{ o: Overlay; x: number; y: number; color: string; local: number; out: number }> = ({ o, x, y, color, local, out }) => {
+  const theme = useTheme();
+  const { u } = useLayout();
+  const text = o.text ?? "";
+  const size = (o.size ?? 150) * u;
+  const style = o.style ?? "slam";
+  const base: React.CSSProperties = { fontSize: size, fontWeight: 900, lineHeight: 1, whiteSpace: "nowrap", color, fontFamily: /^[\d$¥%+.,-]+$/.test(text) ? theme.fonts.number : undefined, letterSpacing: -0.02 * size };
+  const box = (node: React.ReactNode, extra: React.CSSProperties = {}) => (
+    <div style={{ position: "absolute", left: x, top: y, transform: `translate(-50%, -50%) rotate(${o.rotate ?? 0}deg)`, opacity: out, ...extra }}>{node}</div>
+  );
+  if (style === "rise") {
+    const p = easeOut(local / 0.4);
+    return box(<div style={{ overflow: "hidden", padding: `0 ${0.05 * size}px` }}><div style={{ ...base, transform: `translateY(${(1 - p) * 110}%)` }}>{text}</div></div>);
+  }
+  if (style === "type") {
+    const chars = Array.from(text);
+    const n = Math.min(chars.length, Math.floor(local / 0.06) + 1);
+    return box(<div style={base}>{chars.slice(0, n).join("")}<span style={{ opacity: Math.floor(local * 3) % 2 ? 0 : 0.8 }}>▍</span></div>);
+  }
+  const p = clamp01(local / 0.22);
+  const s = lerp(1.6, 1, easeOut(p)) * (1 + 0.04 * Math.sin(clamp01((local - 0.22) / 0.25) * Math.PI));
+  return box(<div style={{ ...base, transform: `scale(${s})`, filter: p < 1 ? `blur(${(1 - p) * 0.06 * size}px)` : undefined }}>{text}</div>, { opacity: out * Math.min(1, p * 3) });
 };

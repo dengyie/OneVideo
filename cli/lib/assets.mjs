@@ -114,6 +114,8 @@ export async function cutClip(src, dest, clip) {
 // is deterministic and light, where <OffthreadVideo>'s frame cache shrinks with free memory and on
 // a 2 GB render node evicts frames as soon as they are decoded ("No frame found at position").
 export const framesDir = (file) => file.replace(/\.mp4$/i, ".frames");
+// Depth map made by `onevideo depth`: one PNG for an image, a PNG sequence dir for a video.
+export const depthPath = (a) => (a.kind === "video" ? a.file.replace(/\.mp4$/i, ".depth") : a.file.replace(/\.[a-z0-9]+$/i, ".depth.png"));
 export const countFrames = (dir) => (existsSync(dir) ? readdirSync(dir).filter((f) => /^\d{4}\.jpg$/.test(f)).length : 0);
 
 export async function clipFrames(mp4, dir) {
