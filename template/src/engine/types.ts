@@ -69,5 +69,6 @@ export type Timeline = {
   sfx: { sound: string; src: string; at: number; volume: number }[];
   chapters: { title: string; start: number }[];
   assets: Record<string, { src: string; kind: "image" | "video"; credit: string }>;
+  icons?: Record<string, { body: string; viewBox: string }>;
   scenes: Scene[];
 };

@@ -1,6 +1,6 @@
 # 场景目录
 
-13 种场景类型，props 的权威定义在 `schemas/storyboard.schema.json` 的 `props.<type>`；`onevideo validate` 按类型校验。`STATIC_TYPES`（quote、bullets、title、chapter、sources）在整片中占比不超过 40%（`gates.staticRatioMax`），同类型连续不超过 2 个（`gates.maxSameTypeRun`）。
+22 种场景类型，props 的权威定义在 `schemas/storyboard.schema.json` 的 `props.<type>`；`onevideo validate` 按类型校验。`STATIC_TYPES`（quote、bullets、title、chapter、sources）在整片中占比不超过 40%（`gates.staticRatioMax`），同类型连续不超过 2 个（`gates.maxSameTypeRun`）。
 
 ## 何时用哪种
 
@@ -19,12 +19,23 @@
 | `bullets` | 要点总结 | `items` | `title` |
 | `media` | 照片、视频素材 | `asset` | `motion`（in/out/left/right/up/none）、`fit`、`dim`、`caption` |
 | `sources` | 片尾来源 | — | `auto`（默认从 research + assets 生成） |
+| `kinetic` | 钩子、金句、关键结论：逐行动态排字 | `lines[{text}]`（≤6） | 行 `style`（rise/slam/type/blur）、`emphasis`（手绘下划线）、`size`、`cue`；`kicker`、`number{value,format,label}` 计数 |
+| `headline` | 新闻标题/报道截图的“证据”镜头 | `items[{outlet,title}]`（≤4） | `date`、`excerpt`、`highlight`（荧光笔标出的子串）、`cue` |
+| `unit-grid` | “每 100 人里有 N 人”式比例 | `groups[{count,label}]` | `total`、`columns`、`icon`（Lucide 名）、组 `color`/`cue`、`note` |
+| `scale-compare` | 数量级差距（嵌套圆，对数缩放镜头） | `items[{label,value}]`（2–6） | `shape`（circle/square）、`format`、`note`、`cue` |
+| `price-chart` | 股价/币价走势，笔尖带实时价格与涨跌幅 | `points[[x,y]]` 或 `candles[[x,o,h,l,c]]` | `events[{x,label,tone}]` 旗标、`drawCue`、`baseline`、`area`、`label` |
+| `map` | 地理：国家高亮、地点、航线、飞镜头；`mode:"globe"` 为旋转地球 | — | `views[{center:[lon,lat],zoom,cue}]`、`highlight[{id}]`（ISO 二位码/中文名/英文名/数字码；中国自动含台湾）、`pins`、`routes[{from,to}]`、`spin`、`fly` |
+| `focus` | 一张照片里逐个推近细节并手绘圈出 | `asset`、`regions[{x,y,w,h}]`（0–1 坐标） | 区域 `label`、`shape`（box/circle）、`zoom`、`cue`；`hold` 结尾拉回全图 |
+| `split` | 左右（竖屏为上下）对照，或 `mode:"pip"` 画中画 | `left`、`right`（`{asset,title,text,value,format,caption}`） | `ratio`、`corner`、各侧 `cue` |
+| `photo-stack` | 多张照片像相纸一样逐张落到桌面 | `items[{asset}]`（≤8） | `caption`、`cue`、`title` |
 
 ## 场景通用字段
 
 - `header: {title, subtitle}`：图表场景的标题条。subtitle 写口径和日期（“2026-11-04 收盘 · StockTitan”）。
 - `cues: {name: 时间}`：时间可以是秒（负数从结尾倒数）、0–1 比例、旁白里的短语，或 `{phrase, offset}`。props 用 `cue`、`drawCue`、`periodCues` 引用 cue 名，引用未定义的 cue 会报错。
-- `enter` / `exit`：`fade`、`slide`、`zoom`、`wipe`、`cut`。
+- `enter` / `exit`：转场类型 `fade`、`slide`、`push`、`whip`、`zoom`、`punch`、`iris`、`wipe`、`clock`、`dip`、`cut`，或 `{type, duration, direction, sfx}`；相邻两场景重叠播放，边界类型取 `next.enter ?? prev.exit ?? theme.transition`。
+- `camera`：`static`、`drift`（默认）、`push`、`pull`、`pan-left`、`pan-right`、`rise`、`handheld`，或 `{move, amount}`。
+- 图标：任意 props 里的 `icon` 字段写 Lucide 名（`rocket`、`user-round`）或 `flag:<iso2>`（圆形国旗），编译时只内联用到的 SVG；未知名字会报错。
 - `background`：`default`、`plain`、`grid`、`stars`、`media`。
 - `hold`：旁白结束后停留的时间（默认 0.5s）；`duration` / `minDuration` 给无旁白或需要更长停留的场景。
 - `sfx: [{sound, at}]`：`at` 同 cue 语法。

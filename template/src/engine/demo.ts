@@ -8,7 +8,7 @@ type Spec = Pick<Scene, "id" | "type" | "props"> & { seconds: number; header?: S
 
 const specs: Spec[] = [
   { id: "title", type: "title", seconds: 4, props: { kicker: "ONEVIDEO", title: "数据驱动的视频引擎", subtitle: "脚本 → 配音 → 时间轴 → 渲染 → 质检", date: "2026" } },
-  { id: "chapter", type: "chapter", seconds: 3, props: { index: 1, title: "场景目录", subtitle: "13 种可组合场景" } },
+  { id: "chapter", type: "chapter", seconds: 3, props: { index: 1, title: "场景目录", subtitle: "22 种可组合场景" } },
   { id: "stats", type: "stat-cards", seconds: 5, header: { title: "关键数字" }, props: { cards: [
     { value: 1.75e12, format: { prefix: "$", compact: "en", decimals: 2 }, label: "估值" },
     { value: 155, format: { suffix: " 亿" }, label: "年收入（美元）" },
@@ -33,6 +33,27 @@ const specs: Spec[] = [
   { id: "quote", type: "quote", seconds: 4, props: { text: "精确的文字放在原生文字卡里，不交给 AI 生图。", author: "OneVideo 规则" } },
   { id: "bullets", type: "bullets", seconds: 5, header: { title: "三条原则" }, props: { items: ["每个数字都有来源", { text: "按句配音，时间轴实测", note: "字幕和动画对齐到真实语音" }, "渲染后自动质检"] } },
   { id: "compare", type: "compare", seconds: 5, props: { title: "两种做法", left: { title: "手工剪辑", items: ["慢", "难复用"] }, right: { title: "OneVideo", items: ["声明式", "可复现"], value: 10, format: { suffix: "×" } } } },
+  { id: "kinetic", type: "kinetic", seconds: 5, props: { kicker: "KINETIC", lines: [
+    { text: "一枚火箭", style: "rise" }, { text: "回收了", style: "slam", emphasis: ["回收"] }, { text: "四百次以上", style: "type", size: 1.3 },
+  ], number: { value: 400, format: { suffix: "+" }, label: "次回收" } } },
+  { id: "headline", type: "headline", seconds: 5, props: { items: [
+    { outlet: "示例日报", title: "可回收火箭第一次成功着陆", date: "2015-12-21", highlight: "成功着陆" },
+    { outlet: "示例周刊", title: "发射成本下降一个数量级", date: "2020-06-01", excerpt: "示例摘要，仅用于预览。", highlight: "一个数量级" },
+  ] } },
+  { id: "units", type: "unit-grid", seconds: 5, header: { title: "一百人里" }, props: { total: 100, columns: 20, icon: "user-round", groups: [
+    { count: 62, label: "用过" }, { count: 25, label: "听说过" }, { count: 13, label: "不知道" },
+  ], note: "示例数据" } },
+  { id: "scale", type: "scale-compare", seconds: 5, props: { title: "体量对比", items: [
+    { label: "小", value: 1, format: { suffix: " 吨" } }, { label: "中", value: 22, format: { suffix: " 吨" } }, { label: "大", value: 150, format: { suffix: " 吨" } },
+  ] } },
+  { id: "price", type: "price-chart", seconds: 6, props: { title: "示例价格", label: "USD", format: { prefix: "$" }, area: true,
+    points: [["1月", 100], ["2月", 112], ["3月", 104], ["4月", 131], ["5月", 126], ["6月", 158], ["7月", 149], ["8月", 171]],
+    events: [{ x: "4月", label: "利好", tone: "up" }, { x: "7月", label: "回调", tone: "down" }] } },
+  { id: "map", type: "map", seconds: 6, props: { title: "航线", views: [{ center: [20, 30], zoom: 1 }, { center: [110, 30], zoom: 2.6, at: 2.5 }],
+    highlight: [{ id: "156", label: "中国" }], pins: [{ lon: 116.4, lat: 39.9, label: "北京" }, { lon: 100.3, lat: 40.96, label: "酒泉" }, { lon: 110.95, lat: 19.6, label: "文昌" }],
+    routes: [{ from: [110.95, 19.6], to: [103.8, 1.35], label: "示例航线" }] } },
+  { id: "globe", type: "map", seconds: 5, props: { mode: "globe", spin: 8, views: [{ center: [-90, 25], zoom: 1 }],
+    pins: [{ lon: -80.6, lat: 28.5, label: "卡纳维拉尔角" }, { lon: -97.2, lat: 26, label: "博卡奇卡" }] } },
   { id: "sources", type: "sources", seconds: 4, props: { items: ["示例数据，仅用于预览场景"] } },
 ];
 
@@ -77,5 +98,9 @@ export const DEMO_TIMELINE: Timeline = {
   sfx: [],
   chapters: [],
   assets: {},
+  // Inlined like the compiler does (cli/lib/icons.mjs), so the bundle never ships the icon set.
+  icons: {
+    "user-round": { viewBox: "0 0 24 24", body: '<g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"><circle cx="12" cy="8" r="5"/><path d="M20 21a8 8 0 0 0-16 0"/></g>' },
+  },
   scenes,
 };

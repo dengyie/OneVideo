@@ -4,6 +4,8 @@ import { existsSync } from "node:fs";
 import { join } from "node:path";
 import { normalizeForMatch, spokenLength } from "./text.mjs";
 import { styleDef } from "./project.mjs";
+import { collectIcons, resolveIcon } from "./icons.mjs";
+import { resolveCountry } from "./geo.mjs";
 
 export const DIMENSIONS = { "16:9": [1920, 1080], "9:16": [1080, 1920], "1:1": [1080, 1080], "4:5": [1080, 1350] };
 export const DEFAULT_HOLD = 0.5;
@@ -71,6 +73,9 @@ export function transitionSfx(cfg, type) {
   return cfg[type] !== undefined ? cfg[type] : cfg["*"] ?? null;
 }
 
+// Scene types that paint the whole frame themselves (no theme background shows through).
+const OPAQUE_TYPES = new Set(["media", "focus", "split"]);
+
 export function compileTimeline({ config, script, storyboard, timings, assets, research, root }) {
   const errors = [];
   const warnings = [];
@@ -80,6 +85,7 @@ export function compileTimeline({ config, script, storyboard, timings, assets, r
   const scriptById = new Map(script.scenes.map((s) => [s.id, s]));
   const assetById = new Map((assets?.items ?? []).map((a) => [a.id, a]));
   const usedAssets = {};
+  const icons = {};
   const scenes = [];
   const captions = [];
   const narration = [];
@@ -117,8 +123,18 @@ export function compileTimeline({ config, script, storyboard, timings, assets, r
       sfx.push({ sound: fx.sound, src: `sfx/${fx.sound}.wav`, at: r3(start + clampT(res.t, duration)), volume: fx.volume ?? sfxCfg.volume });
     }
 
-    const props = { ...(sb.props ?? {}) };
+    const props = structuredClone(sb.props ?? {});
     if (sb.type === "sources" && !props.items?.length && props.auto !== false) props.items = sourceList(research, assets);
+    if (sb.type === "map") for (const h of props.highlight ?? []) {
+      const id = resolveCountry(h.id);
+      if (id) h.id = id; else errors.push(`scene "${sb.id}" map highlight: unknown country "${h.id}" (use a Natural Earth numeric id, ISO alpha-2 or English name)`);
+    }
+    for (const name of collectIcons(props)) {
+      if (icons[name]) continue;
+      const icon = resolveIcon(name);
+      if (icon) icons[name] = icon; else errors.push(`scene "${sb.id}" uses unknown icon "${name}" (Lucide name or flag:<iso2>)`);
+    }
+    if (sb.type === "unit-grid" && !icons[props.icon ?? "user-round"]) { const icon = resolveIcon(props.icon ?? "user-round"); if (icon) icons[props.icon ?? "user-round"] = icon; }
     const refs = collectAssetRefs(props);
     if (sb.backdrop) refs.add(sb.backdrop.asset);
     for (const id of refs) {
@@ -149,7 +165,7 @@ export function compileTimeline({ config, script, storyboard, timings, assets, r
       transitionIn: null,
       transitionOut: null,
       camera: { ...CAMERA_DEFAULT, ...(normCamera(theme.camera) ?? {}), ...(normCamera(sb.camera) ?? {}) },
-      opaque: Boolean(sb.backdrop) || sb.type === "media",
+      opaque: Boolean(sb.backdrop) || OPAQUE_TYPES.has(sb.type),
       header: sb.header ?? null,
       background: sb.background ?? null,
       backdrop: sb.backdrop ? { dim: 0.62, blur: 0, motion: "in", startFrom: 0, ...sb.backdrop } : null,
@@ -203,6 +219,7 @@ export function compileTimeline({ config, script, storyboard, timings, assets, r
     sfx,
     chapters,
     assets: usedAssets,
+    icons,
     scenes,
   };
   return { timeline, errors, warnings };

@@ -2,6 +2,9 @@ import type React from "react";
 import { BulletsScene, ChapterScene, QuoteScene, SourcesScene, TitleScene } from "./Text";
 import { BarCompareScene, BarRaceScene, LineChartScene, ShareScene, StatCardsScene } from "./Data";
 import { CompareScene, MediaScene, TimelineScene } from "./Story";
+import { HeadlineScene, KineticScene, PriceChartScene, ScaleCompareScene, UnitGridScene } from "./Motion";
+import { MapScene } from "./Map";
+import { FocusScene, PhotoStackScene, SplitScene } from "./Frame";
 
 // Scene registry: keys must match the storyboard schema's scene type enum.
 export const SCENES: Record<string, React.FC<any>> = {
@@ -18,4 +21,13 @@ export const SCENES: Record<string, React.FC<any>> = {
   media: MediaScene,
   compare: CompareScene,
   sources: SourcesScene,
+  kinetic: KineticScene,
+  headline: HeadlineScene,
+  "unit-grid": UnitGridScene,
+  "scale-compare": ScaleCompareScene,
+  "price-chart": PriceChartScene,
+  map: MapScene,
+  focus: FocusScene,
+  split: SplitScene,
+  "photo-stack": PhotoStackScene,
 };
