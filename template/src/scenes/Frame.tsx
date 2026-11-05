@@ -1,11 +1,11 @@
 import React from "react";
-import { Img, OffthreadVideo, staticFile } from "remotion";
+import { Img, staticFile } from "remotion";
 import { Box, Circle } from "@remotion/rough-notation";
 import { colorAt, useLayout, useRevealAt, useScene, useTheme, useTime, useTimeline } from "../engine/context";
 import { fmtCount } from "../engine/format";
 import { clamp01, easeInOut, easeOut, easeOutBack, lerp } from "../engine/motion";
 import type { Format } from "../engine/types";
-import { MediaFill } from "../components/Media";
+import { ClipVideo, MediaFill } from "../components/Media";
 
 // ── focus ────────────────────────────────────────────────────────────────────
 // One photo, the camera pushing into regions one by one: the rest dims, the region gets a
@@ -97,7 +97,7 @@ const PanelView: React.FC<{ panel: Panel; at: number; color: string; compact?: b
   return (
     <div style={{ position: "absolute", inset: 0, overflow: "hidden", background: theme.colors.bgAlt }}>
       {a && (a.kind === "video"
-        ? <OffthreadVideo src={staticFile(a.src)} muted style={{ width: "100%", height: "100%", objectFit: "cover", transform: `scale(${1.04 + 0.04 * clamp01(t / 8)})` }} />
+        ? <ClipVideo a={a} style={{ width: "100%", height: "100%", objectFit: "cover", transform: `scale(${1.04 + 0.04 * clamp01(t / 8)})` }} />
         : <Img src={staticFile(a.src)} style={{ width: "100%", height: "100%", objectFit: "cover", transform: `scale(${1.04 + 0.04 * clamp01(t / 8)})` }} />)}
       {a && <div style={{ position: "absolute", inset: 0, background: "linear-gradient(180deg, rgba(0,0,0,0) 40%, rgba(0,0,0,0.75) 100%)" }} />}
       <div style={{ position: "absolute", left: 48 * u * k, right: 48 * u * k, bottom: 48 * u * k, opacity: o, transform: `translateY(${(1 - o) * 24 * u}px)` }}>
@@ -192,7 +192,7 @@ export const PhotoStackScene: React.FC<{ items: Photo[]; title?: string }> = ({ 
             boxShadow: `0 ${18 * u}px ${46 * u}px rgba(0,0,0,0.5)`, borderRadius: 4 * u, textShadow: "none",
           }}>
             {a.kind === "video"
-              ? <OffthreadVideo src={staticFile(a.src)} muted style={{ width: "100%", aspectRatio: "4 / 3", objectFit: "cover", display: "block" }} />
+              ? <ClipVideo a={a} style={{ width: "100%", aspectRatio: "4 / 3", objectFit: "cover", display: "block" }} />
               : <Img src={staticFile(a.src)} style={{ width: "100%", aspectRatio: "4 / 3", objectFit: "cover", display: "block" }} />}
             {it.caption && <div style={{ position: "absolute", left: 0, right: 0, bottom: 16 * u, textAlign: "center", color: "#2a2d33", fontSize: 28 * u, fontWeight: 600 }}>{it.caption}</div>}
           </div>

@@ -1,7 +1,7 @@
 // Licensed media sourcing. Keyless providers: NASA Images (photos + video), Wikimedia Commons
 // (photos + video), Openverse (photos). Optional: Pexels (PEXELS_API_KEY, photos + video) and
 // AI image generation (OpenAI-compatible relay). Videos are cut to a short silent H.264 clip.
-import { existsSync, mkdirSync, rmSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, readdirSync, rmSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { ffmpeg, ffprobe } from "./ffmpeg.mjs";
 import { getJson, download, request, requireApiKey } from "./http.mjs";
@@ -110,6 +110,21 @@ export async function cutClip(src, dest, clip) {
   return { width: v.width, height: v.height, duration: +(+v.duration || seconds).toFixed(2) };
 }
 
+// Clips render from a JPEG sequence next to the mp4 (assets/<id>.frames/0001.jpg…): <Img> per frame
+// is deterministic and light, where <OffthreadVideo>'s frame cache shrinks with free memory and on
+// a 2 GB render node evicts frames as soon as they are decoded ("No frame found at position").
+export const framesDir = (file) => file.replace(/\.mp4$/i, ".frames");
+export const countFrames = (dir) => (existsSync(dir) ? readdirSync(dir).filter((f) => /^\d{4}\.jpg$/.test(f)).length : 0);
+
+export async function clipFrames(mp4, dir) {
+  rmSync(dir, { recursive: true, force: true });
+  mkdirSync(dir, { recursive: true });
+  await ffmpeg(["-y", "-i", mp4, "-an", "-q:v", "4", "-start_number", "1", join(dir, "%04d.jpg")]);
+  const n = countFrames(dir);
+  if (!n) throw new Error(`no frames extracted from ${mp4}`);
+  return n;
+}
+
 const LICENSE_RANK = (l) => (/^(pd|public domain|cc0|pdm)/i.test(l) ? 0 : /pexels/i.test(l) ? 0.5 : /by-sa|by sa/i.test(l) ? 1.5 : /by/i.test(l) ? 1 : 3);
 
 // Lower is better: license openness, aspect fit to the frame, and resolution.
@@ -165,6 +180,7 @@ export async function fetchAsset(item, { publicDir, aspect = 16 / 9, imageDefaul
     const raw = join(dir, `${item.id}.src.${extOf(chosen.url, "mp4")}`);
     writeFileSync(raw, buf);
     try { Object.assign(chosen, await cutClip(raw, join(publicDir, file), item.clip)); } finally { rmSync(raw, { force: true }); }
+    await clipFrames(join(publicDir, file), join(publicDir, framesDir(file)));
   } else {
     file = `assets/${item.id}.${extOf(chosen.url, "jpg")}`;
     writeFileSync(join(publicDir, file), buf);

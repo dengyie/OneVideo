@@ -11,11 +11,24 @@ import { buildPublishKit } from "../lib/publish.mjs";
 import { resolveApiKey, trustedKeyHost } from "../lib/http.mjs";
 import { ttsConfig } from "../lib/tts.mjs";
 import * as media from "./media.mjs";
+import { clipFrames, countFrames, framesDir } from "../lib/assets.mjs";
 
 const ENTRY = "src/index.ts";
 const COMPOSITION = "OneVideo";
 
 export const videoPath = (project) => join(project.paths.out, `${project.config.name}.mp4`);
+
+// Projects fetched before frame sequences existed get them on first render.
+async function ensureClipFrames(project) {
+  if (!existsSync(project.paths.assets)) return;
+  for (const a of readJson(project.paths.assets).items ?? []) {
+    if (a.kind !== "video" || !a.file) continue;
+    const mp4 = project.p("public", a.file), dir = project.p("public", framesDir(a.file));
+    if (!existsSync(mp4) || countFrames(dir)) continue;
+    log(`extracting frames: ${a.id} → public/${framesDir(a.file)}/`);
+    await clipFrames(mp4, dir);
+  }
+}
 
 // Compile + gate the timeline; renders never start from a stale or failing plan.
 function freshTimeline(project, { force = false } = {}) {
@@ -33,6 +46,7 @@ function commonFlags(project) {
 export async function render(args) {
   requireRemotion();
   const project = loadProject();
+  await ensureClipFrames(project);
   const tl = freshTimeline(project, { force: Boolean(args.force) });
   mkdirSync(project.paths.out, { recursive: true });
   const draft = Boolean(args.draft);
@@ -62,6 +76,7 @@ export async function render(args) {
 export async function stills(args) {
   requireRemotion();
   const project = loadProject();
+  await ensureClipFrames(project);
   const tl = freshTimeline(project, { force: Boolean(args.force) });
   const dir = join(project.paths.out, "stills");
   mkdirSync(dir, { recursive: true });
@@ -79,6 +94,7 @@ export async function stills(args) {
 export async function studio(args) {
   requireRemotion();
   const project = loadProject();
+  await ensureClipFrames(project);
   freshTimeline(project, { force: true });
   await run(REMOTION_BIN, ["studio", ENTRY, ...commonFlags(project), ...(args.port ? [`--port=${args.port}`] : [])], { cwd: TEMPLATE_DIR, stdio: "inherit" });
 }

@@ -8,6 +8,7 @@ import { collectIcons, resolveIcon } from "./icons.mjs";
 import { resolveCountry } from "./geo.mjs";
 import { entryPath, isMonoDark, loadCatalog, resolveEntry, tintLottie } from "./library.mjs";
 import { parseWav } from "./wav.mjs";
+import { countFrames, framesDir } from "./assets.mjs";
 
 export const DIMENSIONS = { "16:9": [1920, 1080], "9:16": [1080, 1920], "1:1": [1080, 1080], "4:5": [1080, 1350] };
 export const DEFAULT_HOLD = 0.5;
@@ -198,6 +199,11 @@ export function compileTimeline({ config, script, storyboard, timings, assets, r
       if (!a.file) { errors.push(`asset "${id}" not fetched yet; run: onevideo assets fetch`); continue; }
       if (root && !existsSync(join(root, "public", a.file))) errors.push(`asset "${id}" file missing: public/${a.file}; run: onevideo assets fetch`);
       usedAssets[id] = { src: a.file, kind: a.kind, credit: credit(a) };
+      if (a.kind === "video" && root) {
+        const frames = countFrames(join(root, "public", framesDir(a.file)));
+        if (frames) Object.assign(usedAssets[id], { seq: framesDir(a.file), frames, fps: 30 });
+        else warnings.push(`asset "${id}": no frame sequence, falls back to <OffthreadVideo> (needs memory); run: onevideo render (extracts it)`);
+      }
     }
 
     for (const l of lines) {

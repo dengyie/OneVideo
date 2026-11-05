@@ -1,6 +1,19 @@
 import React from "react";
-import { AbsoluteFill, Img, OffthreadVideo, staticFile } from "remotion";
+import { AbsoluteFill, Img, OffthreadVideo, staticFile, useCurrentFrame } from "remotion";
 import { useLayout, useScene, useTheme, useTime, useTimeline } from "../engine/context";
+import type { Asset } from "../engine/types";
+
+// A video clip: its JPEG sequence frame by frame when extracted (light, deterministic), otherwise
+// <OffthreadVideo>. Holds the last frame once the clip runs out. `startFrom` is in seconds.
+export const ClipVideo: React.FC<{ a: Asset; style: React.CSSProperties; startFrom?: number; muted?: boolean }> = ({ a, style, startFrom = 0, muted = true }) => {
+  const frame = useCurrentFrame();
+  const tl = useTimeline();
+  if (a.seq && a.frames) {
+    const i = Math.min(a.frames, Math.max(1, Math.floor((startFrom + frame / tl.fps) * (a.fps ?? 30)) + 1));
+    return <Img src={staticFile(`${a.seq}/${String(i).padStart(4, "0")}.jpg`)} style={style} />;
+  }
+  return <OffthreadVideo src={staticFile(a.src)} style={style} muted={muted} startFrom={Math.round(startFrom * tl.fps)} />;
+};
 
 export type Motion = "in" | "out" | "left" | "right" | "up" | "none";
 
@@ -28,7 +41,7 @@ export const MediaFill: React.FC<{ asset: string; motion?: Motion; fit?: "cover"
   return (
     <AbsoluteFill style={{ backgroundColor: theme.colors.bg, overflow: "hidden" }}>
       {a.kind === "video"
-        ? <OffthreadVideo src={staticFile(a.src)} style={style} muted={muted} startFrom={Math.round(startFrom * tl.fps)} />
+        ? <ClipVideo a={a} style={style} startFrom={startFrom} muted={muted} />
         : <Img src={staticFile(a.src)} style={style} />}
       <AbsoluteFill style={{ background: `linear-gradient(180deg, rgba(0,0,0,${dim * 0.6}) 0%, rgba(0,0,0,${dim}) 60%, rgba(0,0,0,${Math.min(0.9, dim + 0.3)}) 100%)` }} />
     </AbsoluteFill>

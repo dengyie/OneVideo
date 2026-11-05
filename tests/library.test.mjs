@@ -81,6 +81,21 @@ test("cutClip trims a video window to silent ≤1080p H.264", async () => {
   assert.equal(streams.find((s) => s.codec_type === "video").codec_name, "h264");
 });
 
+test("clipFrames extracts a 30fps JPEG sequence the timeline can count", async () => {
+  const { cutClip, clipFrames, countFrames, framesDir } = await import("../cli/lib/assets.mjs");
+  const { ffmpeg } = await import("../cli/lib/ffmpeg.mjs");
+  const dir = mkdtempSync(join(tmpdir(), "ov-frames-"));
+  const src = join(dir, "src.mp4"), out = join(dir, "clip.mp4"), seq = join(dir, framesDir("clip.mp4"));
+  assert.equal(framesDir("assets/x.MP4"), "assets/x.frames");
+  assert.equal(countFrames(seq), 0);
+  await ffmpeg(["-y", "-f", "lavfi", "-i", "nullsrc=size=640x360:rate=25:duration=3", "-c:v", "libx264", "-preset", "ultrafast", src]);
+  await cutClip(src, out, [0, 2]);
+  const n = await clipFrames(out, seq);
+  assert.ok(Math.abs(n - 60) <= 1, `frames ${n}`);
+  assert.equal(countFrames(seq), n);
+  assert.equal(await clipFrames(out, seq), n, "re-extraction replaces the old sequence");
+});
+
 test("recipes: every recipe fills to a valid storyboard", async () => {
   const { loadRecipes, fillRecipe, recipeSlots } = await import("../cli/lib/library.mjs");
   const { schemaGate } = await import("../cli/lib/gates.mjs");

@@ -66,6 +66,9 @@ export type Scene = {
   overlays?: Overlay[];
 };
 
+// Video assets carry a JPEG sequence (seq/0001.jpg…, `frames` long at `fps`) when one was extracted.
+export type Asset = { src: string; kind: "image" | "video"; credit: string; seq?: string; frames?: number; fps?: number };
+
 export type Timeline = {
   version: number;
   title: string;
@@ -82,7 +85,7 @@ export type Timeline = {
   music: { src: string; volume: number; duckTo: number; fade: number; credit?: string | null } | null;
   sfx: { sound: string; src: string; at: number; volume: number; duration?: number }[];
   chapters: { title: string; start: number }[];
-  assets: Record<string, { src: string; kind: "image" | "video"; credit: string }>;
+  assets: Record<string, Asset>;
   icons?: Record<string, { body: string; viewBox: string }>;
   lottie?: Record<string, any>;
   libraryCredits?: string[];
