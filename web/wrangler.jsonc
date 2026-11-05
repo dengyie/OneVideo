@@ -1,4 +1,4 @@
-// Static player for published OneVideo renders. Refresh media with `node sync.mjs`, then `npx wrangler deploy`.
+// Static player for published OneVideo renders. `npm run web:deploy` (repo root) syncs media and deploys; on the render node it reads /srv/onevideo directly.
 {
   "name": "onevideo-web",
   "main": "worker.mjs",

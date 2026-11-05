@@ -1,17 +1,19 @@
 #!/usr/bin/env node
 // Pull published OneVideo projects from the render host into web/site/v/<slug>/ and write
 // web/site/videos.json. Only projects that ran `onevideo publish` (review approved) are listed.
-//   ONEVIDEO_HOST      ssh host of the render node   (required)
+//   ONEVIDEO_HOST      ssh host of the render node; unset on the render node itself (projects root
+//                      exists here) or "local" reads the projects directly
 //   ONEVIDEO_PROJECTS  projects root on that host     (default: /srv/onevideo)
 import { execFileSync } from "node:child_process";
-import { existsSync, mkdirSync, readFileSync, readdirSync, rmSync, statSync, writeFileSync } from "node:fs";
+import { copyFileSync, existsSync, mkdirSync, readFileSync, readdirSync, rmSync, statSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
-const HOST = process.env.ONEVIDEO_HOST;
 const ROOT = process.env.ONEVIDEO_PROJECTS ?? "/srv/onevideo";
+const HOST = process.env.ONEVIDEO_HOST || (existsSync(ROOT) ? "local" : "");
+const LOCAL = HOST === "local";
 if (!HOST) {
-  console.error("ONEVIDEO_HOST is required: set it to the ssh host of your render node, e.g. `ONEVIDEO_HOST=render-box npm run web:sync`.");
+  console.error(`ONEVIDEO_HOST is required off the render node (${ROOT} not found here): set it to its ssh host, e.g. \`ONEVIDEO_HOST=render-box npm run web:sync\`.`);
   process.exit(1);
 }
 const SITE = join(dirname(fileURLToPath(import.meta.url)), "site");
@@ -31,8 +33,11 @@ for (const slug of fs.readdirSync(root)) {
   } catch {}
 }`;
 
-const ssh = (args, input) => execFileSync("ssh", [HOST, ...args], { input, encoding: "utf8", stdio: ["pipe", "pipe", "inherit"] });
-const scp = (remote, local) => execFileSync("scp", ["-q", `${HOST}:${remote}`, local], { stdio: "inherit" });
+// ssh joins its arguments into one shell command line; locally the same line goes to bash.
+const ssh = (args, input) => LOCAL
+  ? execFileSync("bash", ["-c", args.join(" ")], { input, encoding: "utf8", stdio: ["pipe", "pipe", "inherit"] })
+  : execFileSync("ssh", [HOST, ...args], { input, encoding: "utf8", stdio: ["pipe", "pipe", "inherit"] });
+const scp = (remote, local) => (LOCAL ? copyFileSync(remote, local) : execFileSync("scp", ["-q", `${HOST}:${remote}`, local], { stdio: "inherit" }));
 const q = (s) => `'${String(s).replace(/'/g, `'\\''`)}'`;
 
 const remote = ssh(["node", "-", q(ROOT)], LIST).split("\n").filter(Boolean).map((l) => JSON.parse(l));
