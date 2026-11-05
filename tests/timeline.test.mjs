@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { compileTimeline, phraseTime, resolveAt, mergeTheme, researchSources, sourceList, credit, CUE_LEAD } from "../cli/lib/timeline.mjs";
+import { compileTimeline, phraseTime, resolveAt, mergeTheme, researchSources, sourceList, credit, CUE_LEAD, boundaryTransition, transitionSfx } from "../cli/lib/timeline.mjs";
 import { example } from "./helpers.mjs";
 
 const lines = [{ text: "1990年，全球第一", start: 0.2, end: 2.2 }, { text: "36年后，苹果排第一", start: 2.5, end: 4.5 }];
@@ -92,4 +92,45 @@ test("compileTimeline reports an unfetched asset instead of throwing", () => {
   sb.scenes[0] = { ...sb.scenes[0], props: { ...sb.scenes[0].props, asset: "rocket" } };
   const { errors } = compileTimeline({ ...ex, storyboard: sb, assets: { items: [{ id: "rocket", query: "falcon 9" }] } });
   assert.ok(errors.some((e) => /asset "rocket" not fetched/.test(e)));
+});
+
+test("boundaryTransition: enter wins over exit over theme; overlap is capped by the shorter scene", () => {
+  const a = { durationInFrames: 300, exit: "wipe" };
+  const b = { durationInFrames: 300, enter: { type: "whip", duration: 0.4, direction: "up" } };
+  assert.deepEqual(boundaryTransition(a, b, { transition: "fade" }, 30), { type: "whip", frames: 12, lead: 6, direction: "up", sfx: undefined });
+  assert.equal(boundaryTransition(a, { durationInFrames: 300 }, { transition: "fade" }, 30).type, "wipe");
+  assert.equal(boundaryTransition({ durationInFrames: 300 }, { durationInFrames: 300 }, { transition: "zoom" }, 30).type, "zoom");
+  assert.equal(boundaryTransition(a, { durationInFrames: 20, enter: "iris" }, {}, 30).frames, 8);
+  assert.equal(boundaryTransition(a, { durationInFrames: 300, enter: "cut" }, {}, 30).frames, 0);
+});
+
+test("transitionSfx: one sound for all, or a map by type with a * fallback; cuts stay silent", () => {
+  assert.equal(transitionSfx("whoosh", "fade"), "whoosh");
+  assert.equal(transitionSfx("whoosh", "cut"), null);
+  assert.equal(transitionSfx({ whip: "whoosh", fade: null, "*": "tick" }, "whip"), "whoosh");
+  assert.equal(transitionSfx({ whip: "whoosh", fade: null, "*": "tick" }, "fade"), null);
+  assert.equal(transitionSfx({ whip: "whoosh", "*": "tick" }, "iris"), "tick");
+  assert.equal(transitionSfx(null, "whip"), null);
+});
+
+test("compileTimeline: adjacent scenes share one overlap window; audio starts stay put", () => {
+  const ex = example({ media: ["sfx/whoosh.wav", "sfx/pop.wav", "music/inspired.mp3"] });
+  const { timeline, errors } = compileTimeline({ ...ex, assets: ex.fetchedAssets });
+  assert.deepEqual(errors, []);
+  const sc = timeline.scenes;
+  assert.equal(sc[0].transitionIn.lead, 0, "the opening cannot start before frame 0");
+  assert.equal(sc.at(-1).transitionOut.tail, 0, "the closing cannot run past the end");
+  for (let i = 1; i < sc.length; i++) {
+    const tin = sc[i].transitionIn, tout = sc[i - 1].transitionOut;
+    assert.equal(tin.type, tout.type);
+    assert.equal(tin.frames, tout.frames);
+    assert.equal(tin.lead + tout.tail, tin.frames, `boundary ${sc[i - 1].id}→${sc[i].id} is one window`);
+    assert.equal(tout.nextOpaque, sc[i].opaque);
+  }
+  const hook = ex.storyboard.scenes.findIndex((s) => s.enter === "cut");
+  if (hook > 0) assert.equal(sc[hook].transitionIn.frames, 0);
+  assert.ok(sc.every((s) => s.camera.move), "every scene has a camera");
+  const whooshes = timeline.sfx.filter((s) => s.sound === "whoosh").length;
+  assert.equal(whooshes, sc.slice(1).filter((s) => s.transitionIn.type !== "cut").length, "one transition sound per non-cut boundary");
+  for (let i = 1; i < timeline.sfx.length; i++) assert.ok(timeline.sfx[i].at >= timeline.sfx[i - 1].at, "sfx sorted by time");
 });

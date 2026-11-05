@@ -215,8 +215,16 @@
         "transition": {
           "type": [
             "string",
+            "object",
             "null"
-          ]
+          ],
+          "additionalProperties": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "description": "sound for every scene boundary, or a map by transition type (\"*\" for the rest)"
         },
         "volume": {
           "type": "number",

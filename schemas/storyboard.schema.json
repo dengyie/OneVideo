@@ -16,6 +16,42 @@
     }
   },
   "$defs": {
+    "transitionType": {
+      "enum": ["fade", "slide", "push", "whip", "zoom", "punch", "iris", "wipe", "clock", "dip", "cut"]
+    },
+    "transition": {
+      "oneOf": [
+        { "$ref": "#/$defs/transitionType" },
+        {
+          "type": "object",
+          "required": ["type"],
+          "additionalProperties": false,
+          "properties": {
+            "type": { "$ref": "#/$defs/transitionType" },
+            "duration": { "type": "number", "minimum": 0, "maximum": 2 },
+            "direction": { "enum": ["left", "right", "up", "down"] },
+            "sfx": { "type": ["string", "null"], "description": "sound for this boundary; null silences it" }
+          }
+        }
+      ]
+    },
+    "camera": {
+      "oneOf": [
+        { "$ref": "#/$defs/cameraMove" },
+        {
+          "type": "object",
+          "required": ["move"],
+          "additionalProperties": false,
+          "properties": {
+            "move": { "$ref": "#/$defs/cameraMove" },
+            "amount": { "type": "number", "minimum": 0, "maximum": 3 }
+          }
+        }
+      ]
+    },
+    "cameraMove": {
+      "enum": ["static", "drift", "push", "pull", "pan-left", "pan-right", "rise", "handheld"]
+    },
     "at": {
       "oneOf": [
         {
@@ -185,22 +221,14 @@
           }
         },
         "enter": {
-          "enum": [
-            "fade",
-            "slide",
-            "zoom",
-            "wipe",
-            "cut"
-          ]
+          "$ref": "#/$defs/transition",
+          "description": "transition into this scene; wins over the previous scene's exit"
+        },
+        "camera": {
+          "$ref": "#/$defs/camera"
         },
         "exit": {
-          "enum": [
-            "fade",
-            "slide",
-            "zoom",
-            "wipe",
-            "cut"
-          ]
+          "$ref": "#/$defs/transition"
         },
         "duration": {
           "type": "number",

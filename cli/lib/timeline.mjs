@@ -43,8 +43,33 @@ export function resolveAt(at, lines, duration) {
   return { t: t - CUE_LEAD + (spec.offset ?? 0) };
 }
 
+// Seconds each transition overlaps the two scenes it joins (half before the cut, half after).
+export const TRANSITION_DURATION = { fade: 0.5, slide: 0.45, push: 0.5, whip: 0.32, zoom: 0.45, punch: 0.36, iris: 0.6, wipe: 0.5, clock: 0.6, dip: 0.7, cut: 0 };
+export const CAMERA_DEFAULT = { move: "drift", amount: 1 };
+
+export const normTransition = (t) => (t == null ? null : typeof t === "string" ? { type: t } : t);
+
+// The boundary between two scenes is one transition: the incoming scene's enter wins, then the
+// outgoing scene's exit, then the style's default. Narration never moves; only visuals overlap.
+export function boundaryTransition(prev, next, theme, fps) {
+  const spec = normTransition(next.enter) ?? normTransition(prev.exit) ?? normTransition(theme.transition) ?? { type: "fade" };
+  const want = Math.round((spec.duration ?? TRANSITION_DURATION[spec.type] ?? 0.5) * fps);
+  // Never let a transition eat more than 40% of either scene.
+  const frames = spec.type === "cut" ? 0 : Math.max(2, Math.min(want, Math.floor(prev.durationInFrames * 0.4), Math.floor(next.durationInFrames * 0.4)));
+  const lead = Math.floor(frames / 2);
+  return { type: spec.type, frames, lead, direction: spec.direction ?? "left", sfx: spec.sfx };
+}
+
 const clampT = (t, d) => Math.max(0, Math.min(d, t));
 const r3 = (x) => Math.round(x * 1000) / 1000;
+const normCamera = (c) => (c == null ? null : typeof c === "string" ? { move: c } : c);
+
+// config.sfx.transition: one sound for every boundary, or a map by transition type ("*" = rest).
+export function transitionSfx(cfg, type) {
+  if (!cfg || type === "cut") return null;
+  if (typeof cfg === "string") return cfg;
+  return cfg[type] !== undefined ? cfg[type] : cfg["*"] ?? null;
+}
 
 export function compileTimeline({ config, script, storyboard, timings, assets, research, root }) {
   const errors = [];
@@ -91,9 +116,6 @@ export function compileTimeline({ config, script, storyboard, timings, assets, r
       if (res.error) { errors.push(`scene "${sb.id}" sfx "${fx.sound}": ${res.error}`); continue; }
       sfx.push({ sound: fx.sound, src: `sfx/${fx.sound}.wav`, at: r3(start + clampT(res.t, duration)), volume: fx.volume ?? sfxCfg.volume });
     }
-    if (sfxCfg.transition && scenes.length > 0 && sb.enter !== "cut") {
-      sfx.push({ sound: sfxCfg.transition, src: `sfx/${sfxCfg.transition}.wav`, at: r3(Math.max(0, start - 0.12)), volume: sfxCfg.volume * 0.7 });
-    }
 
     const props = { ...(sb.props ?? {}) };
     if (sb.type === "sources" && !props.items?.length && props.auto !== false) props.items = sourceList(research, assets);
@@ -122,8 +144,12 @@ export function compileTimeline({ config, script, storyboard, timings, assets, r
       start: r3(start),
       duration: r3(duration),
       audio: tm?.file ?? null,
-      enter: sb.enter ?? theme.transition ?? "fade",
-      exit: sb.exit ?? theme.transition ?? "fade",
+      enter: sb.enter ?? null,
+      exit: sb.exit ?? null,
+      transitionIn: null,
+      transitionOut: null,
+      camera: { ...CAMERA_DEFAULT, ...(normCamera(theme.camera) ?? {}), ...(normCamera(sb.camera) ?? {}) },
+      opaque: Boolean(sb.backdrop) || sb.type === "media",
       header: sb.header ?? null,
       background: sb.background ?? null,
       backdrop: sb.backdrop ? { dim: 0.62, blur: 0, motion: "in", startFrom: 0, ...sb.backdrop } : null,
@@ -136,6 +162,20 @@ export function compileTimeline({ config, script, storyboard, timings, assets, r
   }
 
   const totalFrames = frame;
+  // Opening fades up from the background, closing fades out; inner boundaries overlap.
+  const edge = (type, d) => ({ type: type === "cut" ? "cut" : "fade", frames: type === "cut" ? 0 : Math.round(d * fps), lead: 0, direction: "left" });
+  scenes.forEach((sc, i) => {
+    const prev = scenes[i - 1];
+    if (!prev) { sc.transitionIn = edge(normTransition(sc.enter)?.type ?? "fade", 0.45); return; }
+    const b = boundaryTransition(prev, sc, theme, fps);
+    sc.transitionIn = { type: b.type, frames: b.frames, lead: b.lead, direction: b.direction };
+    prev.transitionOut = { type: b.type, frames: b.frames, tail: b.frames - b.lead, direction: b.direction, nextOpaque: sc.opaque };
+    const sound = b.sfx !== undefined ? b.sfx : transitionSfx(sfxCfg.transition, b.type);
+    if (sound) sfx.push({ sound, src: `sfx/${sound}.wav`, at: r3(Math.max(0, (sc.from - b.lead) / fps - 0.06)), volume: sfxCfg.volume * 0.7 });
+  });
+  const last = scenes[scenes.length - 1];
+  if (last) last.transitionOut = { type: normTransition(last.exit)?.type === "cut" ? "cut" : "fade", frames: normTransition(last.exit)?.type === "cut" ? 0 : Math.round(0.6 * fps), tail: 0, direction: "left", nextOpaque: false };
+  sfx.sort((a, b) => a.at - b.at);
   // music.file is a path under public/ (own or licensed track); otherwise the synthesized bgm.wav.
   const musicSrc = config.music?.file ?? "music/bgm.wav";
   const music = config.music?.enabled === false ? null : root && existsSync(join(root, "public", musicSrc))

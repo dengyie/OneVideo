@@ -20,11 +20,13 @@ export function useScene(): Scene {
 
 export const useTheme = (): Theme => useTimeline().theme;
 
-// Scene-relative time in seconds.
+// Scene-relative time in seconds. A scene's visuals start `lead` frames before its own start so
+// the incoming transition can overlap the previous scene; t is negative during that lead-in.
 export function useTime(): number {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
-  return frame / fps;
+  const scene = useContext(SceneContext);
+  return (frame - (scene?.transitionIn?.lead ?? 0)) / fps;
 }
 
 // Layout unit: 1u = 1px at 1080 on the short edge, so every layout scales across aspects.

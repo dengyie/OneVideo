@@ -1,7 +1,7 @@
 // Silent showcase timeline: used by `remotion studio` when no project props are passed,
 // and as the default props so every scene type can be previewed in isolation.
 import style from "../../../styles/midnight-data.json";
-import type { Scene, Theme, Timeline } from "./types";
+import type { Scene, Theme, Timeline, Transition, CameraMove } from "./types";
 
 const FPS = 30;
 type Spec = Pick<Scene, "id" | "type" | "props"> & { seconds: number; header?: Scene["header"] };
@@ -36,16 +36,28 @@ const specs: Spec[] = [
   { id: "sources", type: "sources", seconds: 4, props: { items: ["示例数据，仅用于预览场景"] } },
 ];
 
+// The demo cycles every transition and camera move so one preview shows them all.
+const TRANSITIONS: Transition[] = ["fade", "push", "whip", "punch", "iris", "wipe", "clock", "dip", "slide", "zoom", "cut"];
+const CAMERAS: CameraMove[] = ["drift", "push", "pan-left", "handheld", "pull", "rise", "pan-right"];
 let from = 0;
-const scenes: Scene[] = specs.map((s) => {
+const scenes: Scene[] = specs.map((s, i) => {
   const durationInFrames = s.seconds * FPS;
+  const type = TRANSITIONS[(i - 1 + TRANSITIONS.length) % TRANSITIONS.length];
+  const frames = i === 0 ? 14 : type === "cut" ? 0 : 15;
   const scene: Scene = {
     id: s.id, type: s.type, from, durationInFrames, start: from / FPS, duration: s.seconds, audio: null,
-    enter: "fade", exit: "fade", header: s.header ?? null, background: null,
+    enter: null, exit: null, header: s.header ?? null, background: null,
+    transitionIn: { type: i === 0 ? "fade" : type, frames, lead: i === 0 ? 0 : Math.floor(frames / 2), direction: "left" },
+    transitionOut: null, camera: { move: CAMERAS[i % CAMERAS.length] }, opaque: false,
     backdrop: null, captions: true, cues: {}, lines: [], props: s.props,
   };
   from += durationInFrames;
   return scene;
+});
+scenes.forEach((sc, i) => {
+  const next = scenes[i + 1];
+  const tin = next?.transitionIn;
+  sc.transitionOut = tin ? { type: tin.type, frames: tin.frames, tail: tin.frames - tin.lead, direction: tin.direction, nextOpaque: false } : { type: "fade", frames: 18, tail: 0, direction: "left", nextOpaque: false };
 });
 
 export const DEMO_TIMELINE: Timeline = {

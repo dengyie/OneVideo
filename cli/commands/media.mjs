@@ -41,8 +41,12 @@ export async function music(args) {
   const { config, paths } = project;
   const pre = checkProject(project);
   const sfxNames = new Set(list(args.sfx));
-  if (config.sfx?.transition) sfxNames.add(config.sfx.transition);
-  for (const sb of pre.plan.storyboard?.scenes ?? []) for (const fx of sb.sfx ?? []) sfxNames.add(fx.sound);
+  const tr = config.sfx?.transition;
+  for (const name of typeof tr === "string" ? [tr] : Object.values(tr ?? {})) if (name) sfxNames.add(name);
+  for (const sb of pre.plan.storyboard?.scenes ?? []) {
+    for (const fx of sb.sfx ?? []) sfxNames.add(fx.sound);
+    for (const t of [sb.enter, sb.exit]) if (t?.sfx) sfxNames.add(t.sfx);
+  }
   for (const name of sfxNames) {
     if (!SFX[name]) throw new UserError(`unknown sfx "${name}" (${Object.keys(SFX).join(", ")})`);
     const file = join(paths.sfxDir, `${name}.wav`);

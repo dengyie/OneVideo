@@ -1,17 +1,15 @@
 import React from "react";
 import { AbsoluteFill, Html5Audio, Sequence, staticFile, useCurrentFrame, useVideoConfig } from "remotion";
-import type { Scene, Timeline } from "./types";
+import { noise2D } from "@remotion/noise";
+import type { Camera, Direction, Scene, Timeline, Transition } from "./types";
 import { SceneContext, TimelineContext } from "./context";
-import { clamp01, easeOut, easeInOut } from "./motion";
+import { clamp01, easeInOut } from "./motion";
 import { Backdrop } from "../components/Backdrop";
 import { Credit, MediaFill } from "../components/Media";
 import { Header } from "../components/Header";
 import { Watermark } from "../components/Watermark";
 import { Captions } from "./Captions";
 import { SCENES } from "../scenes";
-
-const ENTER = 0.45;
-const EXIT = 0.35;
 
 // Music gain: full between lines, ducked under speech, with short ramps and fade in/out.
 export function musicGain(t: number, total: number, m: NonNullable<Timeline["music"]>, narration: [number, number][]): number {
@@ -26,23 +24,126 @@ export function musicGain(t: number, total: number, m: NonNullable<Timeline["mus
   return duck * fade;
 }
 
-const SceneFrame: React.FC<{ scene: Scene; children: React.ReactNode }> = ({ scene, children }) => {
+// Unit vector the incoming scene travels along: "left" means it enters from the right.
+const DIR: Record<Direction, [number, number]> = { left: [1, 0], right: [-1, 0], up: [0, 1], down: [0, -1] };
+
+// Clock-wipe polygon: a pie slice from 12 o'clock sweeping clockwise to p·360°.
+function clockPolygon(p: number): string {
+  const pts = ["50% 50%", "50% -100%"];
+  const steps = Math.max(2, Math.ceil(p * 48));
+  for (let i = 1; i <= steps; i++) {
+    const a = (i / steps) * p * Math.PI * 2;
+    pts.push(`${50 + 150 * Math.sin(a)}% ${50 - 150 * Math.cos(a)}%`);
+  }
+  return `polygon(${pts.join(", ")})`;
+}
+
+type Look = { style: React.CSSProperties; whip?: number; dip?: number };
+
+// One side of a boundary. `p` runs 0→1 across the overlap for both sides; the incoming scene is
+// drawn on top, so an outgoing side only has to move or fade when the incoming one doesn't cover it.
+export function presentation(type: Transition, side: "in" | "out", p: number, dir: Direction, w: number, h: number, covered: boolean): Look {
+  const [dx, dy] = DIR[dir] ?? DIR.left;
+  const fadeOut = covered ? 1 : 1 - p;
+  const inS = side === "in";
+  switch (type) {
+    case "cut": return { style: {} };
+    case "fade": return { style: { opacity: inS ? p : fadeOut } };
+    case "slide": {
+      const k = inS ? 1 - p : -p;
+      return { style: { opacity: inS ? p : 1 - p, transform: `translate(${k * dx * w * 0.06}px, ${k * dy * h * 0.06}px)` } };
+    }
+    case "push":
+    case "whip": {
+      const k = inS ? 1 - p : -p;
+      const look: Look = { style: { transform: `translate(${k * dx * w}px, ${k * dy * h}px)` } };
+      if (type === "whip") look.whip = Math.sin(Math.PI * p);
+      return look;
+    }
+    case "zoom": return { style: inS ? { opacity: p, transform: `scale(${0.94 + 0.06 * p})` } : { opacity: fadeOut, transform: `scale(${1 + 0.05 * p})` } };
+    case "punch": return { style: inS ? { opacity: Math.min(1, p * 1.6), transform: `scale(${0.85 + 0.15 * p})` } : { opacity: 1 - p, transform: `scale(${1 + 0.3 * p})` } };
+    case "iris": return { style: inS ? { clipPath: `circle(${p * 72}% at 50% 50%)` } : { opacity: fadeOut } };
+    case "clock": return { style: inS ? { clipPath: p >= 1 ? undefined : clockPolygon(p) } : { opacity: fadeOut } };
+    case "wipe": {
+      const e = p * 100;
+      const horiz = dy === 0;
+      // The edge travels along dir; each side keeps the part the edge hasn't / has passed.
+      const inClip = horiz ? (dx > 0 ? `inset(0 0 0 ${100 - e}%)` : `inset(0 ${100 - e}% 0 0)`) : dy > 0 ? `inset(${100 - e}% 0 0 0)` : `inset(0 0 ${100 - e}% 0)`;
+      const outClip = horiz ? (dx > 0 ? `inset(0 ${e}% 0 0)` : `inset(0 0 0 ${e}%)`) : dy > 0 ? `inset(0 0 ${e}% 0)` : `inset(${e}% 0 0 0)`;
+      return { style: { clipPath: inS ? inClip : outClip } };
+    }
+    case "dip": return inS ? { style: { opacity: 1 }, dip: p } : { style: {} };
+    default: return { style: { opacity: inS ? p : fadeOut } };
+  }
+}
+
+// Slow camera on the scene's foreground; the backdrop keeps its own Ken Burns, so the two layers
+// drift apart and read as depth. `k` is scene progress 0→1.
+export function cameraTransform(cam: Camera, k: number, t: number, w: number, seed: string): string {
+  const a = cam.amount ?? 1;
+  const e = easeInOut(k);
+  switch (cam.move) {
+    case "static": return "";
+    case "push": return `scale(${1 + 0.06 * a * e})`;
+    case "pull": return `scale(${1 + 0.06 * a * (1 - e)})`;
+    case "pan-left": return `translateX(${(0.5 - e) * 0.04 * a * w}px) scale(${1 + 0.02 * a})`;
+    case "pan-right": return `translateX(${(e - 0.5) * 0.04 * a * w}px) scale(${1 + 0.02 * a})`;
+    case "rise": return `translateY(${(0.5 - e) * 0.03 * a * w}px) scale(${1 + 0.02 * a})`;
+    case "handheld": {
+      const x = noise2D(seed + "x", t * 0.6, 0) * 0.006 * a * w;
+      const y = noise2D(seed + "y", t * 0.6, 0) * 0.006 * a * w;
+      const r = noise2D(seed + "r", t * 0.4, 0) * 0.35 * a;
+      return `translate(${x}px, ${y}px) rotate(${r}deg) scale(${1 + 0.015 * a})`;
+    }
+    default: return `scale(${1 + 0.018 * a * e}) translateX(${(e - 0.5) * 0.008 * a * w}px)`;
+  }
+}
+
+// Shape and motion transitions only read when the moving layer is solid; a scene without a photo
+// carries its own copy of the style background while one of these runs.
+const SOLID: Transition[] = ["push", "whip", "iris", "clock", "wipe"];
+
+const SceneFrame: React.FC<{ scene: Scene; length: number; children: React.ReactNode; content: React.ReactNode; base: React.ReactNode }> = ({ scene, length, children, content, base }) => {
   const frame = useCurrentFrame();
-  const { fps, width } = useVideoConfig();
-  const t = frame / fps;
-  const pIn = scene.enter === "cut" ? 1 : easeOut(t / ENTER);
-  const pOut = scene.exit === "cut" ? 1 : easeInOut((scene.duration - t) / EXIT);
-  const p = Math.min(pIn, pOut);
-  const leaving = pOut < pIn;
-  const kind = leaving ? scene.exit : scene.enter;
-  let style: React.CSSProperties = { opacity: p };
-  if (kind === "slide") style = { opacity: p, transform: `translateX(${(1 - p) * (leaving ? -1 : 1) * width * 0.06}px)` };
-  else if (kind === "zoom") style = { opacity: p, transform: `scale(${leaving ? 1 + (1 - p) * 0.05 : 0.94 + 0.06 * p})` };
-  else if (kind === "wipe") style = { clipPath: leaving ? `inset(0 0 0 ${(1 - p) * 100}%)` : `inset(0 ${(1 - p) * 100}% 0 0)` };
-  else if (kind === "cut") style = {};
+  const { fps, width, height } = useVideoConfig();
+  const tin = scene.transitionIn;
+  const tout = scene.transitionOut;
+  let look: Look = { style: {} };
+  let active: Transition | null = null;
+  if (tin && tin.frames > 0 && frame < tin.frames) {
+    active = tin.type;
+    look = presentation(tin.type, "in", easeInOut(frame / tin.frames), tin.direction, width, height, false);
+  } else if (tout && tout.frames > 0 && frame > length - tout.frames) {
+    active = tout.type;
+    look = presentation(tout.type, "out", easeInOut((frame - (length - tout.frames)) / tout.frames), tout.direction, width, height, tout.nextOpaque);
+  }
+  const solid = !scene.opaque && active !== null && SOLID.includes(active);
+  const t = (frame - (tin?.lead ?? 0)) / fps;
+  const cam = cameraTransform(scene.camera ?? { move: "drift" }, clamp01(t / Math.max(0.1, scene.duration)), t, width, scene.id);
+  const filterId = `whip-${scene.id}`;
+  let style: React.CSSProperties = { ...look.style };
+  if (look.whip) style.filter = `url(#${filterId})`;
   // Text over a photo gets a soft shadow (inherited by every label in the scene).
-  if (scene.backdrop) style = { ...style, textShadow: "0 2px 14px rgba(0,0,0,0.6)" };
-  return <AbsoluteFill style={style}>{children}</AbsoluteFill>;
+  const shadow: React.CSSProperties = scene.backdrop ? { textShadow: "0 2px 14px rgba(0,0,0,0.6)" } : {};
+  const dip = look.dip;
+  const [dx, dy] = DIR[tin?.direction ?? "left"] ?? DIR.left;
+  return (
+    <>
+      {dip !== undefined && <AbsoluteFill style={{ backgroundColor: "#000", opacity: dip < 0.5 ? dip * 2 : 2 - dip * 2 }} />}
+      <AbsoluteFill style={{ ...style, ...(dip !== undefined ? { opacity: dip < 0.5 ? 0 : dip * 2 - 1 } : {}), ...shadow }}>
+        {look.whip ? (
+          <svg width={0} height={0} style={{ position: "absolute" }}>
+            <filter id={filterId} x="-10%" y="-10%" width="120%" height="120%">
+              <feGaussianBlur stdDeviation={`${look.whip * 0.03 * width * Math.abs(dx)} ${look.whip * 0.03 * height * Math.abs(dy)}`} />
+            </filter>
+          </svg>
+        ) : null}
+        {solid && base}
+        {children}
+        <AbsoluteFill style={{ transform: cam || undefined }}>{content}</AbsoluteFill>
+      </AbsoluteFill>
+    </>
+  );
 };
 
 export const Video: React.FC<Timeline> = (timeline) => {
@@ -55,19 +156,30 @@ export const Video: React.FC<Timeline> = (timeline) => {
         {timeline.scenes.map((scene) => {
           const Comp = SCENES[scene.type];
           if (!Comp) throw new Error(`unknown scene type "${scene.type}" in scene "${scene.id}"`);
+          const lead = scene.transitionIn?.lead ?? 0;
+          const length = lead + scene.durationInFrames + (scene.transitionOut?.tail ?? 0);
           return (
-            <Sequence key={scene.id} name={`${scene.id} · ${scene.type}`} from={scene.from} durationInFrames={scene.durationInFrames}>
-              <SceneContext.Provider value={scene}>
-                <SceneFrame scene={scene}>
-                  {scene.backdrop
-                    ? <><MediaFill asset={scene.backdrop.asset} motion={scene.backdrop.motion} dim={scene.backdrop.dim} blur={scene.backdrop.blur} startFrom={scene.backdrop.startFrom} /><Credit asset={scene.backdrop.asset} corner="bottom-right" /></>
-                    : scene.background && scene.background !== "default" && scene.background !== theme.background && <Backdrop variant={scene.background} />}
-                  {scene.header && <Header title={scene.header.title} subtitle={scene.header.subtitle} />}
-                  <Comp {...scene.props} />
-                </SceneFrame>
-              </SceneContext.Provider>
-              {scene.audio && <Html5Audio src={staticFile(scene.audio)} />}
-            </Sequence>
+            <React.Fragment key={scene.id}>
+              <Sequence name={`${scene.id} · ${scene.type}`} from={scene.from - lead} durationInFrames={length}>
+                <SceneContext.Provider value={scene}>
+                  <SceneFrame
+                    scene={scene}
+                    length={length}
+                    base={<AbsoluteFill style={{ backgroundColor: theme.colors.bg }}><Backdrop variant={theme.background} /></AbsoluteFill>}
+                    content={<>{scene.header && <Header title={scene.header.title} subtitle={scene.header.subtitle} />}<Comp {...scene.props} /></>}
+                  >
+                    {scene.backdrop
+                      ? <><MediaFill asset={scene.backdrop.asset} motion={scene.backdrop.motion} dim={scene.backdrop.dim} blur={scene.backdrop.blur} startFrom={scene.backdrop.startFrom} /><Credit asset={scene.backdrop.asset} corner="bottom-right" /></>
+                      : scene.background && scene.background !== "default" && scene.background !== theme.background && <Backdrop variant={scene.background} />}
+                  </SceneFrame>
+                </SceneContext.Provider>
+              </Sequence>
+              {scene.audio && (
+                <Sequence name={`${scene.id} · voice`} from={scene.from} durationInFrames={scene.durationInFrames} layout="none">
+                  <Html5Audio src={staticFile(scene.audio)} />
+                </Sequence>
+              )}
+            </React.Fragment>
           );
         })}
         {music && (

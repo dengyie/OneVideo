@@ -10,12 +10,21 @@ export type Theme = {
   fonts: { body: string; number: string };
   background: Background;
   radius: number;
-  transition: Transition;
+  transition: Transition | TransitionSpec;
+  camera?: CameraMove | Camera;
   motion?: { pace?: "slow" | "medium" | "fast"; spring?: { damping?: number } };
   captionBg?: string;
 };
 
-export type Transition = "fade" | "slide" | "zoom" | "wipe" | "cut";
+export type Transition = "fade" | "slide" | "push" | "whip" | "zoom" | "punch" | "iris" | "wipe" | "clock" | "dip" | "cut";
+export type Direction = "left" | "right" | "up" | "down";
+export type TransitionSpec = { type: Transition; duration?: number; direction?: Direction; sfx?: string | null };
+// A boundary as compiled: `frames` of overlap, `lead` of them before this scene's own start (in)
+// or `tail` of them after its end (out).
+export type TransitionIn = { type: Transition; frames: number; lead: number; direction: Direction };
+export type TransitionOut = { type: Transition; frames: number; tail: number; direction: Direction; nextOpaque: boolean };
+export type CameraMove = "static" | "drift" | "push" | "pull" | "pan-left" | "pan-right" | "rise" | "handheld";
+export type Camera = { move: CameraMove; amount?: number };
 export type Background = "default" | "plain" | "grid" | "stars" | "media";
 
 export type Line = { text: string; start: number; end: number };
@@ -28,8 +37,12 @@ export type Scene = {
   start: number;
   duration: number;
   audio: string | null;
-  enter: Transition;
-  exit: Transition;
+  enter: Transition | TransitionSpec | null;
+  exit: Transition | TransitionSpec | null;
+  transitionIn: TransitionIn | null;
+  transitionOut: TransitionOut | null;
+  camera: Camera;
+  opaque: boolean;
   header: { title: string; subtitle?: string } | null;
   background: Background | null;
   backdrop: { asset: string; dim: number; blur: number; motion: "in" | "out" | "left" | "right" | "up" | "none"; startFrom: number } | null;
