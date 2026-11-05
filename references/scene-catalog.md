@@ -41,6 +41,57 @@
 - `sfx: [{sound, at}]`：`at` 同 cue 语法。
 - `intent`：一句话写明这个画面要让观众记住什么，方便审稿。
 
+## 叠层动效 `overlays`
+
+任意场景都可以挂一组叠层，在旁白说到某句时弹出，给静态画面加“动作”。叠层跟随场景转场，但不跟随镜头运动。
+
+```json
+"overlays": [
+  { "type": "stamp", "text": "首次", "at": "成功回收", "x": 0.78, "y": 0.3, "sfx": "auto" },
+  { "type": "lottie", "src": "rocket", "at": 1.2, "x": 0.2, "y": 0.3, "size": 200 }
+]
+```
+
+公共字段：`at`（同 cue 语法）、`duration`（缺省持续到场景结束，最后 0.3s 淡出）、`x`/`y`（画面比例 0–1）、`size`（布局单位，默认 160）、`color`、`sfx`（`"auto"` 取下表默认音效；库 id / 类别名 / `synth:名`；`{sound, volume}`；`null` 静音）。
+
+| type | 用途 | 关键字段 | auto 音效 |
+|---|---|---|---|
+| `lottie` | 矢量动画贴纸（库 40 个：check/cross/rocket/confetti/trophy/warning/globe…） | `src`（库 id 或类别，或 `public/` 下 .json）、`loop`、`speed`、`tint` | ui-pop |
+| `icon` | Lucide 图标弹出 + 脉冲环 | `icon`、`label`、`ring` | ui-pop |
+| `burst` | 放射线爆点，配合数字/印章 | `count` | ui-pop |
+| `confetti` | 彩带 | `origin: top|point`、`count` | success-sting |
+| `arrow` | 手绘弧线箭头 | `from`/`to`（[x,y] 比例）、`curve`、`label` | swish |
+| `mark` | 马克笔圈/框/下划线/删除线/高亮 | `kind: circle|box|underline|strike|highlight`、`rect: [x,y,w,h]` | marker |
+| `callout` | 圆点 + 引线 + 标签 | `text`、`subtitle`、`side` | click |
+| `stamp` | 印章砸下 + 抖动 | `text`、`rotate` | impact |
+| `lower-third` | 下三分之一字条（人名/地点） | `text`、`subtitle` | whoosh-soft |
+| `spotlight` | 聚光压暗四周 | `x`/`y`、`size` | swell |
+| `flash` | 闪白 | — | boom |
+| `image` | 图片贴纸 | `asset`、`shape`、`rotate` | ui-pop |
+
+- 项目级 `sfx.overlays: "auto"`：所有没写 `sfx` 的叠层都配默认音效。
+- Lottie 里的黑色线性图标会自动着色为主题文字色；`tint: "#rrggbb"` 手动指定。用到 CC BY 素材（Noto 动画表情）时，sources 场景和发布文案会自动加署名。
+- `mark.rect`、`arrow.from/to` 是比例坐标，写完一定跑 `onevideo stills --scene <id> --at 0.7` 核对位置。
+
+## 胶片质感 `look`
+
+`onevideo.json` 里 `"look": {"grain": 0.35, "vignette": 0.6, "leak": 0.4}`（0–1）：颗粒噪点、暗角、漏光。纪录片/实拍素材多的片子开，纯数据图表片可只开 vignette。
+
+## 场景配方 `lib recipe`
+
+`library/recipes/` 存了 14 个经典镜头组合（场景 + 叠层 + 音效），直接取用再填空：
+
+```bash
+onevideo lib recipe                                   # 列表：hook-slam、stat-reveal、photo-focus、broll-lower-third、price-shock、versus、success-moment…
+onevideo lib recipe photo-focus --id s3 --set asset=landing,region_label=栅格翼   # 输出可粘贴的 storyboard 场景 JSON
+```
+
+未填的 `{{槽位}}` 会提示。新沉淀的好镜头写成 `library/recipes/<name>.json`（`name/title/description/tags/scenes`），测试会校验它能通过 storyboard schema。
+
+## 实拍视频素材
+
+`plan/assets.json` 里 `{"id": "landing", "kind": "video", "query": "falcon 9 landing", "clip": [5, 8]}`：默认从 NASA、Wikimedia Commons 免 key 检索（有 `PEXELS_API_KEY` 时加 Pexels），下载后裁成无声 ≤1080p H.264 片段。配 `media`、`split`、`focus` 或背景 `backdrop` 使用。
+
 ## 数字格式 `format`
 
 `{prefix, suffix, decimals, compact}`。`compact: "zh"` 输出“亿/万亿”，不指定 `decimals` 时取 3 位有效数字并去掉尾零（1187亿、1.85万亿）。
@@ -55,5 +106,5 @@
 ## 选型原则
 
 1. 一个场景只讲一件事。两个数字用 stat-cards，十个数字用图表。
-2. 能动起来就别静止：用 cue 让卡片、柱子、事件跟着旁白逐个出现。
+2. 能动起来就别静止：用 cue 让卡片、柱子、事件跟着旁白逐个出现；每 2–3 个场景至少一个叠层动作（印章/圈注/箭头/Lottie），关键转折配实拍视频。
 3. 图表优先于文字：bullets 是最后的手段，不要用它承载数据。
