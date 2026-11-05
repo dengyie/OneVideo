@@ -19,7 +19,7 @@ const COMMANDS = {
   depth: [media.depth, "depth [asset ids] [--step 2] [--force]   depth maps for parallax / text-behind-subject (VM python + ONNX)"],
   decide: [media.decide, "decide <category> <subject> --selected X [--options a,b] [--reason …]"],
   render: [render.render, "render [--draft] [--frames 0-90] [--concurrency 4] [--force]"],
-  stills: [render.stills, "stills [--scene id,id] [--at 0.7]   one JPEG per scene → out/stills/"],
+  stills: [render.stills, "stills [--scene id,id] [--at 0.7|0.3,0.9]   JPEG per scene (and fraction) → out/stills/"],
   studio: [render.studio, "studio [--port 3000]         Remotion Studio on this project"],
   qc: [render.qc, "qc [--video file]            post-render review → plan/review.json"],
   publish: [render.publish, "publish [--force]            SRT/VTT, chapters, description → out/publish/ (needs approved review)"],

@@ -92,13 +92,17 @@ export async function stills(args) {
   const dir = join(project.paths.out, "stills");
   mkdirSync(dir, { recursive: true });
   const only = typeof args.scene === "string" ? args.scene.split(",") : null;
-  const at = args.at !== undefined ? Number(args.at) : 0.7;
+  // --at 0.7 or a list (--at 0.3,0.6,0.9): fractions of each scene; a list adds the fraction to the file name.
+  const ats = args.at !== undefined ? String(args.at).split(",").map(Number) : [0.7];
+  if (ats.some((a) => !Number.isFinite(a) || a < 0 || a > 1)) throw new UserError(`--at takes fractions 0–1, got "${args.at}"`);
   for (const [i, s] of tl.scenes.entries()) {
     if (only && !only.includes(s.id)) continue;
-    const frame = s.from + Math.min(s.durationInFrames - 1, Math.floor(s.durationInFrames * at));
-    const file = join(dir, `${String(i + 1).padStart(2, "0")}-${s.id}.jpg`);
-    await run(REMOTION_BIN, ["still", ENTRY, COMPOSITION, file, ...commonFlags(project), `--frame=${frame}`, "--image-format=jpeg", "--scale=0.5"], { cwd: TEMPLATE_DIR });
-    log(`✓ ${file}`);
+    for (const at of ats) {
+      const frame = s.from + Math.min(s.durationInFrames - 1, Math.floor(s.durationInFrames * at));
+      const file = join(dir, `${String(i + 1).padStart(2, "0")}-${s.id}${ats.length > 1 ? `@${at}` : ""}.jpg`);
+      await run(REMOTION_BIN, ["still", ENTRY, COMPOSITION, file, ...commonFlags(project), `--frame=${frame}`, "--image-format=jpeg", "--scale=0.5"], { cwd: TEMPLATE_DIR });
+      log(`✓ ${file}`);
+    }
   }
 }
 
