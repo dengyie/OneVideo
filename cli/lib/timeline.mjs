@@ -9,7 +9,7 @@ import { resolveCountry } from "./geo.mjs";
 import { entryAvailable, entryPath, isMonoDark, loadCatalog, resolveEntry, tintLottie } from "./library.mjs";
 import { parseWav } from "./wav.mjs";
 import { countFrames, depthPath, framesDir } from "./assets.mjs";
-import { beatsFile, snapToBeat } from "./beats.mjs";
+import { beatsFile, snapToBar, snapToBeat } from "./beats.mjs";
 
 export const DIMENSIONS = { "16:9": [1920, 1080], "9:16": [1080, 1920], "1:1": [1080, 1080], "4:5": [1080, 1350] };
 export const DEFAULT_HOLD = 0.5;
@@ -50,7 +50,7 @@ export function resolveAt(at, lines, duration) {
 }
 
 // Seconds each transition overlaps the two scenes it joins (half before the cut, half after).
-export const TRANSITION_DURATION = { fade: 0.5, slide: 0.45, push: 0.5, whip: 0.32, zoom: 0.45, punch: 0.36, iris: 0.6, wipe: 0.5, clock: 0.6, dip: 0.7, cut: 0 };
+export const TRANSITION_DURATION = { fade: 0.5, slide: 0.45, push: 0.5, whip: 0.32, zoom: 0.45, punch: 0.36, iris: 0.6, wipe: 0.5, clock: 0.6, dip: 0.7, through: 0.6, cut: 0 };
 export const CAMERA_DEFAULT = { move: "drift", amount: 1 };
 
 export const normTransition = (t) => (t == null ? null : typeof t === "string" ? { type: t } : t);
@@ -72,7 +72,7 @@ const normCamera = (c) => (c == null ? null : typeof c === "string" ? { move: c 
 
 // config.sfx.transition: one sound for every boundary, or a map by transition type ("*" = rest).
 // sfx.transition: "auto" maps each transition type to a library category that fits its motion.
-export const AUTO_TRANSITION_SFX = { "*": "whoosh-soft", fade: null, dip: null, slide: "whoosh-soft", push: "whoosh-fast", wipe: "swish", whip: "whip", zoom: "whoosh-cinematic", punch: "impact", iris: "swish", clock: "swish" };
+export const AUTO_TRANSITION_SFX = { "*": "whoosh-soft", fade: null, dip: null, slide: "whoosh-soft", push: "whoosh-fast", wipe: "swish", whip: "whip", zoom: "whoosh-cinematic", punch: "impact", iris: "swish", clock: "swish", through: "whoosh-cinematic" };
 
 // Sound name → public/ path: "synth:tick" (force the procedural sound) becomes sfx/synth-tick.wav.
 export const sfxFile = (name) => `sfx/${name.replace(/[^a-z0-9-]/gi, "-")}.wav`;
@@ -154,7 +154,8 @@ export function resolveWhen(spec, { cues, lines, duration, start = 0, beats = []
 }
 
 // Storyboard shots → compiled Shot[]: `focus: [x, y, w, h]` frames a region (zoom to fit it with
-// a margin), otherwise x/y/zoom directly. Times snap to a beat within 0.12 s when beats exist.
+// a margin), otherwise x/y/zoom directly. Times snap to a beat within 0.12 s when beats exist;
+// a hard cut prefers the bar's downbeat within 0.25 s.
 export function compileShots(spec, ctx) {
   const { lines, duration, start, beats, snap } = ctx;
   const out = [];
@@ -166,7 +167,7 @@ export function compileShots(spec, ctx) {
     const res = resolveWhen(sh, ctx);
     if (res.error) { errors.push(`shot ${k}: ${res.error}`); continue; }
     let t = clampT(res.t, duration);
-    if (snap && beats.length && sh.snap !== false) t = snapToBeat(start + t, beats, 0.12) - start;
+    if (snap && beats.length && sh.snap !== false) t = (sh.cut ? snapToBar(start + t, beats, ctx.downbeats) : snapToBeat(start + t, beats, 0.12)) - start;
     let { zoom = 1, x = 0.5, y = 0.5 } = sh;
     if (Array.isArray(sh.focus)) {
       const [fx, fy, fw, fh] = sh.focus;
@@ -189,18 +190,25 @@ const settled = (it) => {
 
 // Resolve every `at`/`cue` in a canvas / footage scene's props to `t` (scene seconds).
 function resolvePropTimes(type, props, ctx, errors, where) {
-  const fix = (o, label) => {
+  // `beat`: camera moves snap like shots ("beat", or "bar" for cuts and speed-ups).
+  const fix = (o, label, beat) => {
     if (!o || (o.at === undefined && o.cue === undefined)) return;
     const res = resolveWhen(o, ctx);
-    if (res.error) errors.push(`${where} ${label}: ${res.error}`); else o.t = r3(clampT(res.t, ctx.duration));
+    if (res.error) { errors.push(`${where} ${label}: ${res.error}`); return; }
+    let t = clampT(res.t, ctx.duration);
+    if (beat && ctx.snap && ctx.beats?.length && o.snap !== false) {
+      const abs = ctx.start + t;
+      t = (beat === "bar" ? snapToBar(abs, ctx.beats, ctx.downbeats) : snapToBeat(abs, ctx.beats, 0.12)) - ctx.start;
+    }
+    o.t = r3(clampT(t, ctx.duration));
   };
   if (type === "canvas") {
     for (const [i, it] of (props.items ?? []).entries()) { fix(it, `item ${it.id ?? i}`); for (const [j, m] of (it.morph ?? []).entries()) fix(m, `item ${it.id ?? i} morph ${j}`); }
-    for (const [i, v] of (props.path ?? []).entries()) fix(v, `path ${i}`);
+    for (const [i, v] of (props.path ?? []).entries()) fix(v, `path ${i}`, i === 0 ? null : v.cut ? "bar" : "beat");
     for (const [i, l] of (props.links ?? []).entries()) fix(l, `link ${i}`);
   }
   if (type === "footage") {
-    for (const [i, r] of (props.ramp ?? []).entries()) fix(r, `ramp ${i}`);
+    for (const [i, r] of (props.ramp ?? []).entries()) fix(r, `ramp ${i}`, r.speed > 1.3 ? "bar" : null);
     fix(props.title, "title");
   }
   if (type === "parallax") fix(props.title, "title");
@@ -230,7 +238,9 @@ export function compileTimeline({ config, script, storyboard, timings, assets, r
   // Beat grid of the music, cached by `onevideo music` / render (see beats.mjs).
   const musicSrc = config.music?.file ?? "music/bgm.wav";
   const beatsAt = root ? beatsFile(join(root, "public", musicSrc)) : null;
-  const beats = config.music?.enabled !== false && beatsAt && existsSync(beatsAt) ? JSON.parse(readFileSync(beatsAt, "utf8")).beats ?? [] : [];
+  const grid = config.music?.enabled !== false && beatsAt && existsSync(beatsAt) ? JSON.parse(readFileSync(beatsAt, "utf8")) : {};
+  const beats = grid.beats ?? [];
+  const downbeats = grid.downbeats ?? [];
   const snap = config.beats?.snap !== false;
   let lastCanvas = null;
 
@@ -297,7 +307,7 @@ export function compileTimeline({ config, script, storyboard, timings, assets, r
     }
 
     const props = structuredClone(sb.props ?? {});
-    const ctx = { cues, lines, duration, start, beats, snap };
+    const ctx = { cues, lines, duration, start, beats, downbeats, snap };
     // A canvas scene with `inherit` continues the previous canvas: same world, camera picks up
     // where it left off (cut into it for a seamless join).
     if (sb.type === "canvas" && props.inherit) {

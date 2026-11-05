@@ -1,6 +1,7 @@
 import React from "react";
 import { colorAt, useLayout, useRevealAt, useScene, useTheme, useTime, cueOr } from "../engine/context";
 import { fmt, fmtCount } from "../engine/format";
+import { Roll } from "../components/Roll";
 import { clamp01, easeInOut, easeOut, lerp } from "../engine/motion";
 import type { Format } from "../engine/types";
 import { Card } from "../components/Card";
@@ -41,7 +42,7 @@ export const StatCardsScene: React.FC<{ columns?: number; cards: StatCard[] }> =
             <Card key={i} o={o} accent={color} style={{ textAlign: "left", padding: `${34 * u}px ${40 * u}px` }}>
               <div style={{ fontSize: 28 * u * Math.max(0.85, big * 0.9), color: theme.colors.muted }}>{c.label}</div>
               <div style={{ fontFamily: theme.fonts.number, fontSize: 88 * u * big, fontWeight: 800, color, marginTop: 10 * u, lineHeight: 1.05, whiteSpace: "nowrap" }}>
-                {fmtCount(v, c.value, c.format)}
+                {c.from === undefined && t - s < COUNT ? <Roll text={fmtCount(c.value, c.value, c.format)} p={easeOut((t - s) / COUNT)} /> : fmtCount(v, c.value, c.format)}
               </div>
               {c.note && <div style={{ fontSize: 22 * u, color: theme.colors.muted, marginTop: 12 * u, lineHeight: 1.4 }}>{c.note}</div>}
             </Card>

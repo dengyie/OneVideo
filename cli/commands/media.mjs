@@ -12,7 +12,7 @@ import { run } from "../lib/ffmpeg.mjs";
 import { AUTO_TRANSITION_SFX, DIMENSIONS, MOTION_SFX, overlaySound, sfxFile, sfxVariants } from "../lib/timeline.mjs";
 import { categories, entryPath, loadCatalog, resolveSfx } from "../lib/library.mjs";
 import { spokenLength } from "../lib/text.mjs";
-import { beatsFile, ensureBeats, gridBeats } from "../lib/beats.mjs";
+import { beatsFile, ensureBeats, everyFourth, gridBeats } from "../lib/beats.mjs";
 
 const list = (v) => (typeof v === "string" ? v.split(",").map((s) => s.trim()).filter(Boolean) : []);
 
@@ -101,7 +101,8 @@ export async function music(args) {
   const bgm = join(paths.musicDir, "bgm.wav");
   writeMusic(bgm, duration, { preset, seed: config.music?.seed ?? 7 });
   // The synth knows its own tempo: the beat grid is exact, no detection needed.
-  writeFileSync(beatsFile(bgm), JSON.stringify({ bpm: MUSIC_PRESETS[preset].bpm, beats: gridBeats(MUSIC_PRESETS[preset].bpm, duration), source: `synth:${preset}` }));
+  const grid = gridBeats(MUSIC_PRESETS[preset].bpm, duration);
+  writeFileSync(beatsFile(bgm), JSON.stringify({ bpm: MUSIC_PRESETS[preset].bpm, beats: grid, downbeats: everyFourth(grid), source: `synth:${preset}` }));
   log(`music: ${preset}, ${duration.toFixed(1)}s → public/music/bgm.wav`);
 }
 

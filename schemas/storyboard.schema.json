@@ -28,6 +28,7 @@
         "wipe",
         "clock",
         "dip",
+        "through",
         "cut"
       ]
     },
@@ -2156,6 +2157,10 @@
               "offset": {
                 "type": "number",
                 "description": "seconds added to a cue"
+              },
+              "snap": {
+                "type": "boolean",
+                "description": "false: keep this exact time instead of snapping to the music"
               }
             }
           },
@@ -2608,6 +2613,10 @@
               "offset": {
                 "type": "number",
                 "description": "seconds added to a cue"
+              },
+              "snap": {
+                "type": "boolean",
+                "description": "false: keep this exact time instead of snapping to the music"
               }
             }
           }

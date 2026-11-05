@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import { writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { AUTO_SHOTS, MOTION_SFX, compileShots, compileTimeline, motionCues, resolveWhen, sfxVariants } from "../cli/lib/timeline.mjs";
-import { beatsFile, detectBeats, gridBeats, snapToBeat } from "../cli/lib/beats.mjs";
+import { beatsFile, detectBeats, everyFourth, gridBeats, snapToBar, snapToBeat } from "../cli/lib/beats.mjs";
 import { schemaGate } from "../cli/lib/gates.mjs";
 import { example } from "./helpers.mjs";
 
@@ -55,12 +55,37 @@ test("beats: synth grid, snapping, and tempo detection on a click track", () => 
   assert.ok(Math.abs(res.beats[0] - offset) < 0.03 || Math.abs(res.beats[1] - offset) < 0.03, `first beats ${res.beats.slice(0, 2)}`);
 });
 
+test("beats: downbeats from the accented bar phase, cuts snap to the bar", () => {
+  const sr = 22050, bpm = 120, dur = 16, offset = 0.1;
+  const mono = new Float32Array(sr * dur);
+  // Beat 2 of every bar (index 1, 5, 9 …) is accented, so the bar starts there.
+  for (let i = 0, t = offset; t < dur; i++, t += 60 / bpm) {
+    const i0 = Math.round(t * sr), amp = i % 4 === 1 ? 1 : 0.35;
+    for (let k = 0; k < 400 && i0 + k < mono.length; k++) mono[i0 + k] = amp * Math.sin(k * 0.9) * Math.exp(-k / 80);
+  }
+  const res = detectBeats(mono, sr);
+  const first = res.downbeats.find((d) => d > 0.4);
+  assert.ok(Math.abs(first - (offset + 0.5)) < 0.03, `downbeat ${first}`);
+  assert.ok(Math.abs(res.downbeats[1] - res.downbeats[0] - 2) < 0.03);
+  assert.deepEqual(everyFourth([0, 1, 2, 3, 4, 5, 6, 7, 8], 1), [1, 5]);
+  const beats = [0, 0.5, 1, 1.5, 2, 2.5], downbeats = [0, 2];
+  assert.equal(snapToBar(1.8, beats, downbeats), 2); // downbeat 0.2 s away; the nearest beat (1.5) is past the beat window
+  assert.equal(snapToBar(2.2, beats, downbeats), 2); // 0.2 s past the downbeat, outside the beat window
+  assert.equal(snapToBar(1.45, beats, downbeats), 1.5); // no downbeat near → nearest beat
+  assert.equal(snapToBar(1.25, beats, downbeats), 1.25); // nothing within the window
+  // A cut shot lands on the downbeat; a push-in only on the nearest beat.
+  const { shots } = compileShots([{ at: 0 }, { at: 1.8, zoom: 1.2, cut: true }, { at: 3.4, zoom: 1.3 }], ctx({ beats: [10, 10.5, 11, 11.5, 12, 12.5, 13, 13.5], downbeats: [10, 12] }));
+  assert.equal(shots[1].t, 2);
+  assert.equal(shots[2].t, 3.5);
+});
+
 test("schema accepts shots, word overlays and the footage / parallax / canvas scenes", () => {
   const scenes = [
     { id: "a", type: "footage", shots: "auto", overlays: [{ type: "word", text: "IPO", style: "slam", at: 1 }], props: { asset: "v", ramp: [{ at: 1, speed: 0.35 }, { at: { beat: 4 }, speed: 1.6 }], title: { text: "SpaceX", behind: true, matte: { mode: "subject" } } } },
     { id: "b", type: "parallax", shots: [{ at: 0, focus: [0.2, 0.2, 0.4, 0.4] }, { at: 2, zoom: 1.2, cut: true }], props: { asset: "p", move: "orbit" } },
     { id: "c", type: "canvas", props: { items: [{ id: "x", type: "stat", x: 960, y: 540, value: 1.75, morph: [{ at: 2, type: "bar", max: 2 }] }], path: [{ focus: "x" }, { at: 3, focus: { x: 2400, y: 540 }, fly: 1.2 }], links: [{ from: "x", to: "x" }] } },
-    { id: "d", type: "canvas", props: { inherit: true, floor: false } },
+    { id: "d", type: "canvas", enter: { type: "through", duration: 0.6 }, props: { inherit: true, floor: false, path: [{ focus: { x: 0, y: 0 }, snap: false }] } },
+    { id: "e", type: "footage", props: { asset: "v", ramp: [{ at: 1, speed: 2, snap: false }] } },
   ];
   assert.deepEqual(schemaGate("storyboard", { scenes }), []);
   const bad = schemaGate("storyboard", { scenes: [{ id: "x", type: "parallax", props: { asset: "p", move: "spin" } }] });

@@ -16,7 +16,7 @@ export type Theme = {
   captionBg?: string;
 };
 
-export type Transition = "fade" | "slide" | "push" | "whip" | "zoom" | "punch" | "iris" | "wipe" | "clock" | "dip" | "cut";
+export type Transition = "fade" | "slide" | "push" | "whip" | "zoom" | "punch" | "iris" | "wipe" | "clock" | "dip" | "through" | "cut";
 export type Direction = "left" | "right" | "up" | "down";
 export type TransitionSpec = { type: Transition; duration?: number; direction?: Direction; sfx?: string | null };
 // A boundary as compiled: `frames` of overlap, `lead` of them before this scene's own start (in)

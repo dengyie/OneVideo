@@ -58,9 +58,11 @@ export function detectBeats(mono, sr) {
     if (s * w > best.score) best = { score: s * w, bpm };
   }
   // Tempo and phase together, finely around the autocorrelation peak: a grid that is 0.2 BPM off
-  // drifts a beat by a hop or two over a few minutes, so refine both against the onsets.
+  // drifts a beat by a hop or two over a few minutes, so refine both against the onsets. The
+  // autocorrelation peak is broad (accents and the tempo prior can pull it a couple of BPM off),
+  // so the sharper phase score gets ±2.5 BPM to correct it.
   let phase = { score: -1, at: 0, bpm: best.bpm };
-  for (let bpm = best.bpm - 0.5; bpm <= best.bpm + 0.5 + 1e-9; bpm += 0.05) {
+  for (let bpm = best.bpm - 2.5; bpm <= best.bpm + 2.5 + 1e-9; bpm += 0.05) {
     const period = (60 / bpm) * rate;
     for (let p = 0; p < period; p += 0.25) {
       let s = 0;
@@ -69,15 +71,21 @@ export function detectBeats(mono, sr) {
     }
   }
   const bpm = Math.round(phase.bpm * 100) / 100;
-  return { bpm, beats: gridBeats(bpm, duration, phase.at / rate) };
+  const beats = gridBeats(bpm, duration, phase.at / rate);
+  // Bar phase: in 4/4 the downbeat carries the most onset energy of the four beat positions.
+  const bar = [0, 1, 2, 3].map((k) => beats.reduce((s, b, i) => (i % 4 === k ? s + sampleAt(env, b * rate) : s), 0));
+  return { bpm, beats, downbeats: everyFourth(beats, bar.indexOf(Math.max(...bar))) };
 }
+
+export const everyFourth = (beats, k = 0) => beats.filter((_, i) => i % 4 === k);
 
 // Beat grid for the timeline's music, cached. Returns null when there is no music file.
 export async function ensureBeats(root, music, { preset } = {}) {
   const file = join(root, "public", music.src);
   if (!existsSync(file)) return null;
   const cache = beatsFile(file);
-  if (existsSync(cache)) return JSON.parse(readFileSync(cache, "utf8"));
+  // Caches from before downbeat detection are re-analysed once.
+  if (existsSync(cache)) { const c = JSON.parse(readFileSync(cache, "utf8")); if (c.downbeats || String(c.source).startsWith("synth:")) return c; }
   let wav = file;
   if (!/\.wav$/i.test(file)) {
     wav = join(tmpdir(), `onevideo-beats-${process.pid}.wav`);
@@ -87,6 +95,12 @@ export async function ensureBeats(root, music, { preset } = {}) {
   const res = { ...detectBeats(toMono(w, w.sampleRate), w.sampleRate), source: preset ? `synth:${preset}` : "detected" };
   writeFileSync(cache, JSON.stringify(res));
   return res;
+}
+
+// Cuts land on the bar: a downbeat within 0.25 s wins, else the nearest beat within `window`.
+export function snapToBar(t, beats, downbeats = [], window = 0.12) {
+  const d = snapToBeat(t, downbeats, 0.25);
+  return d !== t ? d : snapToBeat(t, beats, window);
 }
 
 // Nearest beat within `window` seconds of t (absolute times), else t.

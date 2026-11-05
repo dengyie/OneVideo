@@ -3,7 +3,7 @@ import { AbsoluteFill, Html5Audio, Sequence, staticFile, useCurrentFrame, useVid
 import { noise2D } from "@remotion/noise";
 import type { Camera, Direction, Scene, Timeline, Transition } from "./types";
 import { SceneContext, TimelineContext, useLayout } from "./context";
-import { clamp01, easeInOut } from "./motion";
+import { clamp01, easeInOut, easeOut } from "./motion";
 import { cutBetween, farther, viewAt, viewTransform, viewVelocity } from "./camera";
 import { MotionBlur } from "../components/MotionBlur";
 import { Backdrop } from "../components/Backdrop";
@@ -76,6 +76,11 @@ export function presentation(type: Transition, side: "in" | "out", p: number, di
       const outClip = horiz ? (dx > 0 ? `inset(0 ${e}% 0 0)` : `inset(0 0 0 ${e}%)`) : dy > 0 ? `inset(0 0 ${e}% 0)` : `inset(${e}% 0 0 0)`;
       return { style: { clipPath: inS ? inClip : outClip } };
     }
+    // Through: the camera dives into the outgoing frame's centre (where the shot track has put
+    // the subject) until it blurs into the next scene, which settles back from an overshoot.
+    case "through": return { style: inS
+      ? { opacity: Math.min(1, p * 2.2), transform: `scale(${1.35 - 0.35 * easeOut(p)})` }
+      : { opacity: covered ? 1 : 1 - clamp01((p - 0.35) / 0.65), transform: `scale(${1 + 2.6 * p * p})`, filter: `blur(${(p * p * 0.012 * w).toFixed(1)}px)` } };
     case "dip": return inS ? { style: { opacity: 1 }, dip: p } : { style: {} };
     default: return { style: { opacity: inS ? p : fadeOut } };
   }
@@ -105,7 +110,7 @@ export function cameraTransform(cam: Camera, k: number, t: number, w: number, se
 
 // Shape and motion transitions only read when the moving layer is solid; a scene without a photo
 // carries its own copy of the style background while one of these runs.
-const SOLID: Transition[] = ["push", "whip", "iris", "clock", "wipe"];
+const SOLID: Transition[] = ["push", "whip", "iris", "clock", "wipe", "through"];
 
 const SceneFrame: React.FC<{ scene: Scene; length: number; children: React.ReactNode; content: React.ReactNode; base: React.ReactNode }> = ({ scene, length, children, content, base }) => {
   const frame = useCurrentFrame();

@@ -8,7 +8,7 @@
 |---|---|---|---|
 | `title` | 片头、钩子 | `title` | `kicker`、`subtitle`、`date` |
 | `chapter` | 章节转场 | `title` | `index`、`subtitle` |
-| `stat-cards` | 1–8 个关键数字 | `cards[{value,label}]` | `columns`、卡片 `from`/`format`/`note`/`color`/`cue` |
+| `stat-cards` | 1–8 个关键数字 | `cards[{value,label}]` | `columns`、卡片 `from`/`format`/`note`/`color`/`cue`；无 `from` 时数字逐位翻牌落定 |
 | `bar-compare` | 同一时点的横向对比 | `items[{label,value}]` | `sort`、`max`、`unit`、`format` |
 | `bar-race` | 排名随时间变化 | `periods`、`series[{name,values}]` | `top`、`group`+`groupColors`、`periodCues` |
 | `line-chart` | 趋势、增长曲线 | `series[{name,points}]` | `annotations`、`drawCue`、`yMin`/`yMax` |
@@ -30,13 +30,13 @@
 | `photo-stack` | 多张照片像相纸一样逐张落到桌面 | `items[{asset}]`（≤8） | `caption`、`cue`、`title` |
 | `footage` | 实拍做主角：全屏、变速、标题压在主体后面 | `asset` | `startFrom`、`ramp[{at,speed}]`（如 0.35 慢动作再回 1.6 倍）、`title{text,behind,matte,style,kicker}`（`behind` 需先 `onevideo depth`）、`dim`、`tint` |
 | `parallax` | 一张照片做 2.5D 视差推拉 | `asset`（图片） | `move`（dolly-in/dolly-out/truck-left/truck-right/crane-up/orbit）、`amount`、`title`；有深度图时按深度分层，否则按“下近上远”渐变 |
-| `canvas` | 无限画布：元素变形 + 镜头连续飞行，代替翻页 | — | `items[{id,type,x,y,w,h,value,label,at,morph[{at,type,…}]}]`（stat/text/bar/dot/image，坐标为布局单位，首屏 0–1920×0–1080）、`path[{at,focus,zoom,cut,fly}]`、`links[{from,to,at}]`、`inherit`（接着上一个 canvas 的世界和镜头）、`floor`（随镜头移动的点阵地面，近层 1:1、远层 0.35 视差；有 backdrop 时默认关）。卡片会随镜头速度惯性倾斜，最多 9° |
+| `canvas` | 无限画布：元素变形 + 镜头连续飞行，代替翻页 | — | `items[{id,type,x,y,w,h,value,label,at,morph[{at,type,…}]}]`（stat/text/bar/dot/image，坐标为布局单位，首屏 0–1920×0–1080）、`path[{at,focus,zoom,cut,fly}]`、`links[{from,to,at}]`、`inherit`（接着上一个 canvas 的世界和镜头）、`floor`（随镜头移动的点阵地面，近层 1:1、远层 0.35 视差；有 backdrop 时默认关）。卡片会随镜头速度惯性倾斜，最多 9°；stat 数字计数时逐位翻牌（里程表式，低位多转几圈、从左到右依次落定） |
 
 ## 场景通用字段
 
 - `header: {title, subtitle}`：图表场景的标题条。subtitle 写口径和日期（“2026-11-04 收盘 · StockTitan”）。
 - `cues: {name: 时间}`：时间可以是秒（负数从结尾倒数）、0–1 比例、旁白里的短语，或 `{phrase, offset}`。props 用 `cue`、`drawCue`、`periodCues` 引用 cue 名，引用未定义的 cue 会报错。
-- `enter` / `exit`：转场类型 `fade`、`slide`、`push`、`whip`、`zoom`、`punch`、`iris`、`wipe`、`clock`、`dip`、`cut`，或 `{type, duration, direction, sfx}`；相邻两场景重叠播放，边界类型取 `next.enter ?? prev.exit ?? theme.transition`。
+- `enter` / `exit`：转场类型 `fade`、`slide`、`push`、`whip`、`zoom`、`punch`、`iris`、`wipe`、`clock`、`dip`、`through`（镜头冲进上一镜的画面中心，即镜头轨对准的主体，糊开后露出下一场景；最适合实拍接画布）、`cut`，或 `{type, duration, direction, sfx}`；相邻两场景重叠播放，边界类型取 `next.enter ?? prev.exit ?? theme.transition`。
 - `camera`：`static`、`drift`（默认）、`push`、`pull`、`pan-left`、`pan-right`、`rise`、`handheld`，或 `{move, amount}`。
 - 图标：任意 props 里的 `icon` 字段写 Lucide 名（`rocket`、`user-round`）或 `flag:<iso2>`（圆形国旗），编译时只内联用到的 SVG；未知名字会报错。
 - `background`：`default`、`plain`、`grid`、`stars`、`media`。
@@ -44,7 +44,7 @@
 - `sfx: [{sound, at}]`：`at` 同 cue 语法。
 - `intent`：一句话写明这个画面要让观众记住什么，方便审稿。
 - `shots`：场景的镜头轨，作用于内容和叠层（背景以 0.55 倍弱跟随，产生视差）。`"auto"` = 每句字幕一个机位，推/切交替；或写列表 `[{at, zoom, x, y | focus:[x,y,w,h], rotate, cut, ease}]`。运动帧按镜头速度加方向性动态模糊，硬切帧不加。
-- 卡点：有音乐时编译器读取 `public/<music>.beats.json`（`onevideo music` 生成：合成乐按 BPM 出网格，外部音轨用 onset 检测），镜头时间吸附到 0.12s 内最近的拍点；`onevideo.json` 里 `beats.snap: false` 关闭。`at: {beat: n}` 直接指定场景内第 n 拍（shots、canvas、footage 可用）。
+- 卡点：有音乐时编译器读取 `public/<music>.beats.json`（`onevideo music` 生成：合成乐按 BPM 出网格，外部音轨用 onset 检测），镜头时间吸附到 0.12s 内最近的拍点，硬切镜头（`cut`）、画布路径的硬切停靠点和 speed>1.3 的变速优先吸附到 0.25s 内的小节重拍（downbeat，4/4 下 onset 能量最大的拍位）；单个镜头/停靠点/变速写 `snap: false` 保持原时间；`onevideo.json` 里 `beats.snap: false` 关闭。`at: {beat: n}` 直接指定场景内第 n 拍（shots、canvas、footage 可用）。
 - 深度图：`onevideo depth [asset ids] [--step 2]` 在 VM 上用 Depth Anything V2（ONNX，CPU）生成，图片 → `<file>.depth.png`，视频 → `<file>.depth/NNNN.png`；parallax 和 footage 的 `title.behind` 使用。
 
 ## 叠层动效 `overlays`

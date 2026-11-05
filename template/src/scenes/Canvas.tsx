@@ -5,6 +5,7 @@ import { clamp01, easeInOut, easeOut, easeOutBack, lerp } from "../engine/motion
 import { fmtCount } from "../engine/format";
 import type { Format } from "../engine/types";
 import { MotionBlur } from "../components/MotionBlur";
+import { Roll } from "../components/Roll";
 
 // Infinite canvas: one world of items (in layout units, 1u = 1px at 1080 on the short edge) that a
 // continuous camera flies across. Items enter, then morph — a stat card can become a bar, a dot can
@@ -119,7 +120,8 @@ export function canvasBackdrop(props: { items?: Item[]; path?: Stop[] }, t: numb
   return `translate(${dx.toFixed(1)}px, ${dy.toFixed(1)}px) scale(${s.toFixed(4)})`;
 }
 
-const Content: React.FC<{ s: State; scale: number; theme: ReturnType<typeof useTheme>; t: number; enter: number }> = ({ s, scale, theme, t, enter }) => {
+// `roll`: a stat entering counts up on odometer reels to `full` (its settled value).
+const Content: React.FC<{ s: State; scale: number; theme: ReturnType<typeof useTheme>; t: number; enter: number; roll?: { p: number; full: number } }> = ({ s, scale, theme, t, enter, roll }) => {
   const tl = useTimeline();
   const color = s.color ?? theme.colors.accent;
   const fs = (n: number) => n * scale;
@@ -151,7 +153,7 @@ const Content: React.FC<{ s: State; scale: number; theme: ReturnType<typeof useT
         <div style={{ width: "100%", height: "100%", display: "flex", flexDirection: "column", justifyContent: "center", padding: `0 ${fs(40)}px` }}>
           {s.label && <div style={{ fontSize: fs(30), color: theme.colors.muted }}>{s.label}</div>}
           <div style={{ fontFamily: theme.fonts.number, fontSize: fs(s.size ?? 110), fontWeight: 800, color, lineHeight: 1.05, whiteSpace: "nowrap" }}>
-            {fmtCount(s.value ?? 0, s.value ?? 0, s.format)}
+            {roll && roll.p < 1 ? <Roll text={fmtCount(roll.full, roll.full, s.format)} p={roll.p} /> : fmtCount(s.value ?? 0, s.value ?? 0, s.format)}
           </div>
         </div>
       );
@@ -217,7 +219,8 @@ export const CanvasScene: React.FC<{ items?: Item[]; path?: Stop[]; links?: Link
     // Count up with the decimals of the values the item settles on, not the frame's float.
     const f = s.format ?? {};
     const format = f.decimals !== undefined || f.compact ? f : { ...f, decimals: decimalsOf(it) };
-    return { it, s: { ...s, value: s.value !== undefined ? s.value * count : undefined, format }, prev, p, e, enter };
+    const roll = s.value !== undefined && count < 1 ? { p: count, full: s.value } : undefined;
+    return { it, s: { ...s, value: s.value !== undefined ? s.value * count : undefined, format }, prev, p, e, enter, roll };
   });
   const pos = new Map(shown.map((x) => [x.it.id, x]));
 
@@ -239,7 +242,7 @@ export const CanvasScene: React.FC<{ items?: Item[]; path?: Stop[]; links?: Link
           );
         })}
       </svg>
-      {shown.map(({ it, s, prev, p, e, enter }) => {
+      {shown.map(({ it, s, prev, p, e, enter, roll }) => {
         if (e <= 0) return null;
         const c = toScreen(s.x!, s.y!);
         const w = s.w! * k, h = s.h! * k;
@@ -265,7 +268,7 @@ export const CanvasScene: React.FC<{ items?: Item[]; path?: Stop[]; links?: Link
               </div>
             )}
             <div style={{ position: "absolute", inset: 0, opacity: prev ? p : 1, display: "flex", alignItems: "center", justifyContent: "center" }}>
-              <Content s={s} scale={k} theme={theme} t={t} enter={prev ? t - 0.9 * p : it.settled ? -99 : enter} />
+              <Content s={s} scale={k} theme={theme} t={t} enter={prev ? t - 0.9 * p : it.settled ? -99 : enter} roll={roll} />
             </div>
           </div>
         );

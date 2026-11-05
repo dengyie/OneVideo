@@ -58,7 +58,7 @@ const specs: Spec[] = [
 ];
 
 // The demo cycles every transition and camera move so one preview shows them all.
-const TRANSITIONS: Transition[] = ["fade", "push", "whip", "punch", "iris", "wipe", "clock", "dip", "slide", "zoom", "cut"];
+const TRANSITIONS: Transition[] = ["fade", "push", "whip", "punch", "iris", "wipe", "clock", "dip", "slide", "zoom", "through", "cut"];
 const CAMERAS: CameraMove[] = ["drift", "push", "pan-left", "handheld", "pull", "rise", "pan-right"];
 let from = 0;
 const scenes: Scene[] = specs.map((s, i) => {
