@@ -28,6 +28,102 @@
   },
   "entries": [
     {
+      "id": "boom-01",
+      "kind": "sfx",
+      "category": "boom",
+      "store": "ext",
+      "file": "sfx/boom/boom-01.wav",
+      "sha256": "1643327ac5efca38ec0df7dfea47a012a33de3b3320f6d58feb00de1d5f12bfb",
+      "tags": [],
+      "note": "fast sub drop, 192kHz",
+      "audio": {
+        "duration": 2.095,
+        "sampleRate": 48000,
+        "channels": 2,
+        "lufs": -20,
+        "sourceLufs": -16.5,
+        "peakDb": -8.5
+      },
+      "provenance": {
+        "source": "sonniss:2026/344 Audio - Bass Drops & Downers Vol. 1",
+        "license": "Sonniss GDC Bundle License",
+        "original": "344 Audio - Bass Drops & Downers Vol. 1/DSGNBass_Bass Drop & Downer Fast 16_344 Audio_Bass Drops & Downers.wav",
+        "url": null
+      }
+    },
+    {
+      "id": "boom-02",
+      "kind": "sfx",
+      "category": "boom",
+      "store": "ext",
+      "file": "sfx/boom/boom-02.wav",
+      "sha256": "b33d9e520668d420ed5c7c5310b055847a643320d845651054a907ddce2195ac",
+      "tags": [],
+      "note": "fast sub drop, 192kHz",
+      "audio": {
+        "duration": 2.637,
+        "sampleRate": 48000,
+        "channels": 2,
+        "lufs": -20,
+        "sourceLufs": -24.8,
+        "peakDb": -1.5
+      },
+      "provenance": {
+        "source": "sonniss:2026/344 Audio - Bass Drops & Downers Vol. 2",
+        "license": "Sonniss GDC Bundle License",
+        "original": "344 Audio - Bass Drops & Downers Vol. 2/DSGNBass_Bass Drop & Downer Fast 12_344 Audio_Bass Drops & Downers Vol 2.wav",
+        "url": null
+      }
+    },
+    {
+      "id": "boom-03",
+      "kind": "sfx",
+      "category": "boom",
+      "store": "ext",
+      "file": "sfx/boom/boom-03.wav",
+      "sha256": "43b44e70990613700f31c8f150a5efa4a106e7f391099d51d262f2e74601c47b",
+      "tags": [],
+      "note": "medium sub drop",
+      "audio": {
+        "duration": 3.537,
+        "sampleRate": 48000,
+        "channels": 2,
+        "lufs": -20,
+        "sourceLufs": -28.2,
+        "peakDb": -1.5
+      },
+      "provenance": {
+        "source": "sonniss:2026/344 Audio - Bass Drops & Downers Vol. 2",
+        "license": "Sonniss GDC Bundle License",
+        "original": "344 Audio - Bass Drops & Downers Vol. 2/DSGNBass_Bass Drop & Downer Medium 15_344 Audio_Bass Drops & Downers Vol 2.wav",
+        "url": null
+      }
+    },
+    {
+      "id": "boom-04",
+      "kind": "sfx",
+      "category": "boom",
+      "store": "ext",
+      "file": "sfx/boom/boom-04.wav",
+      "sha256": "54ccf656540b1da6c78a6f2a61fdd862dc4ab50cb05818ccaf1832029763c418",
+      "tags": [],
+      "note": "punchy drop",
+      "audio": {
+        "duration": 3.651,
+        "sampleRate": 48000,
+        "channels": 2,
+        "lufs": -20,
+        "sourceLufs": -13.6,
+        "peakDb": -9.2
+      },
+      "provenance": {
+        "source": "sonniss:2026/344 Audio - Bass Drops & Downers Vol. 3",
+        "license": "Sonniss GDC Bundle License",
+        "original": "344 Audio - Bass Drops & Downers Vol. 3/DSGNBass_Jump Start Drop 3_344 Audio_Bass Drops and Downers Vol 3.wav",
+        "url": null
+      }
+    },
+    {
       "id": "boom-05",
       "kind": "sfx",
       "category": "boom",
@@ -96,6 +192,54 @@
         "source": "kenney:rpg-audio",
         "license": "CC0",
         "original": "Audio/handleCoins2.ogg",
+        "url": null
+      }
+    },
+    {
+      "id": "cash-03",
+      "kind": "sfx",
+      "category": "cash",
+      "store": "ext",
+      "file": "sfx/cash/cash-03.wav",
+      "sha256": "60bb4558f8342f4b5424c34335b626b3f93a98000449bcf2d0636b3563fb4091",
+      "tags": [],
+      "note": "coin ting, UI reward",
+      "audio": {
+        "duration": 1.038,
+        "sampleRate": 48000,
+        "channels": 2,
+        "lufs": -20,
+        "sourceLufs": -29.1,
+        "peakDb": -1.6
+      },
+      "provenance": {
+        "source": "sonniss:2026/Cinematic Sound Design - UI Interaction Elements",
+        "license": "Sonniss GDC Bundle License",
+        "original": "Cinematic Sound Design - UI Interaction Elements/Ting Coins.wav",
+        "url": null
+      }
+    },
+    {
+      "id": "cash-04",
+      "kind": "sfx",
+      "category": "cash",
+      "store": "ext",
+      "file": "sfx/cash/cash-04.wav",
+      "sha256": "1390dead382e28b40110a729bf868dfcb41d496c512247b9784ff7b636522746",
+      "tags": [],
+      "note": "single coin flip",
+      "audio": {
+        "duration": 0.938,
+        "sampleRate": 48000,
+        "channels": 2,
+        "lufs": -20,
+        "sourceLufs": -27.8,
+        "peakDb": -1.5
+      },
+      "provenance": {
+        "source": "sonniss:2026/Cinematic Sound Design - Hybrid Game & UI Elements",
+        "license": "Sonniss GDC Bundle License",
+        "original": "Cinematic Sound Design - Hybrid Game & UI Elements/Foley Coin Flip Single Fast.wav",
         "url": null
       }
     },
@@ -220,6 +364,126 @@
       }
     },
     {
+      "id": "click-05",
+      "kind": "sfx",
+      "category": "click",
+      "store": "ext",
+      "file": "sfx/click/click-05.wav",
+      "sha256": "cd5880646896fa8fa5bacab5a41c6573d55ce370324dd624dd5d27bef3a9fd14",
+      "tags": [],
+      "note": "analog double click, mono",
+      "audio": {
+        "duration": 0.167,
+        "sampleRate": 48000,
+        "channels": 2,
+        "lufs": -20,
+        "sourceLufs": -24.8,
+        "peakDb": -1.7
+      },
+      "provenance": {
+        "source": "sonniss:2026/Epic Stock Media - Board Game - Sound Set Kit for Tabletop and Digital Games",
+        "license": "Sonniss GDC Bundle License",
+        "original": "Epic Stock Media - Board Game - Sound Set Kit for Tabletop and Digital Games/UIClick_UI Button Analog Vintage Double Click Neutral Dry Press 11_ESM_BG.wav",
+        "url": null
+      }
+    },
+    {
+      "id": "crowd-01",
+      "kind": "sfx",
+      "category": "crowd",
+      "store": "ext",
+      "file": "sfx/crowd/crowd-01.wav",
+      "sha256": "4085bfc53a67682c3c8e2d79ece65db5a71c1b8aebb2c2a7e9abaf95be555d5e",
+      "tags": [],
+      "note": "walla, mono, 10.5s",
+      "audio": {
+        "duration": 8,
+        "sampleRate": 48000,
+        "channels": 2,
+        "lufs": -20,
+        "sourceLufs": -18,
+        "peakDb": -6
+      },
+      "provenance": {
+        "source": "sonniss:2026/TheWorkRoom - Nigerian Walla",
+        "license": "Sonniss GDC Bundle License",
+        "original": "TheWorkRoom - Nigerian Walla/NIG053.wav",
+        "url": null
+      }
+    },
+    {
+      "id": "crowd-02",
+      "kind": "sfx",
+      "category": "crowd",
+      "store": "ext",
+      "file": "sfx/crowd/crowd-02.wav",
+      "sha256": "44b274a4dd5c206f06c93dc3423f9224ecf6fd870a72990c02a12a5453f650ea",
+      "tags": [],
+      "note": "cheer + applause; 6-ch surround, downmix and trim",
+      "audio": {
+        "duration": 8,
+        "sampleRate": 48000,
+        "channels": 2,
+        "lufs": -20,
+        "sourceLufs": -27,
+        "peakDb": -1.8
+      },
+      "provenance": {
+        "source": "sonniss:2026/Sonik Sound Library - Spanish Crowds",
+        "license": "Sonniss GDC Bundle License",
+        "original": "Sonik Sound Library - Spanish Crowds/CRWDCheer_Small Club, 50 People, Crowd, Spanish, Cheering and Applause-Surround_KSL_KS015.wav",
+        "url": null
+      }
+    },
+    {
+      "id": "crowd-03",
+      "kind": "sfx",
+      "category": "crowd",
+      "store": "ext",
+      "file": "sfx/crowd/crowd-03.wav",
+      "sha256": "7a0031a2b18d76455175130d6d264171234e2379989a9e91e3761b34748fe4a1",
+      "tags": [],
+      "note": "spectator voice reactions; 18s, trim",
+      "audio": {
+        "duration": 8,
+        "sampleRate": 48000,
+        "channels": 2,
+        "lufs": -20,
+        "sourceLufs": -52.2,
+        "peakDb": -2.1
+      },
+      "provenance": {
+        "source": "sonniss:2026/344 Audio - Cinema Experience Vol. 1",
+        "license": "Sonniss GDC Bundle License",
+        "original": "344 Audio - Cinema Experience Vol. 1/VOXReac_Spectator, Female, Various Questions_344 Audio_Cinema Experience.wav",
+        "url": null
+      }
+    },
+    {
+      "id": "crowd-04",
+      "kind": "sfx",
+      "category": "crowd",
+      "store": "ext",
+      "file": "sfx/crowd/crowd-04.wav",
+      "sha256": "31cb270123115bf71556cda563d10d86c1ee038555c367b27de48061f43c0367",
+      "tags": [],
+      "note": "pub walla bed; 118s, trim",
+      "audio": {
+        "duration": 8,
+        "sampleRate": 48000,
+        "channels": 2,
+        "lufs": -20,
+        "sourceLufs": -23.6,
+        "peakDb": -1.8
+      },
+      "provenance": {
+        "source": "sonniss:2026/Jake Fielding - British Walla and Crowd",
+        "license": "Sonniss GDC Bundle License",
+        "original": "Jake Fielding - British Walla and Crowd/CRWDWalla_Pub Walla, Crowd, Bar, _Jake Fielding_British Walla and Crowd_14.wav",
+        "url": null
+      }
+    },
+    {
       "id": "ding-01",
       "kind": "sfx",
       "category": "ding",
@@ -288,6 +552,30 @@
         "source": "kenney:interface-sounds",
         "license": "CC0",
         "original": "Audio/glass_001.ogg",
+        "url": null
+      }
+    },
+    {
+      "id": "ding-04",
+      "kind": "sfx",
+      "category": "ding",
+      "store": "ext",
+      "file": "sfx/ding/ding-04.wav",
+      "sha256": "7537f3a3e5c2a8fa2e6dbfb924776d500fc8f1a2d33fa167af80139de7bf4063",
+      "tags": [],
+      "note": "sci-fi ping",
+      "audio": {
+        "duration": 0.748,
+        "sampleRate": 48000,
+        "channels": 2,
+        "lufs": -20,
+        "sourceLufs": -16.3,
+        "peakDb": -7
+      },
+      "provenance": {
+        "source": "sonniss:2026/Cinematic Sound Design - System & UI Feedback Elements",
+        "license": "Sonniss GDC Bundle License",
+        "original": "Cinematic Sound Design - System & UI Feedback Elements/Interface Sci-Fi Ping Down.wav",
         "url": null
       }
     },
@@ -364,6 +652,126 @@
       }
     },
     {
+      "id": "error-04",
+      "kind": "sfx",
+      "category": "error",
+      "store": "ext",
+      "file": "sfx/error/error-04.wav",
+      "sha256": "a96fddb84186658eddcc8280480a7df40173581bb0a8486c6386b2f3a29b77ae",
+      "tags": [],
+      "note": "low dark deny",
+      "audio": {
+        "duration": 0.743,
+        "sampleRate": 48000,
+        "channels": 2,
+        "lufs": -20,
+        "sourceLufs": -20.6,
+        "peakDb": -2.7
+      },
+      "provenance": {
+        "source": "sonniss:2026/Cinematic Sound Design - System & UI Feedback Elements",
+        "license": "Sonniss GDC Bundle License",
+        "original": "Cinematic Sound Design - System & UI Feedback Elements/Interface Deny Low Fat Dark.wav",
+        "url": null
+      }
+    },
+    {
+      "id": "error-05",
+      "kind": "sfx",
+      "category": "error",
+      "store": "ext",
+      "file": "sfx/error/error-05.wav",
+      "sha256": "a734e3fe48ae156d52abfd82644cb697ac0f4aaef4ce0059845cd142f4267000",
+      "tags": [],
+      "note": "muted deny",
+      "audio": {
+        "duration": 0.799,
+        "sampleRate": 48000,
+        "channels": 2,
+        "lufs": -20,
+        "sourceLufs": -14.1,
+        "peakDb": -11.5
+      },
+      "provenance": {
+        "source": "sonniss:2026/Cinematic Sound Design - UI Interaction Elements",
+        "license": "Sonniss GDC Bundle License",
+        "original": "Cinematic Sound Design - UI Interaction Elements/Deny Muted.wav",
+        "url": null
+      }
+    },
+    {
+      "id": "glitch-01",
+      "kind": "sfx",
+      "category": "glitch",
+      "store": "ext",
+      "file": "sfx/glitch/glitch-01.wav",
+      "sha256": "b005d161a15037ce4bf8f40a802dd10c0d3a0913c854711dbeb4d27fc24d3c0d",
+      "tags": [],
+      "note": "designed data-corrupt glitch; 5.4s, trim",
+      "audio": {
+        "duration": 3,
+        "sampleRate": 48000,
+        "channels": 2,
+        "lufs": -20,
+        "sourceLufs": -27,
+        "peakDb": -1.5
+      },
+      "provenance": {
+        "source": "sonniss:2026/The Noisery - Rich Glitch",
+        "license": "Sonniss GDC Bundle License",
+        "original": "The Noisery - Rich Glitch/UIGlitch_Designed_Glitch_Corrupted_Data Error_The Noisery_Rich Glitch_06.wav",
+        "url": null
+      }
+    },
+    {
+      "id": "glitch-02",
+      "kind": "sfx",
+      "category": "glitch",
+      "store": "ext",
+      "file": "sfx/glitch/glitch-02.wav",
+      "sha256": "1423dd2ec6f7137afd9a3964026858e49cf8a25731e4fa9a5f30a379252b50de",
+      "tags": [],
+      "note": "electric glitch impact, 3.7s",
+      "audio": {
+        "duration": 3,
+        "sampleRate": 48000,
+        "channels": 2,
+        "lufs": -20,
+        "sourceLufs": -18.5,
+        "peakDb": -2.9
+      },
+      "provenance": {
+        "source": "sonniss:2026/Epic Stock Media - Elemental Mutation Whooshes and Impacts",
+        "license": "Sonniss GDC Bundle License",
+        "original": "Epic Stock Media - Elemental Mutation Whooshes and Impacts/ELECMisc_Impact Electric Tonal Deep Movement Motion Hiss Glitch 01_ESM_EMWI.wav",
+        "url": null
+      }
+    },
+    {
+      "id": "glitch-03",
+      "kind": "sfx",
+      "category": "glitch",
+      "store": "ext",
+      "file": "sfx/glitch/glitch-03.wav",
+      "sha256": "54feccb76ad0df3fbcea576eae3d821fb60e697981219d30c89e3f7f19f23c51",
+      "tags": [],
+      "note": "electric arc zap",
+      "audio": {
+        "duration": 1.04,
+        "sampleRate": 48000,
+        "channels": 2,
+        "lufs": -20,
+        "sourceLufs": -20,
+        "peakDb": -3.3
+      },
+      "provenance": {
+        "source": "sonniss:2026/InMotionAudio - Arc",
+        "license": "Sonniss GDC Bundle License",
+        "original": "InMotionAudio - Arc/ELECArc_ArcDesign15_InMotionAudio_Arc.wav",
+        "url": null
+      }
+    },
+    {
       "id": "glitch-04",
       "kind": "sfx",
       "category": "glitch",
@@ -408,6 +816,102 @@
         "source": "kenney:interface-sounds",
         "license": "CC0",
         "original": "Audio/glitch_004.ogg",
+        "url": null
+      }
+    },
+    {
+      "id": "impact-01",
+      "kind": "sfx",
+      "category": "impact",
+      "store": "ext",
+      "file": "sfx/impact/impact-01.wav",
+      "sha256": "bf6f658787d9d4c4ff6a497035b3f1d2961c673f6f96deff363dec1e98cdcba6",
+      "tags": [],
+      "note": "trailer boom hit; 15s tail, trim",
+      "audio": {
+        "duration": 4,
+        "sampleRate": 48000,
+        "channels": 2,
+        "lufs": -20,
+        "sourceLufs": -23.1,
+        "peakDb": -1.6
+      },
+      "provenance": {
+        "source": "sonniss:2026/Federico Soler - Effective Trailer Booms Vol. 2",
+        "license": "Sonniss GDC Bundle License",
+        "original": "Federico Soler - Effective Trailer Booms Vol. 2/EffectiveTrailer_Booms_Vol2_075.wav",
+        "url": null
+      }
+    },
+    {
+      "id": "impact-02",
+      "kind": "sfx",
+      "category": "impact",
+      "store": "ext",
+      "file": "sfx/impact/impact-02.wav",
+      "sha256": "a6be90295f46a7f35f7ae1df304bdb169cb5952a784c2a311e43c2c3955611f1",
+      "tags": [],
+      "note": "trailer boom hit; 17s tail, trim",
+      "audio": {
+        "duration": 4,
+        "sampleRate": 48000,
+        "channels": 2,
+        "lufs": -20,
+        "sourceLufs": -15.4,
+        "peakDb": -5.6
+      },
+      "provenance": {
+        "source": "sonniss:2026/Federico Soler - Effective Trailer Booms Vol. 2",
+        "license": "Sonniss GDC Bundle License",
+        "original": "Federico Soler - Effective Trailer Booms Vol. 2/EffectiveTrailer_Booms_Vol2_011.wav",
+        "url": null
+      }
+    },
+    {
+      "id": "impact-03",
+      "kind": "sfx",
+      "category": "impact",
+      "store": "ext",
+      "file": "sfx/impact/impact-03.wav",
+      "sha256": "e64137c3fc4a7a1bb711c081b1b75b5235d3d7238fcec9e845b2dc159da0c6a6",
+      "tags": [],
+      "note": "tonal chord hit, good for title slam",
+      "audio": {
+        "duration": 3.206,
+        "sampleRate": 48000,
+        "channels": 2,
+        "lufs": -20,
+        "sourceLufs": -24.8,
+        "peakDb": -1.5
+      },
+      "provenance": {
+        "source": "sonniss:2026/Cinematic Sound Design - Ultra Transitions & Impacts",
+        "license": "Sonniss GDC Bundle License",
+        "original": "Cinematic Sound Design - Ultra Transitions & Impacts/Impact Hit Rapid Chord Reverb.wav",
+        "url": null
+      }
+    },
+    {
+      "id": "impact-04",
+      "kind": "sfx",
+      "category": "impact",
+      "store": "ext",
+      "file": "sfx/impact/impact-04.wav",
+      "sha256": "9f5a2a791f71f9a25fc07e7f2a9db18b21bc2ddbc09649cde69d8adf5b1199e6",
+      "tags": [],
+      "note": "crunchy short blast",
+      "audio": {
+        "duration": 1.462,
+        "sampleRate": 48000,
+        "channels": 2,
+        "lufs": -20,
+        "sourceLufs": -22.1,
+        "peakDb": -1.6
+      },
+      "provenance": {
+        "source": "sonniss:2026/Epic Stock Media - Anime Game",
+        "license": "Sonniss GDC Bundle License",
+        "original": "Epic Stock Media - Anime Game/EXPLDsgn_Explosion Small Blast Enemy Death Crunchy Boom Cartoon Noisy Crash Impact Delay 03_ESM_AG.wav",
         "url": null
       }
     },
@@ -484,6 +988,30 @@
       }
     },
     {
+      "id": "keyboard-03",
+      "kind": "sfx",
+      "category": "keyboard",
+      "store": "ext",
+      "file": "sfx/keyboard/keyboard-03.wav",
+      "sha256": "9acc2a4a26810cedd72d556f63957baf33d570ce4b34f2283df3a9b02fffb9ab",
+      "tags": [],
+      "note": "approximation: mechanical key, heavier than a modern keyboard",
+      "audio": {
+        "duration": 0.518,
+        "sampleRate": 48000,
+        "channels": 2,
+        "lufs": -20,
+        "sourceLufs": -30.5,
+        "peakDb": -1.5
+      },
+      "provenance": {
+        "source": "sonniss:2026/344 Audio - Antique Typewriter",
+        "license": "Sonniss GDC Bundle License",
+        "original": "344 Audio - Antique Typewriter/COMType_Typewriter Space Key, Typewriter 05_344 Audio_Antiques - Typewriter.wav",
+        "url": null
+      }
+    },
+    {
       "id": "marker-01",
       "kind": "sfx",
       "category": "marker",
@@ -556,6 +1084,30 @@
       }
     },
     {
+      "id": "marker-04",
+      "kind": "sfx",
+      "category": "marker",
+      "store": "ext",
+      "file": "sfx/marker/marker-04.wav",
+      "sha256": "880a0f82697687012f59bee720422e9906f2a606e356477acd7bae1eb7e82f31",
+      "tags": [],
+      "note": "approximation: surface wipe/scrape",
+      "audio": {
+        "duration": 1.076,
+        "sampleRate": 48000,
+        "channels": 2,
+        "lufs": -20,
+        "sourceLufs": -34.4,
+        "peakDb": -1.5
+      },
+      "provenance": {
+        "source": "sonniss:2026/InMotionAudio - Scratch Card",
+        "license": "Sonniss GDC Bundle License",
+        "original": "InMotionAudio - Scratch Card/OBJMisc_ScratchCard_SurfaceWipe_04_InMotionAudio_ScratchCard.wav",
+        "url": null
+      }
+    },
+    {
       "id": "page-flip-01",
       "kind": "sfx",
       "category": "page-flip",
@@ -580,6 +1132,54 @@
       }
     },
     {
+      "id": "page-flip-02",
+      "kind": "sfx",
+      "category": "page-flip",
+      "store": "ext",
+      "file": "sfx/page-flip/page-flip-02.wav",
+      "sha256": "94e9ecaa22dc4c74e6e5f1c5ada23244873dca89a82a8e85ab9a7dc83ce4e808",
+      "tags": [],
+      "note": "glossy page turn",
+      "audio": {
+        "duration": 0.549,
+        "sampleRate": 48000,
+        "channels": 2,
+        "lufs": -20,
+        "sourceLufs": -41.6,
+        "peakDb": -1.6
+      },
+      "provenance": {
+        "source": "sonniss:2026/Cinematic Sound Design - Paper Foley",
+        "license": "Sonniss GDC Bundle License",
+        "original": "Cinematic Sound Design - Paper Foley/Encyclopedia Glossy Page Turn Muted.wav",
+        "url": null
+      }
+    },
+    {
+      "id": "page-flip-03",
+      "kind": "sfx",
+      "category": "page-flip",
+      "store": "ext",
+      "file": "sfx/page-flip/page-flip-03.wav",
+      "sha256": "52079eb76f88d381dcc53ac92ac79156171e282ed78a768c241bbceafc4b4edc",
+      "tags": [],
+      "note": "paper rattle page turn",
+      "audio": {
+        "duration": 1.246,
+        "sampleRate": 48000,
+        "channels": 2,
+        "lufs": -20,
+        "sourceLufs": -40.3,
+        "peakDb": -1.5
+      },
+      "provenance": {
+        "source": "sonniss:2026/Cinematic Sound Design - Paper Foley",
+        "license": "Sonniss GDC Bundle License",
+        "original": "Cinematic Sound Design - Paper Foley/A4 Printing Paper Rattle Page Turn Tail.wav",
+        "url": null
+      }
+    },
+    {
       "id": "page-flip-04",
       "kind": "sfx",
       "category": "page-flip",
@@ -600,6 +1200,54 @@
         "source": "kenney:rpg-audio",
         "license": "CC0",
         "original": "Audio/bookFlip1.ogg",
+        "url": null
+      }
+    },
+    {
+      "id": "page-flip-05",
+      "kind": "sfx",
+      "category": "page-flip",
+      "store": "ext",
+      "file": "sfx/page-flip/page-flip-05.wav",
+      "sha256": "fd8a79ddc84053d735269c6f161642fe881b2fa1394c9a6cf22703c8f3e84a36",
+      "tags": [],
+      "note": "flicking through pages",
+      "audio": {
+        "duration": 1.643,
+        "sampleRate": 48000,
+        "channels": 2,
+        "lufs": -20,
+        "sourceLufs": -43.5,
+        "peakDb": -1.5
+      },
+      "provenance": {
+        "source": "sonniss:2026/344 Audio - Antique Books",
+        "license": "Sonniss GDC Bundle License",
+        "original": "344 Audio - Antique Books/PAPRMisc_Antique Books Flicking Through Pages 11_344 Audio_Antiques - Books.wav",
+        "url": null
+      }
+    },
+    {
+      "id": "riser-01",
+      "kind": "sfx",
+      "category": "riser",
+      "store": "ext",
+      "file": "sfx/riser/riser-01.wav",
+      "sha256": "56d0856d200e7456bba00c9cd6756e9b0603d3bcd8ee4345c20bb40b25d288a4",
+      "tags": [],
+      "note": "electric power-up rise; 7.5s, over 6s, trim",
+      "audio": {
+        "duration": 5,
+        "sampleRate": 48000,
+        "channels": 2,
+        "lufs": -20,
+        "sourceLufs": -21.8,
+        "peakDb": -5.4
+      },
+      "provenance": {
+        "source": "sonniss:2026/InMotionAudio - Arc",
+        "license": "Sonniss GDC Bundle License",
+        "original": "InMotionAudio - Arc/ELECArc_ArcPowerUpDesign04_InMotionAudio_Arc.wav",
         "url": null
       }
     },
@@ -676,6 +1324,30 @@
       }
     },
     {
+      "id": "rocket-01",
+      "kind": "sfx",
+      "category": "rocket",
+      "store": "ext",
+      "file": "sfx/rocket/rocket-01.wav",
+      "sha256": "e9afcef6e4cbd3577cf14d74e6727a79b783cabc93ce94be8e564ee1ef9c8ff5",
+      "tags": [],
+      "note": "designed jet blast-off, best fit",
+      "audio": {
+        "duration": 7,
+        "sampleRate": 48000,
+        "channels": 2,
+        "lufs": -20,
+        "sourceLufs": -25.2,
+        "peakDb": -3.1
+      },
+      "provenance": {
+        "source": "sonniss:2026/344 Audio - Air Designed",
+        "license": "Sonniss GDC Bundle License",
+        "original": "344 Audio - Air Designed/AEROJet_Blast Off Clean_344 Audio_Air Designed.wav",
+        "url": null
+      }
+    },
+    {
       "id": "rocket-02",
       "kind": "sfx",
       "category": "rocket",
@@ -748,6 +1420,30 @@
       }
     },
     {
+      "id": "rocket-05",
+      "kind": "sfx",
+      "category": "rocket",
+      "store": "ext",
+      "file": "sfx/rocket/rocket-05.wav",
+      "sha256": "9e4b8ee4461682a8f299e2a22a4ef1f220cb8d9ba7eec9ba78b6215a2bf2ee11",
+      "tags": [],
+      "note": "launch/explosion series; 24s, trim",
+      "audio": {
+        "duration": 7,
+        "sampleRate": 48000,
+        "channels": 2,
+        "lufs": -20,
+        "sourceLufs": -32.4,
+        "peakDb": -1.5
+      },
+      "provenance": {
+        "source": "sonniss:2026/Ivo Vicic - Fireworks FX",
+        "license": "Sonniss GDC Bundle License",
+        "original": "Ivo Vicic - Fireworks FX/13 Fireworks_powerful explosions_multiples in a row_near.wav",
+        "url": null
+      }
+    },
+    {
       "id": "shutter-01",
       "kind": "sfx",
       "category": "shutter",
@@ -796,6 +1492,102 @@
       }
     },
     {
+      "id": "shutter-03",
+      "kind": "sfx",
+      "category": "shutter",
+      "store": "ext",
+      "file": "sfx/shutter/shutter-03.wav",
+      "sha256": "e3c98c609c87de595c0b97075b17e4b8b611055bab00f392038e3043f33f0b4d",
+      "tags": [],
+      "note": "approximation: mechanical latch click",
+      "audio": {
+        "duration": 0.379,
+        "sampleRate": 48000,
+        "channels": 2,
+        "lufs": -20,
+        "sourceLufs": -30.7,
+        "peakDb": -1.5
+      },
+      "provenance": {
+        "source": "sonniss:2026/Epic Stock Media - HD Lock And Mechanism Sound Design Kit",
+        "license": "Sonniss GDC Bundle License",
+        "original": "Epic Stock Media - HD Lock And Mechanism Sound Design Kit/MECHLtch_Click Deep Mechanism Latch Button Nearfield Thunk 02_ESM_HDLM.wav",
+        "url": null
+      }
+    },
+    {
+      "id": "success-sting-01",
+      "kind": "sfx",
+      "category": "success-sting",
+      "store": "ext",
+      "file": "sfx/success-sting/success-sting-01.wav",
+      "sha256": "8c03dbf33d540b9697cac4c0f6aabbdd1831c4fbcb18f10530eead65706bc588",
+      "tags": [],
+      "note": "bright positive stinger",
+      "audio": {
+        "duration": 1.491,
+        "sampleRate": 48000,
+        "channels": 2,
+        "lufs": -20,
+        "sourceLufs": -19.3,
+        "peakDb": -2.4
+      },
+      "provenance": {
+        "source": "sonniss:2026/Epic Stock Media - Anime Game",
+        "license": "Sonniss GDC Bundle License",
+        "original": "Epic Stock Media - Anime Game/DSGNStngr_Power Up Bright Positive Successful Light Saturation Crash Shimmer 05_ESM_AG.wav",
+        "url": null
+      }
+    },
+    {
+      "id": "success-sting-02",
+      "kind": "sfx",
+      "category": "success-sting",
+      "store": "ext",
+      "file": "sfx/success-sting/success-sting-02.wav",
+      "sha256": "a67b058a1ee80b9f0b3e7152f0ed9fe3561e0b75940009238ca21ac7e07975e1",
+      "tags": [],
+      "note": "happy short sting",
+      "audio": {
+        "duration": 0.875,
+        "sampleRate": 48000,
+        "channels": 2,
+        "lufs": -20,
+        "sourceLufs": -23.2,
+        "peakDb": -2.1
+      },
+      "provenance": {
+        "source": "sonniss:2026/Cinematic Sound Design - Hybrid Game & UI Elements",
+        "license": "Sonniss GDC Bundle License",
+        "original": "Cinematic Sound Design - Hybrid Game & UI Elements/Game Entry Happy Short.wav",
+        "url": null
+      }
+    },
+    {
+      "id": "success-sting-03",
+      "kind": "sfx",
+      "category": "success-sting",
+      "store": "ext",
+      "file": "sfx/success-sting/success-sting-03.wav",
+      "sha256": "a34eca216e043b322f35ea6d5a825d36524181d4cc91d03da5a979833885c1c2",
+      "tags": [],
+      "note": "happy plucks",
+      "audio": {
+        "duration": 0.853,
+        "sampleRate": 48000,
+        "channels": 2,
+        "lufs": -20,
+        "sourceLufs": -19.4,
+        "peakDb": -4.2
+      },
+      "provenance": {
+        "source": "sonniss:2026/Cinematic Sound Design - User Interface",
+        "license": "Sonniss GDC Bundle License",
+        "original": "Cinematic Sound Design - User Interface/Interface Plucks Happy.wav",
+        "url": null
+      }
+    },
+    {
       "id": "success-sting-04",
       "kind": "sfx",
       "category": "success-sting",
@@ -840,6 +1632,102 @@
         "source": "kenney:music-jingles",
         "license": "CC0",
         "original": "Steel jingles/jingles_STEEL00.ogg",
+        "url": null
+      }
+    },
+    {
+      "id": "swell-01",
+      "kind": "sfx",
+      "category": "swell",
+      "store": "ext",
+      "file": "sfx/swell/swell-01.wav",
+      "sha256": "c64e092e35e51d2d57b1a9793c455919df3d61593e4242cc7dc34fba32305c0a",
+      "tags": [],
+      "note": "approximation: dark braam swell, not a reverse cymbal",
+      "audio": {
+        "duration": 4.361,
+        "sampleRate": 48000,
+        "channels": 2,
+        "lufs": -20,
+        "sourceLufs": -21.9,
+        "peakDb": -2.1
+      },
+      "provenance": {
+        "source": "sonniss:2026/Cinematic Sound Design - Ultra Transitions & Impacts",
+        "license": "Sonniss GDC Bundle License",
+        "original": "Cinematic Sound Design - Ultra Transitions & Impacts/Transition Braam Slow Dark Creepy.wav",
+        "url": null
+      }
+    },
+    {
+      "id": "swell-02",
+      "kind": "sfx",
+      "category": "swell",
+      "store": "ext",
+      "file": "sfx/swell/swell-02.wav",
+      "sha256": "441abefd0e7c254c3b5de97ee3cce46c44ce6a70395bd1467119550fd87db35b",
+      "tags": [],
+      "note": "approximation: horn braam; 13.7s, trim",
+      "audio": {
+        "duration": 5,
+        "sampleRate": 48000,
+        "channels": 2,
+        "lufs": -20,
+        "sourceLufs": -20.4,
+        "peakDb": -4.6
+      },
+      "provenance": {
+        "source": "sonniss:2026/Jake Fielding - Cinematic Horn Braams",
+        "license": "Sonniss GDC Bundle License",
+        "original": "Jake Fielding - Cinematic Horn Braams/DSGNBram____Cinematic Horn Braam, Epic, Cinematic, Dark, Instrument, Huge-67.wav",
+        "url": null
+      }
+    },
+    {
+      "id": "swish-01",
+      "kind": "sfx",
+      "category": "swish",
+      "store": "ext",
+      "file": "sfx/swish/swish-01.wav",
+      "sha256": "03421d50940bc1752ecc4f650f981ec0aa4de75dd406f405d9c908187b190316",
+      "tags": [],
+      "note": "layered blade swish",
+      "audio": {
+        "duration": 2.454,
+        "sampleRate": 48000,
+        "channels": 2,
+        "lufs": -20,
+        "sourceLufs": -14.7,
+        "peakDb": -6.2
+      },
+      "provenance": {
+        "source": "sonniss:2026/Epic Stock Media - Tower Defense Game",
+        "license": "Sonniss GDC Bundle License",
+        "original": "Epic Stock Media - Tower Defense Game/DSGNStngr_Action Deploy Units Sword Slice Special Move Layered Swish 04_ESM_TDG.wav",
+        "url": null
+      }
+    },
+    {
+      "id": "swish-02",
+      "kind": "sfx",
+      "category": "swish",
+      "store": "ext",
+      "file": "sfx/swish/swish-02.wav",
+      "sha256": "73ab0cd8070a528f3795c7eecdbef2edcb12a48c20e3241efacbf2871d7bfd77",
+      "tags": [],
+      "note": "light cloth flip swish",
+      "audio": {
+        "duration": 0.658,
+        "sampleRate": 48000,
+        "channels": 2,
+        "lufs": -20,
+        "sourceLufs": -22,
+        "peakDb": -1.6
+      },
+      "provenance": {
+        "source": "sonniss:2026/Epic Stock Media - Fantasy Game 2 - Sound Kit for Enchanted Realms",
+        "license": "Sonniss GDC Bundle License",
+        "original": "Epic Stock Media - Fantasy Game 2 - Sound Kit for Enchanted Realms/CLOTHFlp_Action Inventory Open Flip Cloth Canvas Bag Slide Light 02_ESM_FG2.wav",
         "url": null
       }
     },
@@ -988,6 +1876,150 @@
       }
     },
     {
+      "id": "tick-04",
+      "kind": "sfx",
+      "category": "tick",
+      "store": "ext",
+      "file": "sfx/tick/tick-04.wav",
+      "sha256": "a3dd7875496c2ca4984b0a48fd2bbb0809e8877467d3798f3edddf39bbc6c102",
+      "tags": [],
+      "note": "mechanical counter tick",
+      "audio": {
+        "duration": 0.271,
+        "sampleRate": 48000,
+        "channels": 2,
+        "lufs": -20,
+        "sourceLufs": -16.7,
+        "peakDb": -4.2
+      },
+      "provenance": {
+        "source": "sonniss:2026/Epic Stock Media - HD Lock And Mechanism Sound Design Kit",
+        "license": "Sonniss GDC Bundle License",
+        "original": "Epic Stock Media - HD Lock And Mechanism Sound Design Kit/MACHMech_Mechanism Counting Machine Interact Loose Container Short 01_ESM_HDLM.wav",
+        "url": null
+      }
+    },
+    {
+      "id": "tick-05",
+      "kind": "sfx",
+      "category": "tick",
+      "store": "ext",
+      "file": "sfx/tick/tick-05.wav",
+      "sha256": "0d7cffc7f5c8dac4ccde931f34047027ab03868cd290eb6a883f2f81930367c4",
+      "tags": [],
+      "note": "clock ticking loop; 60s, trim",
+      "audio": {
+        "duration": 4,
+        "sampleRate": 48000,
+        "channels": 2,
+        "lufs": -20,
+        "sourceLufs": -35.6,
+        "peakDb": -1.5
+      },
+      "provenance": {
+        "source": "sonniss:2026/344 Audio - Antique Clocks",
+        "license": "Sonniss GDC Bundle License",
+        "original": "344 Audio - Antique Clocks/CLOCKTick_Crooked Antique Clock_344 Audio_Antique Clocks.wav",
+        "url": null
+      }
+    },
+    {
+      "id": "typewriter-01",
+      "kind": "sfx",
+      "category": "typewriter",
+      "store": "ext",
+      "file": "sfx/typewriter/typewriter-01.wav",
+      "sha256": "9acc2a4a26810cedd72d556f63957baf33d570ce4b34f2283df3a9b02fffb9ab",
+      "tags": [],
+      "note": "single key strike",
+      "audio": {
+        "duration": 0.518,
+        "sampleRate": 48000,
+        "channels": 2,
+        "lufs": -20,
+        "sourceLufs": -30.5,
+        "peakDb": -1.5
+      },
+      "provenance": {
+        "source": "sonniss:2026/344 Audio - Antique Typewriter",
+        "license": "Sonniss GDC Bundle License",
+        "original": "344 Audio - Antique Typewriter/COMType_Typewriter Space Key, Typewriter 05_344 Audio_Antiques - Typewriter.wav",
+        "url": null
+      }
+    },
+    {
+      "id": "typewriter-02",
+      "kind": "sfx",
+      "category": "typewriter",
+      "store": "ext",
+      "file": "sfx/typewriter/typewriter-02.wav",
+      "sha256": "836dffa87bdd73e165bcdfe7a28bfa5d6cd2d617a22e7614d011affdf2e12002",
+      "tags": [],
+      "note": "paper feed; trim to taste",
+      "audio": {
+        "duration": 2.951,
+        "sampleRate": 48000,
+        "channels": 2,
+        "lufs": -20,
+        "sourceLufs": -49.2,
+        "peakDb": -1.5
+      },
+      "provenance": {
+        "source": "sonniss:2026/344 Audio - Antique Typewriter",
+        "license": "Sonniss GDC Bundle License",
+        "original": "344 Audio - Antique Typewriter/COMType_Typewriter Paper Movements, Typewriter 04_344 Audio_Antiques - Typewriter.wav",
+        "url": null
+      }
+    },
+    {
+      "id": "typewriter-03",
+      "kind": "sfx",
+      "category": "typewriter",
+      "store": "ext",
+      "file": "sfx/typewriter/typewriter-03.wav",
+      "sha256": "97be7952242800eaa981080d9db2cdf74c331e48ca4d8a4220e81b3d27041f10",
+      "tags": [],
+      "note": "carriage move/return; trim",
+      "audio": {
+        "duration": 3,
+        "sampleRate": 48000,
+        "channels": 2,
+        "lufs": -20,
+        "sourceLufs": -30.1,
+        "peakDb": -1.5
+      },
+      "provenance": {
+        "source": "sonniss:2026/344 Audio - Antique Typewriter",
+        "license": "Sonniss GDC Bundle License",
+        "original": "344 Audio - Antique Typewriter/COMType_Typewriter Carriage Movement, Typewriter_344 Audio_Antiques - Typewriter_01.wav",
+        "url": null
+      }
+    },
+    {
+      "id": "ui-pop-01",
+      "kind": "sfx",
+      "category": "ui-pop",
+      "store": "ext",
+      "file": "sfx/ui-pop/ui-pop-01.wav",
+      "sha256": "e7560efc97f1a1e0c2c9ed44e718b3213cb7ce5a5cfa04faf840b813274bb8a2",
+      "tags": [],
+      "note": "bright infographic pop",
+      "audio": {
+        "duration": 0.638,
+        "sampleRate": 48000,
+        "channels": 2,
+        "lufs": -20,
+        "sourceLufs": -18.7,
+        "peakDb": -2.6
+      },
+      "provenance": {
+        "source": "sonniss:2026/Cinematic Sound Design - Interface & Infographics",
+        "license": "Sonniss GDC Bundle License",
+        "original": "Cinematic Sound Design - Interface & Infographics/Interface Pop High Short.wav",
+        "url": null
+      }
+    },
+    {
       "id": "ui-pop-02",
       "kind": "sfx",
       "category": "ui-pop",
@@ -1032,6 +2064,30 @@
         "source": "kenney:interface-sounds",
         "license": "CC0",
         "original": "Audio/pluck_002.ogg",
+        "url": null
+      }
+    },
+    {
+      "id": "ui-pop-04",
+      "kind": "sfx",
+      "category": "ui-pop",
+      "store": "ext",
+      "file": "sfx/ui-pop/ui-pop-04.wav",
+      "sha256": "ab44e3d3734193b9830633e954d368461038d1c00236014e3829bed0f55b817e",
+      "tags": [],
+      "note": "glassy snap pop",
+      "audio": {
+        "duration": 0.433,
+        "sampleRate": 48000,
+        "channels": 2,
+        "lufs": -20,
+        "sourceLufs": -25.7,
+        "peakDb": -3.5
+      },
+      "provenance": {
+        "source": "sonniss:2026/Cinematic Sound Design - Interface & Infographics",
+        "license": "Sonniss GDC Bundle License",
+        "original": "Cinematic Sound Design - Interface & Infographics/Interface Accept Glassy Snap.wav",
         "url": null
       }
     },
@@ -1084,6 +2140,30 @@
       }
     },
     {
+      "id": "whip-02",
+      "kind": "sfx",
+      "category": "whip",
+      "store": "ext",
+      "file": "sfx/whip/whip-02.wav",
+      "sha256": "deef25d9fe2c78d21272deccb1aba783ecf86f36d6ad3e395c54bb89187b6265",
+      "tags": [],
+      "note": "approximation: snap transition, not a real whip",
+      "audio": {
+        "duration": 1.439,
+        "sampleRate": 48000,
+        "channels": 2,
+        "lufs": -20,
+        "sourceLufs": -22,
+        "peakDb": -1.7
+      },
+      "provenance": {
+        "source": "sonniss:2026/Cinematic Sound Design - Colossal Impacts",
+        "license": "Sonniss GDC Bundle License",
+        "original": "Cinematic Sound Design - Colossal Impacts/Transition Frantic Shaker Snap.wav",
+        "url": null
+      }
+    },
+    {
       "id": "whip-03",
       "kind": "sfx",
       "category": "whip",
@@ -1108,6 +2188,150 @@
       }
     },
     {
+      "id": "whoosh-cinematic-01",
+      "kind": "sfx",
+      "category": "whoosh-cinematic",
+      "store": "ext",
+      "file": "sfx/whoosh-cinematic/whoosh-cinematic-01.wav",
+      "sha256": "d5ed11b258cb86f90e2b17b9fa4baf07e71b9354582f21a81b9e11c356c793e6",
+      "tags": [],
+      "note": "heavy whoosh with debris tail",
+      "audio": {
+        "duration": 2.307,
+        "sampleRate": 48000,
+        "channels": 2,
+        "lufs": -20,
+        "sourceLufs": -23.2,
+        "peakDb": -1.6
+      },
+      "provenance": {
+        "source": "sonniss:2026/Cinematic Sound Design - Colossal Impacts",
+        "license": "Sonniss GDC Bundle License",
+        "original": "Cinematic Sound Design - Colossal Impacts/Woosh Debris.wav",
+        "url": null
+      }
+    },
+    {
+      "id": "whoosh-cinematic-02",
+      "kind": "sfx",
+      "category": "whoosh-cinematic",
+      "store": "ext",
+      "file": "sfx/whoosh-cinematic/whoosh-cinematic-02.wav",
+      "sha256": "06f6bd5fe0f1b2ec7b9d23572e161f9f12366cd26f5382207496a8d081681350",
+      "tags": [],
+      "note": "deep saturated fire whoosh",
+      "audio": {
+        "duration": 2.417,
+        "sampleRate": 48000,
+        "channels": 2,
+        "lufs": -20,
+        "sourceLufs": -17.3,
+        "peakDb": -3.8
+      },
+      "provenance": {
+        "source": "sonniss:2026/Epic Stock Media - Elemental Mutation Whooshes and Impacts",
+        "license": "Sonniss GDC Bundle License",
+        "original": "Epic Stock Media - Elemental Mutation Whooshes and Impacts/FIREWhsh_Whoosh Fire Deep Growl Monster Saturated Crisp 03_ESM_EMWI.wav",
+        "url": null
+      }
+    },
+    {
+      "id": "whoosh-cinematic-03",
+      "kind": "sfx",
+      "category": "whoosh-cinematic",
+      "store": "ext",
+      "file": "sfx/whoosh-cinematic/whoosh-cinematic-03.wav",
+      "sha256": "9a8264dec78a71880bbc726c41f32bd02bad1505f943857710fa0f8d58d3fad0",
+      "tags": [],
+      "note": "layered whoosh into shatter hit",
+      "audio": {
+        "duration": 2.509,
+        "sampleRate": 48000,
+        "channels": 2,
+        "lufs": -20,
+        "sourceLufs": -13.3,
+        "peakDb": -7.7
+      },
+      "provenance": {
+        "source": "sonniss:2026/Epic Stock Media - Tower Defense Game",
+        "license": "Sonniss GDC Bundle License",
+        "original": "Epic Stock Media - Tower Defense Game/ICEBrk_Skill Freeze Whoosh Break Impact Layered Movement Shatter 03_ESM_TDG.wav",
+        "url": null
+      }
+    },
+    {
+      "id": "whoosh-cinematic-04",
+      "kind": "sfx",
+      "category": "whoosh-cinematic",
+      "store": "ext",
+      "file": "sfx/whoosh-cinematic/whoosh-cinematic-04.wav",
+      "sha256": "b3ebd082590bc6129e7e362c7e3dbd2f1142685fb4db4ea2f4d841b1669600a8",
+      "tags": [],
+      "note": "crystalline whoosh, 2.63s slightly over 2.5s",
+      "audio": {
+        "duration": 2.559,
+        "sampleRate": 48000,
+        "channels": 2,
+        "lufs": -20,
+        "sourceLufs": -16.2,
+        "peakDb": -4.7
+      },
+      "provenance": {
+        "source": "sonniss:2026/Epic Stock Media - Elemental Mutation Whooshes and Impacts",
+        "license": "Sonniss GDC Bundle License",
+        "original": "Epic Stock Media - Elemental Mutation Whooshes and Impacts/GLASMvmt_Whoosh Glass Crystal Fragments Sharp Shards Dry 05_ESM_EMWI.wav",
+        "url": null
+      }
+    },
+    {
+      "id": "whoosh-cinematic-05",
+      "kind": "sfx",
+      "category": "whoosh-cinematic",
+      "store": "ext",
+      "file": "sfx/whoosh-cinematic/whoosh-cinematic-05.wav",
+      "sha256": "4619c554c92fefa3c2373c8d7bd4c69dbc36f17bbc76edd9a2dee85a71ba9a10",
+      "tags": [],
+      "note": "sweep into impact cut, 2.79s",
+      "audio": {
+        "duration": 2.731,
+        "sampleRate": 48000,
+        "channels": 2,
+        "lufs": -20,
+        "sourceLufs": -21.1,
+        "peakDb": -1.8
+      },
+      "provenance": {
+        "source": "sonniss:2026/Cinematic Sound Design - Colossal Impacts",
+        "license": "Sonniss GDC Bundle License",
+        "original": "Cinematic Sound Design - Colossal Impacts/Impact Cut Sweep.wav",
+        "url": null
+      }
+    },
+    {
+      "id": "whoosh-fast-01",
+      "kind": "sfx",
+      "category": "whoosh-fast",
+      "store": "ext",
+      "file": "sfx/whoosh-fast/whoosh-fast-01.wav",
+      "sha256": "003a0f27b7470292c8ec8ea30723e992f5bf15fa458afdfd76ed875fd5cc86d1",
+      "tags": [],
+      "note": "clean infographic slide whoosh",
+      "audio": {
+        "duration": 0.493,
+        "sampleRate": 48000,
+        "channels": 2,
+        "lufs": -20,
+        "sourceLufs": -17.8,
+        "peakDb": -2.8
+      },
+      "provenance": {
+        "source": "sonniss:2026/Cinematic Sound Design - Ultra Transitions & Impacts",
+        "license": "Sonniss GDC Bundle License",
+        "original": "Cinematic Sound Design - Ultra Transitions & Impacts/Woosh Sweep Slide Infographics Basic.wav",
+        "url": null
+      }
+    },
+    {
       "id": "whoosh-fast-02",
       "kind": "sfx",
       "category": "whoosh-fast",
@@ -1128,6 +2352,126 @@
         "source": "remotion",
         "license": "Remotion SFX (no attribution)",
         "original": "remotion/whoosh.wav",
+        "url": null
+      }
+    },
+    {
+      "id": "whoosh-fast-03",
+      "kind": "sfx",
+      "category": "whoosh-fast",
+      "store": "ext",
+      "file": "sfx/whoosh-fast/whoosh-fast-03.wav",
+      "sha256": "bd590ef45f65216225af3fab61f18febda538985dff86ed86ba73b6e49684de3",
+      "tags": [],
+      "note": "electronic bass sweep, punchy",
+      "audio": {
+        "duration": 0.31,
+        "sampleRate": 48000,
+        "channels": 2,
+        "lufs": -20,
+        "sourceLufs": -15,
+        "peakDb": -6
+      },
+      "provenance": {
+        "source": "sonniss:2026/Epic Stock Media - Fantasy Game 2 - Sound Kit for Enchanted Realms",
+        "license": "Sonniss GDC Bundle License",
+        "original": "Epic Stock Media - Fantasy Game 2 - Sound Kit for Enchanted Realms/UIAlert_Collect Scifi Futuristic Electronic Bass Burst Sweep Heavy 04_ESM_FG2.wav",
+        "url": null
+      }
+    },
+    {
+      "id": "whoosh-fast-04",
+      "kind": "sfx",
+      "category": "whoosh-fast",
+      "store": "ext",
+      "file": "sfx/whoosh-fast/whoosh-fast-04.wav",
+      "sha256": "deef25d9fe2c78d21272deccb1aba783ecf86f36d6ad3e395c54bb89187b6265",
+      "tags": [],
+      "note": "fast shaker transition ending in snap",
+      "audio": {
+        "duration": 1.439,
+        "sampleRate": 48000,
+        "channels": 2,
+        "lufs": -20,
+        "sourceLufs": -22,
+        "peakDb": -1.7
+      },
+      "provenance": {
+        "source": "sonniss:2026/Cinematic Sound Design - Colossal Impacts",
+        "license": "Sonniss GDC Bundle License",
+        "original": "Cinematic Sound Design - Colossal Impacts/Transition Frantic Shaker Snap.wav",
+        "url": null
+      }
+    },
+    {
+      "id": "whoosh-soft-01",
+      "kind": "sfx",
+      "category": "whoosh-soft",
+      "store": "ext",
+      "file": "sfx/whoosh-soft/whoosh-soft-01.wav",
+      "sha256": "e682162563239c36e31fab1af7ea50a252ed274fbb847144b3b0f389bd58406e",
+      "tags": [],
+      "note": "airy wind rush; filename says x5 variations, check/trim",
+      "audio": {
+        "duration": 1.014,
+        "sampleRate": 48000,
+        "channels": 2,
+        "lufs": -20,
+        "sourceLufs": -31.3,
+        "peakDb": -3.9
+      },
+      "provenance": {
+        "source": "sonniss:2026/344 Audio - Elemental Palette Designed Vol. 1",
+        "license": "Sonniss GDC Bundle License",
+        "original": "344 Audio - Elemental Palette Designed Vol. 1/WINDDsgn_Wind, Rush, Whoosh, Long x5 01_344 Audio_Elemental Palette Designed Vol 1.wav",
+        "url": null
+      }
+    },
+    {
+      "id": "whoosh-soft-02",
+      "kind": "sfx",
+      "category": "whoosh-soft",
+      "store": "ext",
+      "file": "sfx/whoosh-soft/whoosh-soft-02.wav",
+      "sha256": "87204f6c63ed814259f4cb637616fd86b0f4d81ca6441f099c8d0e8ab0848027",
+      "tags": [],
+      "note": "slow pass-by with metal rattle",
+      "audio": {
+        "duration": 1.183,
+        "sampleRate": 48000,
+        "channels": 2,
+        "lufs": -20,
+        "sourceLufs": -24.5,
+        "peakDb": -1.5
+      },
+      "provenance": {
+        "source": "sonniss:2026/344 Audio - Elemental Palette Designed Vol. 1",
+        "license": "Sonniss GDC Bundle License",
+        "original": "344 Audio - Elemental Palette Designed Vol. 1/METLMisc_Metal, Slow Whoosh, Rattle, Pass By x4 01_344 Audio_Elemental Palette Designed Vol 1.wav",
+        "url": null
+      }
+    },
+    {
+      "id": "whoosh-soft-03",
+      "kind": "sfx",
+      "category": "whoosh-soft",
+      "store": "ext",
+      "file": "sfx/whoosh-soft/whoosh-soft-03.wav",
+      "sha256": "820586242573b11f11a3ef6049f5705962792b80939bea355e81dd2e228d0efa",
+      "tags": [],
+      "note": "soft pull swoosh with readout tail",
+      "audio": {
+        "duration": 2.215,
+        "sampleRate": 48000,
+        "channels": 2,
+        "lufs": -20,
+        "sourceLufs": -24.7,
+        "peakDb": -1.5
+      },
+      "provenance": {
+        "source": "sonniss:2026/Cinematic Sound Design - Cartoon & Animation Vol 2",
+        "license": "Sonniss GDC Bundle License",
+        "original": "Cinematic Sound Design - Cartoon & Animation Vol 2/Cartoon Pull Swoosh Readout.wav",
         "url": null
       }
     }
