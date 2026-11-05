@@ -50,7 +50,7 @@ export function resolveAt(at, lines, duration) {
 }
 
 // Seconds each transition overlaps the two scenes it joins (half before the cut, half after).
-export const TRANSITION_DURATION = { fade: 0.5, slide: 0.45, push: 0.5, whip: 0.32, zoom: 0.45, punch: 0.36, iris: 0.6, wipe: 0.5, clock: 0.6, dip: 0.7, through: 0.6, cut: 0 };
+export const TRANSITION_DURATION = { fade: 0.5, slide: 0.45, push: 0.5, whip: 0.32, zoom: 0.45, punch: 0.36, iris: 0.6, wipe: 0.5, clock: 0.6, dip: 0.7, through: 0.8, cut: 0 };
 export const CAMERA_DEFAULT = { move: "drift", amount: 1 };
 
 export const normTransition = (t) => (t == null ? null : typeof t === "string" ? { type: t } : t);

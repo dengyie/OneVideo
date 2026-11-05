@@ -77,10 +77,11 @@ export function presentation(type: Transition, side: "in" | "out", p: number, di
       return { style: { clipPath: inS ? inClip : outClip } };
     }
     // Through: the camera dives into the outgoing frame's centre (where the shot track has put
-    // the subject) until it blurs into the next scene, which settles back from an overshoot.
+    // the subject) until it blurs into the next scene, which settles back from an overshoot. The
+    // next scene only shows from p 0.3, so the dive has read (≈1.5×) before it is covered.
     case "through": return { style: inS
-      ? { opacity: Math.min(1, p * 2.2), transform: `scale(${1.35 - 0.35 * easeOut(p)})` }
-      : { opacity: covered ? 1 : 1 - clamp01((p - 0.35) / 0.65), transform: `scale(${1 + 2.6 * p * p})`, filter: `blur(${(p * p * 0.012 * w).toFixed(1)}px)` } };
+      ? { opacity: clamp01((p - 0.3) / 0.4), transform: `scale(${1.35 - 0.35 * easeOut(p)})` }
+      : { opacity: covered ? 1 : 1 - clamp01((p - 0.6) / 0.4), transform: `scale(${1 + 3 * p ** 1.5})`, filter: `blur(${(p * p * 0.012 * w).toFixed(1)}px)` } };
     case "dip": return inS ? { style: { opacity: 1 }, dip: p } : { style: {} };
     default: return { style: { opacity: inS ? p : fadeOut } };
   }
