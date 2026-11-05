@@ -45,6 +45,12 @@ export async function render(args) {
     "--image-format=jpeg", `--jpeg-quality=${draft ? 70 : 90}`,
   ];
   if (draft) flags.push("--scale=0.5");
+  // OffthreadVideo's frame cache defaults to a share of free memory; on a small render node it
+  // evicts frames as soon as they are extracted ("No frame found at position"). Pin it when the
+  // timeline plays video (render.videoCacheMB, default 512).
+  if (Object.values(tl.assets ?? {}).some((a) => a.kind === "video")) {
+    flags.push(`--offthreadvideo-cache-size-in-bytes=${Math.round((project.config.render?.videoCacheMB ?? 512) * 1024 * 1024)}`);
+  }
   if (args.frames) flags.push(`--frames=${args.frames}`);
   log(`rendering ${tl.duration.toFixed(1)}s ${tl.width}x${tl.height}${draft ? " (draft, half scale)" : ""} → ${out}`);
   const t0 = Date.now();

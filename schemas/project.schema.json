@@ -277,6 +277,11 @@
         },
         "crf": {
           "type": "integer"
+        },
+        "videoCacheMB": {
+          "type": "number",
+          "minimum": 64,
+          "description": "OffthreadVideo frame cache when the timeline plays video (default 512)"
         }
       }
     },
