@@ -263,14 +263,9 @@
             "additionalProperties": false,
             "properties": {
               "sound": {
-                "enum": [
-                  "whoosh",
-                  "tick",
-                  "impact",
-                  "riser",
-                  "pop",
-                  "chime"
-                ]
+                "type": "string",
+                "pattern": "^(synth:)?[a-z0-9][a-z0-9-]*$",
+                "description": "library id or category (onevideo lib list), a procedural sound (whoosh, tick, impact, riser, pop, chime), or synth:<name> to force the procedural one"
               },
               "at": {
                 "$ref": "#/$defs/at"

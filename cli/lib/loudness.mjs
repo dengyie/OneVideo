@@ -40,6 +40,8 @@ export function integratedLoudness(samples, sampleRate, { dualMono = false, full
     for (let i = s; i < s + block; i++) p += k[i] * k[i];
     powers.push(p / block);
   }
+  // Clips shorter than one 400 ms block (clicks, pops) are measured as a single block.
+  if (!powers.length && k.length) powers.push(k.reduce((a, v) => a + v * v, 0) / k.length);
   const lufs = (p) => -0.691 + 10 * Math.log10(p / (fullScale * fullScale)) + (dualMono ? 10 * Math.log10(2) : 0);
   const mean = (ps) => ps.reduce((a, b) => a + b, 0) / ps.length;
   const abs = powers.filter((p) => lufs(p) > -70);

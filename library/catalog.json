@@ -1,0 +1,1135 @@
+{
+  "version": 1,
+  "defaults": {
+    "whoosh-fast": "whoosh-fast-01",
+    "whoosh-soft": "whoosh-soft-01",
+    "whoosh-cinematic": "whoosh-cinematic-01",
+    "swish": "swish-01",
+    "whip": "whip-01",
+    "click": "click-01",
+    "ui-pop": "ui-pop-01",
+    "ding": "ding-01",
+    "typewriter": "typewriter-01",
+    "keyboard": "keyboard-01",
+    "cash": "cash-01",
+    "shutter": "shutter-01",
+    "glitch": "glitch-01",
+    "boom": "boom-01",
+    "impact": "impact-01",
+    "riser": "riser-01",
+    "swell": "swell-01",
+    "page-flip": "page-flip-01",
+    "tick": "tick-01",
+    "crowd": "crowd-01",
+    "rocket": "rocket-01",
+    "marker": "marker-01",
+    "error": "error-01",
+    "success-sting": "success-sting-01"
+  },
+  "entries": [
+    {
+      "id": "boom-05",
+      "kind": "sfx",
+      "category": "boom",
+      "store": "repo",
+      "file": "sfx/boom/boom-05.wav",
+      "sha256": "20fb29993d9ce58104965f01cf034540da2a40eb55e76660f59db9a08dcb6a08",
+      "tags": [],
+      "note": "low-frequency boom, CC0 fallback",
+      "audio": {
+        "duration": 1.998,
+        "sampleRate": 48000,
+        "channels": 2,
+        "lufs": -20,
+        "sourceLufs": -18.3,
+        "peakDb": -3
+      },
+      "provenance": {
+        "source": "kenney:sci-fi-sounds",
+        "license": "CC0",
+        "original": "Audio/lowFrequency_explosion_000.ogg",
+        "url": null
+      }
+    },
+    {
+      "id": "cash-01",
+      "kind": "sfx",
+      "category": "cash",
+      "store": "repo",
+      "file": "sfx/cash/cash-01.wav",
+      "sha256": "91566d32cac81fbdb327d41b0e91aafab9d7e759feb63b4a9c8445a4a5fe4080",
+      "tags": [],
+      "note": "coins handled",
+      "audio": {
+        "duration": 0.799,
+        "sampleRate": 48000,
+        "channels": 2,
+        "lufs": -20,
+        "sourceLufs": -24.4,
+        "peakDb": -1.5
+      },
+      "provenance": {
+        "source": "kenney:rpg-audio",
+        "license": "CC0",
+        "original": "Audio/handleCoins.ogg",
+        "url": null
+      }
+    },
+    {
+      "id": "cash-02",
+      "kind": "sfx",
+      "category": "cash",
+      "store": "repo",
+      "file": "sfx/cash/cash-02.wav",
+      "sha256": "6043a40bfbfe2bbb01d75323676af4eb8a8f2a67f04e04080aeba625530246f6",
+      "tags": [],
+      "note": "coins short",
+      "audio": {
+        "duration": 0.323,
+        "sampleRate": 48000,
+        "channels": 2,
+        "lufs": -20,
+        "sourceLufs": -31,
+        "peakDb": -1.7
+      },
+      "provenance": {
+        "source": "kenney:rpg-audio",
+        "license": "CC0",
+        "original": "Audio/handleCoins2.ogg",
+        "url": null
+      }
+    },
+    {
+      "id": "cash-05",
+      "kind": "sfx",
+      "category": "cash",
+      "store": "repo",
+      "file": "sfx/cash/cash-05.wav",
+      "sha256": "e65ad76498e37c8d80b85077eb5d9691bc1ebce49b33cd231f8da271570b3ce5",
+      "tags": [],
+      "note": "chip stack clack",
+      "audio": {
+        "duration": 0.357,
+        "sampleRate": 48000,
+        "channels": 2,
+        "lufs": -20,
+        "sourceLufs": -26.1,
+        "peakDb": -1.5
+      },
+      "provenance": {
+        "source": "kenney:casino-audio",
+        "license": "CC0",
+        "original": "Audio/chips-stack-3.ogg",
+        "url": null
+      }
+    },
+    {
+      "id": "click-01",
+      "kind": "sfx",
+      "category": "click",
+      "store": "repo",
+      "file": "sfx/click/click-01.wav",
+      "sha256": "88468fedef6672ab8d93fff59dff57e51daceaf38fa671ad90a4f0c911d86976",
+      "tags": [],
+      "note": "crisp UI click",
+      "audio": {
+        "duration": 0.091,
+        "sampleRate": 48000,
+        "channels": 2,
+        "lufs": -20,
+        "sourceLufs": -24.2,
+        "peakDb": -1.5
+      },
+      "provenance": {
+        "source": "kenney:ui-audio",
+        "license": "CC0",
+        "original": "Audio/click1.ogg",
+        "url": null
+      }
+    },
+    {
+      "id": "click-02",
+      "kind": "sfx",
+      "category": "click",
+      "store": "repo",
+      "file": "sfx/click/click-02.wav",
+      "sha256": "2bfd4e7721f08144c3ece3079af10df076234cf178c677f9d4996a18c2128279",
+      "tags": [],
+      "note": "mouse click",
+      "audio": {
+        "duration": 0.056,
+        "sampleRate": 48000,
+        "channels": 2,
+        "lufs": -20,
+        "sourceLufs": -21,
+        "peakDb": -2.1
+      },
+      "provenance": {
+        "source": "kenney:ui-audio",
+        "license": "CC0",
+        "original": "Audio/mouseclick1.ogg",
+        "url": null
+      }
+    },
+    {
+      "id": "click-03",
+      "kind": "sfx",
+      "category": "click",
+      "store": "repo",
+      "file": "sfx/click/click-03.wav",
+      "sha256": "5a8fb9b1c9ab179644bb8b66f17c59e33555a378300eabd5ea1211ba30a4a9cc",
+      "tags": [],
+      "note": "mouse click, realistic",
+      "audio": {
+        "duration": 0.282,
+        "sampleRate": 48000,
+        "channels": 2,
+        "lufs": -20,
+        "sourceLufs": -26.8,
+        "peakDb": -1.5
+      },
+      "provenance": {
+        "source": "remotion",
+        "license": "Remotion SFX (no attribution)",
+        "original": "remotion/mouse-click.wav",
+        "url": null
+      }
+    },
+    {
+      "id": "click-04",
+      "kind": "sfx",
+      "category": "click",
+      "store": "repo",
+      "file": "sfx/click/click-04.wav",
+      "sha256": "ebfb6f08c49aa957649bb8b501443e447689624ce28b56b8a98f15fcf7f7716b",
+      "tags": [],
+      "note": "soft interface click",
+      "audio": {
+        "duration": 0.097,
+        "sampleRate": 48000,
+        "channels": 2,
+        "lufs": -20,
+        "sourceLufs": -28.8,
+        "peakDb": -1.5
+      },
+      "provenance": {
+        "source": "kenney:interface-sounds",
+        "license": "CC0",
+        "original": "Audio/click_001.ogg",
+        "url": null
+      }
+    },
+    {
+      "id": "ding-01",
+      "kind": "sfx",
+      "category": "ding",
+      "store": "repo",
+      "file": "sfx/ding/ding-01.wav",
+      "sha256": "a97cee2e43d16b82e1dfc240e93795c06f2293c084b367de9f274c12ee701aba",
+      "tags": [],
+      "note": "clean ding with tail",
+      "audio": {
+        "duration": 1.27,
+        "sampleRate": 48000,
+        "channels": 2,
+        "lufs": -20,
+        "sourceLufs": -14.9,
+        "peakDb": -8.2
+      },
+      "provenance": {
+        "source": "remotion",
+        "license": "Remotion SFX (no attribution)",
+        "original": "remotion/ding.wav",
+        "url": null
+      }
+    },
+    {
+      "id": "ding-02",
+      "kind": "sfx",
+      "category": "ding",
+      "store": "repo",
+      "file": "sfx/ding/ding-02.wav",
+      "sha256": "992a953fd6c149ee3a4b3af86cf0eae48aad55f42b3a79c7c2a04bee1f726f51",
+      "tags": [],
+      "note": "short bong",
+      "audio": {
+        "duration": 0.12,
+        "sampleRate": 48000,
+        "channels": 2,
+        "lufs": -20,
+        "sourceLufs": -20.4,
+        "peakDb": -3.6
+      },
+      "provenance": {
+        "source": "kenney:interface-sounds",
+        "license": "CC0",
+        "original": "Audio/bong_001.ogg",
+        "url": null
+      }
+    },
+    {
+      "id": "ding-03",
+      "kind": "sfx",
+      "category": "ding",
+      "store": "repo",
+      "file": "sfx/ding/ding-03.wav",
+      "sha256": "97ffc87400b509d5c8e27455ecdab9b79cb54a90210f150ee939eaba7629e5e0",
+      "tags": [],
+      "note": "glass ting",
+      "audio": {
+        "duration": 0.276,
+        "sampleRate": 48000,
+        "channels": 2,
+        "lufs": -20,
+        "sourceLufs": -20.9,
+        "peakDb": -3.4
+      },
+      "provenance": {
+        "source": "kenney:interface-sounds",
+        "license": "CC0",
+        "original": "Audio/glass_001.ogg",
+        "url": null
+      }
+    },
+    {
+      "id": "error-01",
+      "kind": "sfx",
+      "category": "error",
+      "store": "repo",
+      "file": "sfx/error/error-01.wav",
+      "sha256": "9f8e49ae0e53a0aadc945e0a4230c0baf823b34f0e314e09bb088fa49d8cfb72",
+      "tags": [],
+      "note": "short error buzz",
+      "audio": {
+        "duration": 0.162,
+        "sampleRate": 48000,
+        "channels": 2,
+        "lufs": -20,
+        "sourceLufs": -16.7,
+        "peakDb": -3.5
+      },
+      "provenance": {
+        "source": "kenney:interface-sounds",
+        "license": "CC0",
+        "original": "Audio/error_001.ogg",
+        "url": null
+      }
+    },
+    {
+      "id": "error-02",
+      "kind": "sfx",
+      "category": "error",
+      "store": "repo",
+      "file": "sfx/error/error-02.wav",
+      "sha256": "75dfc3736c9e8f8c10348b2410a4a00dc5f212b9fa8b1295d18e4b3f276bf2ba",
+      "tags": [],
+      "note": "error tone",
+      "audio": {
+        "duration": 0.467,
+        "sampleRate": 48000,
+        "channels": 2,
+        "lufs": -20,
+        "sourceLufs": -23.9,
+        "peakDb": -1.8
+      },
+      "provenance": {
+        "source": "kenney:interface-sounds",
+        "license": "CC0",
+        "original": "Audio/error_005.ogg",
+        "url": null
+      }
+    },
+    {
+      "id": "error-03",
+      "kind": "sfx",
+      "category": "error",
+      "store": "repo",
+      "file": "sfx/error/error-03.wav",
+      "sha256": "1892186594ae1297bc5c741594e2c4f8e106498d063559689f2db315c1902633",
+      "tags": [],
+      "note": "error tone alt",
+      "audio": {
+        "duration": 0.482,
+        "sampleRate": 48000,
+        "channels": 2,
+        "lufs": -20,
+        "sourceLufs": -21.4,
+        "peakDb": -2.8
+      },
+      "provenance": {
+        "source": "kenney:interface-sounds",
+        "license": "CC0",
+        "original": "Audio/error_006.ogg",
+        "url": null
+      }
+    },
+    {
+      "id": "glitch-04",
+      "kind": "sfx",
+      "category": "glitch",
+      "store": "repo",
+      "file": "sfx/glitch/glitch-04.wav",
+      "sha256": "1d65554f0d008b9e9848b33dd3c0d3ce992e680c614194f485d183e1885e1a09",
+      "tags": [],
+      "note": "micro glitch 20ms",
+      "audio": {
+        "duration": 0.017,
+        "sampleRate": 48000,
+        "channels": 2,
+        "lufs": -20,
+        "sourceLufs": -12.8,
+        "peakDb": -8.3
+      },
+      "provenance": {
+        "source": "kenney:interface-sounds",
+        "license": "CC0",
+        "original": "Audio/glitch_001.ogg",
+        "url": null
+      }
+    },
+    {
+      "id": "glitch-05",
+      "kind": "sfx",
+      "category": "glitch",
+      "store": "repo",
+      "file": "sfx/glitch/glitch-05.wav",
+      "sha256": "7a5cbba1c75370704656016bdd31f3f18bde069277b2376d4fc17762e2cd62db",
+      "tags": [],
+      "note": "micro glitch 20ms",
+      "audio": {
+        "duration": 0.02,
+        "sampleRate": 48000,
+        "channels": 2,
+        "lufs": -20,
+        "sourceLufs": -12.4,
+        "peakDb": -8.2
+      },
+      "provenance": {
+        "source": "kenney:interface-sounds",
+        "license": "CC0",
+        "original": "Audio/glitch_004.ogg",
+        "url": null
+      }
+    },
+    {
+      "id": "impact-05",
+      "kind": "sfx",
+      "category": "impact",
+      "store": "repo",
+      "file": "sfx/impact/impact-05.wav",
+      "sha256": "56f230463072fc748364e020ab5ca4e6f2a12c30a95810a0b3a4cd187a6e5f8a",
+      "tags": [],
+      "note": "short heavy punch, CC0 fallback",
+      "audio": {
+        "duration": 0.649,
+        "sampleRate": 48000,
+        "channels": 2,
+        "lufs": -20,
+        "sourceLufs": -20.9,
+        "peakDb": -1.8
+      },
+      "provenance": {
+        "source": "kenney:impact-sounds",
+        "license": "CC0",
+        "original": "Audio/impactPunch_heavy_000.ogg",
+        "url": null
+      }
+    },
+    {
+      "id": "keyboard-01",
+      "kind": "sfx",
+      "category": "keyboard",
+      "store": "repo",
+      "file": "sfx/keyboard/keyboard-01.wav",
+      "sha256": "325b92fa502667221404d397a25364e9cb9f3e44c01296a6d82feaddd750cec6",
+      "tags": [],
+      "note": "approximation: 10ms click, stitch for typing",
+      "audio": {
+        "duration": 0.012,
+        "sampleRate": 48000,
+        "channels": 2,
+        "lufs": -20,
+        "sourceLufs": -17.1,
+        "peakDb": -6.8
+      },
+      "provenance": {
+        "source": "kenney:interface-sounds",
+        "license": "CC0",
+        "original": "Audio/click_002.ogg",
+        "url": null
+      }
+    },
+    {
+      "id": "keyboard-02",
+      "kind": "sfx",
+      "category": "keyboard",
+      "store": "repo",
+      "file": "sfx/keyboard/keyboard-02.wav",
+      "sha256": "23000becd1f648d4470ac4f0e58b8a0ece44de9c537bb5299e1b14b0eb5fd594",
+      "tags": [],
+      "note": "approximation: 10ms click, stitch for typing",
+      "audio": {
+        "duration": 0.007,
+        "sampleRate": 48000,
+        "channels": 2,
+        "lufs": -20,
+        "sourceLufs": -15.2,
+        "peakDb": -9.3
+      },
+      "provenance": {
+        "source": "kenney:interface-sounds",
+        "license": "CC0",
+        "original": "Audio/click_003.ogg",
+        "url": null
+      }
+    },
+    {
+      "id": "marker-01",
+      "kind": "sfx",
+      "category": "marker",
+      "store": "repo",
+      "file": "sfx/marker/marker-01.wav",
+      "sha256": "5deb94bd1bba12bee674218975fb2ae8ef36159f7b42c8e77df9b81665f8c1ba",
+      "tags": [],
+      "note": "approximation: scratch stroke, 0.33s",
+      "audio": {
+        "duration": 0.325,
+        "sampleRate": 48000,
+        "channels": 2,
+        "lufs": -20,
+        "sourceLufs": -20.9,
+        "peakDb": -3.3
+      },
+      "provenance": {
+        "source": "kenney:interface-sounds",
+        "license": "CC0",
+        "original": "Audio/scratch_004.ogg",
+        "url": null
+      }
+    },
+    {
+      "id": "marker-02",
+      "kind": "sfx",
+      "category": "marker",
+      "store": "repo",
+      "file": "sfx/marker/marker-02.wav",
+      "sha256": "0bc8cf2d33c3bba184c4a2b9f56eef5378ca38326101cee762ede825ba66ba27",
+      "tags": [],
+      "note": "approximation: scratch stroke alt",
+      "audio": {
+        "duration": 0.325,
+        "sampleRate": 48000,
+        "channels": 2,
+        "lufs": -20,
+        "sourceLufs": -15.4,
+        "peakDb": -8.5
+      },
+      "provenance": {
+        "source": "kenney:interface-sounds",
+        "license": "CC0",
+        "original": "Audio/scratch_005.ogg",
+        "url": null
+      }
+    },
+    {
+      "id": "marker-03",
+      "kind": "sfx",
+      "category": "marker",
+      "store": "repo",
+      "file": "sfx/marker/marker-03.wav",
+      "sha256": "016d7d711f8709b702a7b0e857cd8bbc874ef130f2b89181da38e9233e2e10dd",
+      "tags": [],
+      "note": "approximation: short scratch",
+      "audio": {
+        "duration": 0.139,
+        "sampleRate": 48000,
+        "channels": 2,
+        "lufs": -20,
+        "sourceLufs": -12.4,
+        "peakDb": -11.4
+      },
+      "provenance": {
+        "source": "kenney:interface-sounds",
+        "license": "CC0",
+        "original": "Audio/scratch_001.ogg",
+        "url": null
+      }
+    },
+    {
+      "id": "page-flip-01",
+      "kind": "sfx",
+      "category": "page-flip",
+      "store": "repo",
+      "file": "sfx/page-flip/page-flip-01.wav",
+      "sha256": "54267ab0158844db832d734d37bda35207f4644c7fbe816ce0d71b0a0b71fd59",
+      "tags": [],
+      "note": "clean page turn",
+      "audio": {
+        "duration": 0.387,
+        "sampleRate": 48000,
+        "channels": 2,
+        "lufs": -20,
+        "sourceLufs": -21.5,
+        "peakDb": -4.3
+      },
+      "provenance": {
+        "source": "remotion",
+        "license": "Remotion SFX (no attribution)",
+        "original": "remotion/page-turn.wav",
+        "url": null
+      }
+    },
+    {
+      "id": "page-flip-04",
+      "kind": "sfx",
+      "category": "page-flip",
+      "store": "repo",
+      "file": "sfx/page-flip/page-flip-04.wav",
+      "sha256": "de9fe33a991443ed46961285f342064da600c7068c99699c6a6b0d3cf5c214ef",
+      "tags": [],
+      "note": "book flip",
+      "audio": {
+        "duration": 0.701,
+        "sampleRate": 48000,
+        "channels": 2,
+        "lufs": -20,
+        "sourceLufs": -24.1,
+        "peakDb": -1.5
+      },
+      "provenance": {
+        "source": "kenney:rpg-audio",
+        "license": "CC0",
+        "original": "Audio/bookFlip1.ogg",
+        "url": null
+      }
+    },
+    {
+      "id": "riser-02",
+      "kind": "sfx",
+      "category": "riser",
+      "store": "repo",
+      "file": "sfx/riser/riser-02.wav",
+      "sha256": "61a9226b773304b8f1049ff01a3be371f4e5731e320ab40a5531c274aafaa08c",
+      "tags": [],
+      "note": "short synth riser, 1.2s",
+      "audio": {
+        "duration": 1.113,
+        "sampleRate": 48000,
+        "channels": 2,
+        "lufs": -20,
+        "sourceLufs": -15.2,
+        "peakDb": -8.5
+      },
+      "provenance": {
+        "source": "kenney:digital-audio",
+        "license": "CC0",
+        "original": "Audio/powerUp1.ogg",
+        "url": null
+      }
+    },
+    {
+      "id": "riser-03",
+      "kind": "sfx",
+      "category": "riser",
+      "store": "repo",
+      "file": "sfx/riser/riser-03.wav",
+      "sha256": "d5513150f42ba34a64c767614e4c49cde402ce73ee8e3bbba15bb8b790eec81b",
+      "tags": [],
+      "note": "short rising zap",
+      "audio": {
+        "duration": 1.107,
+        "sampleRate": 48000,
+        "channels": 2,
+        "lufs": -20,
+        "sourceLufs": -13.4,
+        "peakDb": -9.7
+      },
+      "provenance": {
+        "source": "kenney:digital-audio",
+        "license": "CC0",
+        "original": "Audio/zapThreeToneUp.ogg",
+        "url": null
+      }
+    },
+    {
+      "id": "riser-04",
+      "kind": "sfx",
+      "category": "riser",
+      "store": "repo",
+      "file": "sfx/riser/riser-04.wav",
+      "sha256": "94243fc9051759826b3a7fe8332a8e7a8dc9d06ae8fe139cba491f0c9e8ce557",
+      "tags": [],
+      "note": "micro riser 0.5s",
+      "audio": {
+        "duration": 0.429,
+        "sampleRate": 48000,
+        "channels": 2,
+        "lufs": -20,
+        "sourceLufs": -17.5,
+        "peakDb": -3.9
+      },
+      "provenance": {
+        "source": "kenney:digital-audio",
+        "license": "CC0",
+        "original": "Audio/phaserUp1.ogg",
+        "url": null
+      }
+    },
+    {
+      "id": "rocket-02",
+      "kind": "sfx",
+      "category": "rocket",
+      "store": "repo",
+      "file": "sfx/rocket/rocket-02.wav",
+      "sha256": "f9e3e8ffd03f86884d788dec2916ffb349ec2fd0ca31fc574cb94e10393bee70",
+      "tags": [],
+      "note": "thruster fire loop 5s",
+      "audio": {
+        "duration": 5,
+        "sampleRate": 48000,
+        "channels": 2,
+        "lufs": -20,
+        "sourceLufs": -22.8,
+        "peakDb": -2.1
+      },
+      "provenance": {
+        "source": "kenney:sci-fi-sounds",
+        "license": "CC0",
+        "original": "Audio/thrusterFire_000.ogg",
+        "url": null
+      }
+    },
+    {
+      "id": "rocket-03",
+      "kind": "sfx",
+      "category": "rocket",
+      "store": "repo",
+      "file": "sfx/rocket/rocket-03.wav",
+      "sha256": "0717b9a938e79789b2327b9cf965fc39459b0c647fe04d7194d1e261cf74a227",
+      "tags": [],
+      "note": "large engine rumble 5s",
+      "audio": {
+        "duration": 5,
+        "sampleRate": 48000,
+        "channels": 2,
+        "lufs": -20,
+        "sourceLufs": -16.1,
+        "peakDb": -7.8
+      },
+      "provenance": {
+        "source": "kenney:sci-fi-sounds",
+        "license": "CC0",
+        "original": "Audio/spaceEngineLarge_000.ogg",
+        "url": null
+      }
+    },
+    {
+      "id": "rocket-04",
+      "kind": "sfx",
+      "category": "rocket",
+      "store": "repo",
+      "file": "sfx/rocket/rocket-04.wav",
+      "sha256": "b26c7859e8d4c206b790a24f75b43806ea1768a4ad5f80d1a4c02a5080441552",
+      "tags": [],
+      "note": "low engine rumble 5s",
+      "audio": {
+        "duration": 5,
+        "sampleRate": 48000,
+        "channels": 2,
+        "lufs": -20,
+        "sourceLufs": -12,
+        "peakDb": -12
+      },
+      "provenance": {
+        "source": "kenney:sci-fi-sounds",
+        "license": "CC0",
+        "original": "Audio/spaceEngineLow_000.ogg",
+        "url": null
+      }
+    },
+    {
+      "id": "shutter-01",
+      "kind": "sfx",
+      "category": "shutter",
+      "store": "repo",
+      "file": "sfx/shutter/shutter-01.wav",
+      "sha256": "cc6898e34a162854f590ffa1a605dee2bfdeb44f361ab5dea07779c93c91b12d",
+      "tags": [],
+      "note": "modern camera shutter",
+      "audio": {
+        "duration": 0.353,
+        "sampleRate": 48000,
+        "channels": 2,
+        "lufs": -20,
+        "sourceLufs": -31.1,
+        "peakDb": -1.5
+      },
+      "provenance": {
+        "source": "remotion",
+        "license": "Remotion SFX (no attribution)",
+        "original": "remotion/shutter-modern.wav",
+        "url": null
+      }
+    },
+    {
+      "id": "shutter-02",
+      "kind": "sfx",
+      "category": "shutter",
+      "store": "repo",
+      "file": "sfx/shutter/shutter-02.wav",
+      "sha256": "168f8de6b71767bda266ca0c881b0b1cd7901c6f6546c42d44bbfa860b3e5bbd",
+      "tags": [],
+      "note": "vintage camera shutter",
+      "audio": {
+        "duration": 0.253,
+        "sampleRate": 48000,
+        "channels": 2,
+        "lufs": -20,
+        "sourceLufs": -25.1,
+        "peakDb": -1.6
+      },
+      "provenance": {
+        "source": "remotion",
+        "license": "Remotion SFX (no attribution)",
+        "original": "remotion/shutter-old.wav",
+        "url": null
+      }
+    },
+    {
+      "id": "success-sting-04",
+      "kind": "sfx",
+      "category": "success-sting",
+      "store": "repo",
+      "file": "sfx/success-sting/success-sting-04.wav",
+      "sha256": "6d17296bae08bebec360571e43395db38d6c326d500fac30157e0b7a174ed862",
+      "tags": [],
+      "note": "confirmation chime",
+      "audio": {
+        "duration": 0.539,
+        "sampleRate": 48000,
+        "channels": 2,
+        "lufs": -20,
+        "sourceLufs": -16.3,
+        "peakDb": -7.7
+      },
+      "provenance": {
+        "source": "kenney:interface-sounds",
+        "license": "CC0",
+        "original": "Audio/confirmation_002.ogg",
+        "url": null
+      }
+    },
+    {
+      "id": "success-sting-05",
+      "kind": "sfx",
+      "category": "success-sting",
+      "store": "repo",
+      "file": "sfx/success-sting/success-sting-05.wav",
+      "sha256": "edc478778ba67a1b182dc5592ae2bc15518f423db58a11b411ac38aac80d7d7b",
+      "tags": [],
+      "note": "steel-drum jingle, 0.9s",
+      "audio": {
+        "duration": 0.925,
+        "sampleRate": 48000,
+        "channels": 2,
+        "lufs": -20,
+        "sourceLufs": -18.5,
+        "peakDb": -4.1
+      },
+      "provenance": {
+        "source": "kenney:music-jingles",
+        "license": "CC0",
+        "original": "Steel jingles/jingles_STEEL00.ogg",
+        "url": null
+      }
+    },
+    {
+      "id": "swish-03",
+      "kind": "sfx",
+      "category": "swish",
+      "store": "repo",
+      "file": "sfx/swish/swish-03.wav",
+      "sha256": "f43d5cd431c6672e507c6b35e2bf0afcda4d7f9d7a2cf1636e40e539efd7845d",
+      "tags": [],
+      "note": "short blade draw swish",
+      "audio": {
+        "duration": 0.326,
+        "sampleRate": 48000,
+        "channels": 2,
+        "lufs": -20,
+        "sourceLufs": -41.1,
+        "peakDb": -3.3
+      },
+      "provenance": {
+        "source": "kenney:rpg-audio",
+        "license": "CC0",
+        "original": "Audio/drawKnife1.ogg",
+        "url": null
+      }
+    },
+    {
+      "id": "swish-04",
+      "kind": "sfx",
+      "category": "swish",
+      "store": "repo",
+      "file": "sfx/swish/swish-04.wav",
+      "sha256": "ae17223bf32c2ed8bfbf5628d1fb75c6178873d4be968ca46d1bfbd3b6d8bd13",
+      "tags": [],
+      "note": "knife slice swish",
+      "audio": {
+        "duration": 0.524,
+        "sampleRate": 48000,
+        "channels": 2,
+        "lufs": -20,
+        "sourceLufs": -17.4,
+        "peakDb": -4
+      },
+      "provenance": {
+        "source": "kenney:rpg-audio",
+        "license": "CC0",
+        "original": "Audio/knifeSlice.ogg",
+        "url": null
+      }
+    },
+    {
+      "id": "swish-05",
+      "kind": "sfx",
+      "category": "swish",
+      "store": "repo",
+      "file": "sfx/swish/swish-05.wav",
+      "sha256": "ffabceb253ff2e8ec35bcaaab2aa3f9e9e4f13aa64802e2e8b5757f1dbcea0b7",
+      "tags": [],
+      "note": "paper-card fan swish",
+      "audio": {
+        "duration": 0.721,
+        "sampleRate": 48000,
+        "channels": 2,
+        "lufs": -20,
+        "sourceLufs": -24.1,
+        "peakDb": -1.5
+      },
+      "provenance": {
+        "source": "kenney:casino-audio",
+        "license": "CC0",
+        "original": "Audio/card-fan-1.ogg",
+        "url": null
+      }
+    },
+    {
+      "id": "tick-01",
+      "kind": "sfx",
+      "category": "tick",
+      "store": "repo",
+      "file": "sfx/tick/tick-01.wav",
+      "sha256": "deded88042327a46a18f029b792e2f0bf1792deb26dea55d1e30ebaed092bb82",
+      "tags": [],
+      "note": "tiny tick",
+      "audio": {
+        "duration": 0.045,
+        "sampleRate": 48000,
+        "channels": 2,
+        "lufs": -20,
+        "sourceLufs": -21.7,
+        "peakDb": -2
+      },
+      "provenance": {
+        "source": "kenney:interface-sounds",
+        "license": "CC0",
+        "original": "Audio/tick_001.ogg",
+        "url": null
+      }
+    },
+    {
+      "id": "tick-02",
+      "kind": "sfx",
+      "category": "tick",
+      "store": "repo",
+      "file": "sfx/tick/tick-02.wav",
+      "sha256": "98001dbaab19eef7e4612c0099df2a3ac3a1a98d27a9b3ecfbe79595b3a7a60b",
+      "tags": [],
+      "note": "tiny tick alt",
+      "audio": {
+        "duration": 0.02,
+        "sampleRate": 48000,
+        "channels": 2,
+        "lufs": -20,
+        "sourceLufs": -16.9,
+        "peakDb": -5
+      },
+      "provenance": {
+        "source": "kenney:interface-sounds",
+        "license": "CC0",
+        "original": "Audio/tick_002.ogg",
+        "url": null
+      }
+    },
+    {
+      "id": "tick-03",
+      "kind": "sfx",
+      "category": "tick",
+      "store": "repo",
+      "file": "sfx/tick/tick-03.wav",
+      "sha256": "53f7ab6242bb867ec4e9ff28163d5dcef0f93a4a85ccf1281b188cdff0f1207b",
+      "tags": [],
+      "note": "tiny tick, slightly longer",
+      "audio": {
+        "duration": 0.055,
+        "sampleRate": 48000,
+        "channels": 2,
+        "lufs": -20,
+        "sourceLufs": -15.8,
+        "peakDb": -8
+      },
+      "provenance": {
+        "source": "kenney:interface-sounds",
+        "license": "CC0",
+        "original": "Audio/tick_004.ogg",
+        "url": null
+      }
+    },
+    {
+      "id": "ui-pop-02",
+      "kind": "sfx",
+      "category": "ui-pop",
+      "store": "repo",
+      "file": "sfx/ui-pop/ui-pop-02.wav",
+      "sha256": "5faa00d63632979c9d55329c13f8806043431e99384435ff8de4db5a1c78943f",
+      "tags": [],
+      "note": "tiny pluck pop",
+      "audio": {
+        "duration": 0.1,
+        "sampleRate": 48000,
+        "channels": 2,
+        "lufs": -20,
+        "sourceLufs": -18.3,
+        "peakDb": -2.4
+      },
+      "provenance": {
+        "source": "kenney:interface-sounds",
+        "license": "CC0",
+        "original": "Audio/pluck_001.ogg",
+        "url": null
+      }
+    },
+    {
+      "id": "ui-pop-03",
+      "kind": "sfx",
+      "category": "ui-pop",
+      "store": "repo",
+      "file": "sfx/ui-pop/ui-pop-03.wav",
+      "sha256": "8f1fca44fa0fbc8827a752ec52d7d91e067e94a6b44f6dc97cecb3ae44cd69c4",
+      "tags": [],
+      "note": "tiny pluck pop alt",
+      "audio": {
+        "duration": 0.162,
+        "sampleRate": 48000,
+        "channels": 2,
+        "lufs": -20,
+        "sourceLufs": -19.4,
+        "peakDb": -2
+      },
+      "provenance": {
+        "source": "kenney:interface-sounds",
+        "license": "CC0",
+        "original": "Audio/pluck_002.ogg",
+        "url": null
+      }
+    },
+    {
+      "id": "ui-pop-05",
+      "kind": "sfx",
+      "category": "ui-pop",
+      "store": "repo",
+      "file": "sfx/ui-pop/ui-pop-05.wav",
+      "sha256": "7dd97b1f016a9cf87df431607e9ecb5deefa4bbebffeff381f5bc4b52083ac4e",
+      "tags": [],
+      "note": "rising pop for element appear",
+      "audio": {
+        "duration": 0.258,
+        "sampleRate": 48000,
+        "channels": 2,
+        "lufs": -20,
+        "sourceLufs": -12.7,
+        "peakDb": -11.2
+      },
+      "provenance": {
+        "source": "kenney:interface-sounds",
+        "license": "CC0",
+        "original": "Audio/maximize_001.ogg",
+        "url": null
+      }
+    },
+    {
+      "id": "whip-01",
+      "kind": "sfx",
+      "category": "whip",
+      "store": "repo",
+      "file": "sfx/whip/whip-01.wav",
+      "sha256": "8bd0b8a3fa03a7737ec2b8a744d2c45106967de92745d3271f9919983bf6a626",
+      "tags": [],
+      "note": "true whip crack, 96kHz",
+      "audio": {
+        "duration": 0.173,
+        "sampleRate": 48000,
+        "channels": 2,
+        "lufs": -20,
+        "sourceLufs": -19.9,
+        "peakDb": -3.3
+      },
+      "provenance": {
+        "source": "remotion",
+        "license": "Remotion SFX (no attribution)",
+        "original": "remotion/whip.wav",
+        "url": null
+      }
+    },
+    {
+      "id": "whip-03",
+      "kind": "sfx",
+      "category": "whip",
+      "store": "repo",
+      "file": "sfx/whip/whip-03.wav",
+      "sha256": "aa2488c0eb65e2d163ef8dbd267b0241d595798a1cfdb3b79ca35ccc5ddadbb0",
+      "tags": [],
+      "note": "approximation: fast synthetic zip-down",
+      "audio": {
+        "duration": 0.259,
+        "sampleRate": 48000,
+        "channels": 2,
+        "lufs": -20,
+        "sourceLufs": -18.6,
+        "peakDb": -3
+      },
+      "provenance": {
+        "source": "kenney:digital-audio",
+        "license": "CC0",
+        "original": "Audio/phaserDown2.ogg",
+        "url": null
+      }
+    },
+    {
+      "id": "whoosh-fast-02",
+      "kind": "sfx",
+      "category": "whoosh-fast",
+      "store": "repo",
+      "file": "sfx/whoosh-fast/whoosh-fast-02.wav",
+      "sha256": "4139705ec7939847a6d40abc87c1c52a8340c2223c7f18ea0519b62d469f90a3",
+      "tags": [],
+      "note": "very short airy whoosh",
+      "audio": {
+        "duration": 0.138,
+        "sampleRate": 48000,
+        "channels": 2,
+        "lufs": -20,
+        "sourceLufs": -22.6,
+        "peakDb": -3.6
+      },
+      "provenance": {
+        "source": "remotion",
+        "license": "Remotion SFX (no attribution)",
+        "original": "remotion/whoosh.wav",
+        "url": null
+      }
+    }
+  ]
+}

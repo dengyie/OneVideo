@@ -67,8 +67,15 @@ const r3 = (x) => Math.round(x * 1000) / 1000;
 const normCamera = (c) => (c == null ? null : typeof c === "string" ? { move: c } : c);
 
 // config.sfx.transition: one sound for every boundary, or a map by transition type ("*" = rest).
+// sfx.transition: "auto" maps each transition type to a library category that fits its motion.
+export const AUTO_TRANSITION_SFX = { "*": "whoosh-soft", fade: null, dip: null, slide: "whoosh-soft", push: "whoosh-fast", wipe: "swish", whip: "whip", zoom: "whoosh-cinematic", punch: "impact", iris: "swish", clock: "swish" };
+
+// Sound name → public/ path: "synth:tick" (force the procedural sound) becomes sfx/synth-tick.wav.
+export const sfxFile = (name) => `sfx/${name.replace(/[^a-z0-9-]/gi, "-")}.wav`;
+
 export function transitionSfx(cfg, type) {
   if (!cfg || type === "cut") return null;
+  if (cfg === "auto") cfg = AUTO_TRANSITION_SFX;
   if (typeof cfg === "string") return cfg;
   return cfg[type] !== undefined ? cfg[type] : cfg["*"] ?? null;
 }
@@ -120,7 +127,7 @@ export function compileTimeline({ config, script, storyboard, timings, assets, r
     for (const fx of sb.sfx ?? []) {
       const res = resolveAt(fx.at ?? 0, lines, duration);
       if (res.error) { errors.push(`scene "${sb.id}" sfx "${fx.sound}": ${res.error}`); continue; }
-      sfx.push({ sound: fx.sound, src: `sfx/${fx.sound}.wav`, at: r3(start + clampT(res.t, duration)), volume: fx.volume ?? sfxCfg.volume });
+      sfx.push({ sound: fx.sound, src: sfxFile(fx.sound), at: r3(start + clampT(res.t, duration)), volume: fx.volume ?? sfxCfg.volume });
     }
 
     const props = structuredClone(sb.props ?? {});
@@ -187,7 +194,7 @@ export function compileTimeline({ config, script, storyboard, timings, assets, r
     sc.transitionIn = { type: b.type, frames: b.frames, lead: b.lead, direction: b.direction };
     prev.transitionOut = { type: b.type, frames: b.frames, tail: b.frames - b.lead, direction: b.direction, nextOpaque: sc.opaque };
     const sound = b.sfx !== undefined ? b.sfx : transitionSfx(sfxCfg.transition, b.type);
-    if (sound) sfx.push({ sound, src: `sfx/${sound}.wav`, at: r3(Math.max(0, (sc.from - b.lead) / fps - 0.06)), volume: sfxCfg.volume * 0.7 });
+    if (sound) sfx.push({ sound, src: sfxFile(sound), at: r3(Math.max(0, (sc.from - b.lead) / fps - 0.06)), volume: sfxCfg.volume * 0.7 });
   });
   const last = scenes[scenes.length - 1];
   if (last) last.transitionOut = { type: normTransition(last.exit)?.type === "cut" ? "cut" : "fade", frames: normTransition(last.exit)?.type === "cut" ? 0 : Math.round(0.6 * fps), tail: 0, direction: "left", nextOpaque: false };
@@ -200,7 +207,7 @@ export function compileTimeline({ config, script, storyboard, timings, assets, r
   if (config.music?.enabled !== false && !music) warnings.push(`no background music (public/${musicSrc})${config.music?.file ? "" : "; run: onevideo music"}`);
   if (config.music?.file && !config.music?.credit) warnings.push("music.file has no music.credit; add the track title/author/license for the publish credits");
   const usedSfx = [...new Set(sfx.map((s) => s.sound))];
-  if (root) for (const name of usedSfx) if (!existsSync(join(root, "public", "sfx", `${name}.wav`))) errors.push(`sfx "${name}" missing: public/sfx/${name}.wav; run: onevideo music`);
+  if (root) for (const name of usedSfx) if (!existsSync(join(root, "public", sfxFile(name)))) errors.push(`sfx "${name}" missing: public/${sfxFile(name)}; run: onevideo music`);
 
   const timeline = {
     version: 1,

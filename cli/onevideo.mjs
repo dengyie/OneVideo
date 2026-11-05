@@ -5,6 +5,7 @@ import { UserError } from "./lib/project.mjs";
 import * as plan from "./commands/plan.mjs";
 import * as media from "./commands/media.mjs";
 import * as render from "./commands/render.mjs";
+import * as library from "./commands/library.mjs";
 
 const COMMANDS = {
   init: [plan.init, "init <dir> [--pipeline data-explainer] [--style midnight-data] [--aspect 16:9] [--title …] [--example spacex-ipo]"],
@@ -22,6 +23,7 @@ const COMMANDS = {
   qc: [render.qc, "qc [--video file]            post-render review → plan/review.json"],
   publish: [render.publish, "publish [--force]            SRT/VTT, chapters, description → out/publish/ (needs approved review)"],
   build: [render.build, "build [--draft]              tts → music → timeline → render → qc (then approve review, publish)"],
+  lib: [library.lib, "lib list [--category c] | search <words> | import <candidates.json> | merge <catalog.json> | verify"],
   doctor: [render.doctor, "doctor                       environment check"],
 };
 
