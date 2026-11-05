@@ -719,6 +719,10 @@
         "snap": {
           "type": "boolean",
           "description": "false = do not snap to a beat"
+        },
+        "offset": {
+          "type": "number",
+          "description": "seconds added to a cue"
         }
       }
     }
@@ -2148,6 +2152,10 @@
                 "type": "number",
                 "minimum": 0.05,
                 "maximum": 8
+              },
+              "offset": {
+                "type": "number",
+                "description": "seconds added to a cue"
               }
             }
           },
@@ -2232,6 +2240,15 @@
                 "rise",
                 "slam"
               ]
+            },
+            "duration": {
+              "type": "number",
+              "minimum": 0.2,
+              "description": "seconds on screen, then a 0.3 s fade"
+            },
+            "offset": {
+              "type": "number",
+              "description": "seconds added to a cue"
             }
           }
         }
@@ -2338,6 +2355,15 @@
                 "rise",
                 "slam"
               ]
+            },
+            "duration": {
+              "type": "number",
+              "minimum": 0.2,
+              "description": "seconds on screen, then a 0.3 s fade"
+            },
+            "offset": {
+              "type": "number",
+              "description": "seconds added to a cue"
             }
           }
         }
@@ -2503,9 +2529,17 @@
                     },
                     "format": {
                       "$ref": "#/$defs/format"
+                    },
+                    "offset": {
+                      "type": "number",
+                      "description": "seconds added to a cue"
                     }
                   }
                 }
+              },
+              "offset": {
+                "type": "number",
+                "description": "seconds added to a cue"
               }
             }
           }
@@ -2566,6 +2600,10 @@
                 "type": "number",
                 "minimum": 0.05,
                 "maximum": 5
+              },
+              "offset": {
+                "type": "number",
+                "description": "seconds added to a cue"
               }
             }
           }
@@ -2598,6 +2636,10 @@
               },
               "dashed": {
                 "type": "boolean"
+              },
+              "offset": {
+                "type": "number",
+                "description": "seconds added to a cue"
               }
             }
           }

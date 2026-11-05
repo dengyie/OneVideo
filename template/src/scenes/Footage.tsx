@@ -7,7 +7,7 @@ import { depthSrc, ForegroundCut, ParallaxCanvas, type Matte, type ParallaxMove 
 
 // Big title over footage. With `behind` and a depth map the subject is cut out and drawn again
 // on top, so the title sits between the subject and the world behind it.
-type Title = { text: string; t?: number; x?: number; y?: number; size?: number; color?: string; kicker?: string; behind?: boolean; matte?: Matte; style?: "rise" | "slam" };
+type Title = { text: string; t?: number; x?: number; y?: number; size?: number; color?: string; kicker?: string; behind?: boolean; matte?: Matte; style?: "rise" | "slam"; duration?: number };
 
 const TitleText: React.FC<{ title: Title }> = ({ title }) => {
   const theme = useTheme();
@@ -15,12 +15,14 @@ const TitleText: React.FC<{ title: Title }> = ({ title }) => {
   const t = useTime();
   const local = t - (title.t ?? 0.2);
   if (local < 0) return null;
+  const gone = title.duration !== undefined ? clamp01((local - title.duration) / 0.3) : 0;
+  if (gone >= 1) return null;
   const size = (title.size ?? 260) * u;
   const slam = title.style === "slam";
   const p = slam ? clamp01(local / 0.25) : easeOut(local / 0.7);
   const k = easeOut(clamp01((local - 0.25) / 0.5));
   return (
-    <div style={{ position: "absolute", left: (title.x ?? 0.5) * width, top: (title.y ?? 0.42) * height, transform: "translate(-50%, -50%)", textAlign: "center", textShadow: "none" }}>
+    <div style={{ position: "absolute", left: (title.x ?? 0.5) * width, top: (title.y ?? 0.42) * height, transform: "translate(-50%, -50%)", textAlign: "center", opacity: 1 - gone }}>
       {title.kicker && <div style={{ fontSize: size * 0.16, fontWeight: 700, letterSpacing: size * 0.04, color: theme.colors.highlight, opacity: k, marginBottom: size * 0.04 }}>{title.kicker}</div>}
       <div style={{ overflow: slam ? "visible" : "hidden" }}>
         <div style={{
@@ -49,7 +51,8 @@ export const FootageScene: React.FC<{ asset: string; startFrom?: number; ramp?: 
   const style: React.CSSProperties = { position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" };
   const photo = a.kind === "video" ? (a.seq ? seqSrc(a, s) : null) : staticFile(a.src);
   const depth = depthSrc(a, s);
-  const cut = title?.behind && photo && depth;
+  const local = t - (title?.t ?? 0.2);
+  const cut = title?.behind && photo && depth && local >= 0 && (title.duration === undefined || local < title.duration + 0.3);
   return (
     <AbsoluteFill style={{ backgroundColor: "#000", overflow: "hidden" }}>
       {a.kind === "video" ? <ClipVideo a={a} style={style} time={s} /> : <Img src={staticFile(a.src)} style={style} />}
