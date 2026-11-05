@@ -37,6 +37,18 @@ function mixColor(a: string, b: string, p: number) {
   return `rgb(${x.map((v, i) => Math.round(lerp(v, y[i], p))).join(",")})`;
 }
 
+const places = (v: number) => (Number.isInteger(v) ? 0 : Math.min(4, (String(v).split(".")[1] ?? "").length));
+const decimalsOf = (it: Item) => Math.max(0, ...[it.value, ...(it.morph ?? []).map((m) => m.value)].filter((v): v is number => v !== undefined).map(places));
+
+// Where the segment from p (centre of a w×h box) towards q leaves the box, plus a gap.
+function edge(p: { x: number; y: number }, q: { x: number; y: number }, w: number, h: number, gap: number) {
+  const dx = q.x - p.x, dy = q.y - p.y;
+  const len = Math.hypot(dx, dy);
+  if (len < 1e-6) return p;
+  const f = Math.min(dx ? w / 2 / Math.abs(dx) : Infinity, dy ? h / 2 / Math.abs(dy) : Infinity) + gap / len;
+  return { x: p.x + dx * Math.min(0.5, f), y: p.y + dy * Math.min(0.5, f) };
+}
+
 // The item's state at time t: base, then each due morph blended in over its `dur`.
 // `prev` is the content it is morphing away from, for the crossfade.
 export function itemAt(it: Item, t: number): { s: State; prev: State | null; p: number } {
@@ -158,7 +170,10 @@ export const CanvasScene: React.FC<{ items?: Item[]; path?: Stop[]; links?: Link
     const { s, prev, p } = itemAt(it, t);
     const e = it.settled ? 1 : clamp01((t - enter) / 0.5);
     const count = it.settled || (it.morph ?? []).some((m) => (m.t ?? 0) <= t) ? 1 : easeOut((t - enter) / 1.1);
-    return { it, s: { ...s, value: s.value !== undefined ? s.value * count : undefined }, prev, p, e, enter };
+    // Count up with the decimals of the values the item settles on, not the frame's float.
+    const f = s.format ?? {};
+    const format = f.decimals !== undefined || f.compact ? f : { ...f, decimals: decimalsOf(it) };
+    return { it, s: { ...s, value: s.value !== undefined ? s.value * count : undefined, format }, prev, p, e, enter };
   });
   const pos = new Map(shown.map((x) => [x.it.id, x]));
 
@@ -169,7 +184,9 @@ export const CanvasScene: React.FC<{ items?: Item[]; path?: Stop[]; links?: Link
           const a = pos.get(l.from), b = pos.get(l.to);
           if (!a || !b || t < (l.t ?? 0)) return null;
           const p = easeInOut((t - (l.t ?? 0)) / 0.7) * Math.min(a.e, b.e);
-          const A = toScreen(a.s.x!, a.s.y!), B = toScreen(b.s.x!, b.s.y!);
+          const A0 = toScreen(a.s.x!, a.s.y!), B0 = toScreen(b.s.x!, b.s.y!);
+          // Run edge to edge: trim each end to where it leaves its item's box.
+          const A = edge(A0, B0, a.s.w! * k, a.s.h! * k, 10 * k), B = edge(B0, A0, b.s.w! * k, b.s.h! * k, 10 * k);
           const len = Math.hypot(B.x - A.x, B.y - A.y);
           return (
             <line key={i} x1={A.x} y1={A.y} x2={B.x} y2={B.y} stroke={l.color ?? theme.colors.muted} strokeWidth={4 * k} strokeLinecap="round"
