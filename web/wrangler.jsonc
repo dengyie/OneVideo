@@ -1,0 +1,10 @@
+// Static player for published OneVideo renders. Refresh media with `node sync.mjs`, then `npx wrangler deploy`.
+{
+  "name": "onevideo-web",
+  "main": "worker.mjs",
+  "compatibility_date": "2026-10-01",
+  "assets": { "directory": "./site", "binding": "ASSETS", "not_found_handling": "404-page", "run_worker_first": ["/v/*"] },
+  "routes": [{ "pattern": "vedio.mangoqwq.com", "custom_domain": true }],
+  "workers_dev": false,
+  "preview_urls": false
+}

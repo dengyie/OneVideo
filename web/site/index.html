@@ -1,0 +1,162 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>OneVideo 放映室</title>
+<meta name="description" content="OneVideo 流水线产出的视频">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%230b1530'/%3E%3Cpath d='M12 9l12 7-12 7z' fill='%2322d3ee'/%3E%3C/svg%3E">
+<style>
+:root {
+  --bg: #f4f6fb; --surface: #ffffff; --surface-2: #eef1f8; --line: #dde2ee;
+  --text: #0e1630; --muted: #5b6684; --accent: #2563eb; --accent-2: #0891b2;
+  --chip: #e8eefc; --chip-on: #2563eb; --chip-on-text: #fff; --shadow: 0 1px 2px rgba(14,22,48,.06), 0 8px 24px rgba(14,22,48,.06);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #070c1c; --surface: #0e1630; --surface-2: #131d3b; --line: #1f2a4d;
+    --text: #e8ecf8; --muted: #8b96b8; --accent: #5b8cff; --accent-2: #22d3ee;
+    --chip: #17224a; --chip-on: #22d3ee; --chip-on-text: #04111a; --shadow: none;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #070c1c; --surface: #0e1630; --surface-2: #131d3b; --line: #1f2a4d;
+  --text: #e8ecf8; --muted: #8b96b8; --accent: #5b8cff; --accent-2: #22d3ee;
+  --chip: #17224a; --chip-on: #22d3ee; --chip-on-text: #04111a; --shadow: none;
+}
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body {
+  margin: 0; background: var(--bg); color: var(--text);
+  font: 15px/1.6 system-ui, -apple-system, "PingFang SC", "Noto Sans SC", "Microsoft YaHei", sans-serif;
+}
+.wrap { max-width: 1120px; margin: 0 auto; padding: 0 16px; }
+header { display: flex; align-items: center; gap: 12px; padding: 20px 0 16px; }
+.logo { width: 30px; height: 30px; border-radius: 8px; background: var(--surface); border: 1px solid var(--line); display: grid; place-items: center; }
+.logo svg { width: 14px; height: 14px; fill: var(--accent-2); }
+header h1 { font-size: 17px; margin: 0; font-weight: 650; letter-spacing: .2px; }
+header .count { color: var(--muted); font-size: 13px; margin-left: auto; }
+.player { background: #000; border-radius: 14px; overflow: hidden; aspect-ratio: 16 / 9; box-shadow: var(--shadow); }
+.player video { width: 100%; height: 100%; display: block; background: #000; }
+.meta { padding: 16px 2px 8px; }
+.meta h2 { font-size: 22px; line-height: 1.35; margin: 0 0 6px; font-weight: 700; }
+.sub { color: var(--muted); font-size: 13px; display: flex; flex-wrap: wrap; gap: 4px 14px; }
+.summary { margin: 12px 0 0; max-width: 72ch; }
+.chapters { display: flex; flex-wrap: wrap; gap: 8px; margin: 16px 0 4px; padding: 0; list-style: none; }
+.chapters button {
+  font: inherit; font-size: 13px; border: 0; cursor: pointer; color: var(--text);
+  background: var(--chip); padding: 6px 12px; border-radius: 999px; display: flex; gap: 8px; align-items: baseline;
+}
+.chapters button .t { font-variant-numeric: tabular-nums; color: var(--muted); font-size: 12px; }
+.chapters button[aria-current="true"] { background: var(--chip-on); color: var(--chip-on-text); }
+.chapters button[aria-current="true"] .t { color: inherit; opacity: .75; }
+.chapters button:focus-visible, .card:focus-visible, summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+details { margin: 14px 0 0; border-top: 1px solid var(--line); padding-top: 10px; }
+summary { cursor: pointer; color: var(--muted); font-size: 13px; width: fit-content; }
+details pre { white-space: pre-wrap; word-break: break-word; font: inherit; font-size: 13px; color: var(--muted); margin: 10px 0 0; }
+details a { color: var(--accent); }
+.actions { display: flex; gap: 14px; margin-top: 12px; font-size: 13px; }
+.actions a { color: var(--accent); text-decoration: none; }
+.actions a:hover { text-decoration: underline; }
+section.list { padding: 28px 0 40px; }
+section.list h3 { font-size: 14px; color: var(--muted); font-weight: 600; margin: 0 0 12px; }
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 16px; }
+.card {
+  display: block; text-decoration: none; color: inherit; background: var(--surface);
+  border: 1px solid var(--line); border-radius: 12px; overflow: hidden; box-shadow: var(--shadow);
+}
+.card[aria-current="true"] { border-color: var(--accent-2); }
+.thumb { position: relative; aspect-ratio: 16 / 9; background: var(--surface-2); }
+.thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.thumb .dur { position: absolute; right: 8px; bottom: 8px; background: rgba(0,0,0,.72); color: #fff; font-size: 12px; padding: 1px 6px; border-radius: 4px; font-variant-numeric: tabular-nums; }
+.card .info { padding: 10px 12px 12px; }
+.card .info b { display: block; font-size: 14px; line-height: 1.4; font-weight: 600; }
+.card .info span { color: var(--muted); font-size: 12px; }
+.empty { color: var(--muted); padding: 60px 0; text-align: center; }
+footer { color: var(--muted); font-size: 12px; padding: 0 0 32px; }
+@media (max-width: 600px) {
+  .player { border-radius: 0; margin: 0 -16px; }
+  .meta h2 { font-size: 19px; }
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="logo" aria-hidden="true"><svg viewBox="0 0 16 16"><path d="M4 2l10 6-10 6z"/></svg></div>
+    <h1>OneVideo 放映室</h1>
+    <span class="count" id="count"></span>
+  </header>
+  <main id="main"><p class="empty">加载中…</p></main>
+  <footer>由 OneVideo 流水线渲染 · 素材版权与数据来源见各视频说明</footer>
+</div>
+<script>
+(() => {
+  const $ = (s, el = document) => el.querySelector(s);
+  const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
+  const fmt = (t) => { t = Math.max(0, Math.floor(t)); const m = Math.floor(t / 60), s = t % 60; return `${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`; };
+  const linkify = (s) => esc(s).replace(/https?:\/\/[^\s<]+/g, (u) => `<a href="${u}" target="_blank" rel="noopener noreferrer">${u}</a>`);
+  const main = $("#main");
+  let videos = [];
+
+  function slugFromHash() {
+    const h = decodeURIComponent(location.hash.slice(1));
+    const [slug, t] = h.split("@");
+    return { slug, t: t ? Number(t) : null };
+  }
+
+  function render() {
+    if (!videos.length) { main.innerHTML = `<p class="empty">还没有已发布的视频</p>`; return; }
+    const { slug, t } = slugFromHash();
+    const cur = videos.find((v) => v.slug === slug) ?? videos[0];
+    document.title = `${cur.title} · OneVideo 放映室`;
+    main.innerHTML = `
+      <div class="player">
+        <video id="vid" controls playsinline preload="metadata" poster="${esc(cur.poster)}">
+          <source src="${esc(cur.video)}" type="video/mp4">
+          <track kind="subtitles" srclang="zh" label="中文字幕（外挂）" src="${esc(cur.captions)}">
+        </video>
+      </div>
+      <div class="meta">
+        <h2>${esc(cur.title)}</h2>
+        <div class="sub"><span>${esc(cur.date)}</span><span>${fmt(cur.duration)}</span><span>${(cur.size / 1048576).toFixed(1)} MB</span></div>
+        ${cur.summary ? `<p class="summary">${esc(cur.summary)}</p>` : ""}
+        ${cur.chapters.length ? `<ul class="chapters">${cur.chapters.map((c, i) => `<li><button data-i="${i}" data-t="${c.start}"><span class="t">${fmt(c.start)}</span>${esc(c.title)}</button></li>`).join("")}</ul>` : ""}
+        <div class="actions"><a href="${esc(cur.video)}" download="${esc(cur.slug)}.mp4">下载 MP4</a><a href="${esc(cur.captions)}" download="${esc(cur.slug)}.vtt">字幕 VTT</a><a href="#${esc(cur.slug)}" id="share">复制链接</a></div>
+        ${cur.description ? `<details><summary>说明与数据来源</summary><pre>${linkify(cur.description)}</pre></details>` : ""}
+      </div>
+      ${videos.length > 1 ? `<section class="list"><h3>全部视频</h3><div class="grid">${videos.map((v) => `
+        <a class="card" href="#${esc(v.slug)}" ${v.slug === cur.slug ? 'aria-current="true"' : ""}>
+          <div class="thumb"><img src="${esc(v.poster)}" alt="" loading="lazy"><span class="dur">${fmt(v.duration)}</span></div>
+          <div class="info"><b>${esc(v.title)}</b><span>${esc(v.date)}</span></div>
+        </a>`).join("")}</div></section>` : ""}`;
+
+    const vid = $("#vid");
+    const btns = [...main.querySelectorAll(".chapters button")];
+    const starts = cur.chapters.map((c) => c.start);
+    const mark = () => {
+      let i = 0;
+      for (let k = 0; k < starts.length; k++) if (vid.currentTime + 0.05 >= starts[k]) i = k;
+      btns.forEach((b, k) => b.setAttribute("aria-current", String(k === i)));
+    };
+    if (btns.length) { mark(); vid.addEventListener("timeupdate", mark); }
+    btns.forEach((b) => b.addEventListener("click", () => { vid.currentTime = Number(b.dataset.t); vid.play().catch(() => {}); }));
+    if (t != null && Number.isFinite(t)) vid.addEventListener("loadedmetadata", () => { vid.currentTime = t; }, { once: true });
+    $("#share").addEventListener("click", (e) => {
+      e.preventDefault();
+      const url = `${location.origin}${location.pathname}#${cur.slug}${vid.currentTime > 1 ? "@" + Math.floor(vid.currentTime) : ""}`;
+      const done = () => { e.target.textContent = "已复制"; setTimeout(() => (e.target.textContent = "复制链接"), 1500); };
+      if (navigator.clipboard) navigator.clipboard.writeText(url).then(done, () => prompt("链接", url));
+      else prompt("链接", url);
+    });
+  }
+
+  window.addEventListener("hashchange", () => { render(); window.scrollTo({ top: 0, behavior: "smooth" }); });
+  fetch("videos.json", { cache: "no-cache" })
+    .then((r) => { if (!r.ok) throw new Error(r.status); return r.json(); })
+    .then((j) => { videos = j.videos ?? []; $("#count").textContent = videos.length ? `${videos.length} 个视频` : ""; render(); })
+    .catch((e) => { main.innerHTML = `<p class="empty">视频清单加载失败（${esc(e.message)}），请刷新重试</p>`; });
+})();
+</script>
+</body>
+</html>

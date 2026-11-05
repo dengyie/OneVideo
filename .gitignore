@@ -11,3 +11,8 @@ node_modules/
 /examples/*/plan/review.json
 /examples/*/plan/publish.json
 /template/out/
+
+# web 播放页：媒体由 web/sync.mjs 从渲染节点拉取
+/web/site/v/
+/web/site/videos.json
+/web/.wrangler/
