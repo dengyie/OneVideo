@@ -50,7 +50,7 @@ test("compileTimeline on the SpaceX example: frames, captions, cues, chapters, m
   const { timeline, errors } = compileTimeline({ ...ex, assets: ex.fetchedAssets });
   assert.deepEqual(errors, []);
   assert.equal(timeline.width, 1920);
-  assert.deepEqual(timeline.scenes.find((s) => s.id === "race").backdrop, { asset: "falcon-heavy", dim: 0.82, blur: 14, motion: "none", startFrom: 0 });
+  assert.deepEqual(timeline.scenes.find((s) => s.id === "race").backdrop, { asset: "pad-night", dim: 0.8, blur: 12, motion: "none", startFrom: 0 });
   assert.ok(timeline.scenes.filter((s) => s.id !== "credits").every((s) => s.backdrop), "every content scene has footage behind it");
   assert.equal(timeline.scenes.length, ex.storyboard.scenes.length);
   let frame = 0;

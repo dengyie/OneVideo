@@ -368,9 +368,9 @@
         "y2026": "排在第一"
       },
       "backdrop": {
-        "asset": "falcon-heavy",
-        "dim": 0.82,
-        "blur": 14,
+        "asset": "pad-night",
+        "dim": 0.8,
+        "blur": 12,
         "motion": "none"
       }
     },
@@ -422,8 +422,8 @@
         ]
       },
       "backdrop": {
-        "asset": "starship",
-        "dim": 0.72,
+        "asset": "ascent",
+        "dim": 0.7,
         "motion": "right"
       }
     },
@@ -466,6 +466,7 @@
       "backdrop": {
         "asset": "starlink",
         "dim": 0.74,
+        "blur": 4,
         "motion": "up"
       }
     },
