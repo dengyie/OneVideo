@@ -1033,6 +1033,54 @@
       }
     },
     {
+      "id": "keyboard-04",
+      "kind": "sfx",
+      "category": "keyboard",
+      "store": "ext",
+      "file": "sfx/keyboard/keyboard-04.wav",
+      "sha256": "6e8c12d0233a1c0ee60797cf130fa0229366fc798f2784b7dc3c65739ed625f3",
+      "tags": [],
+      "note": "approximation: retro computer button press sequence, 0.26s; no real keyboard in GDC 2024",
+      "audio": {
+        "duration": 0.313,
+        "sampleRate": 48000,
+        "channels": 2,
+        "lufs": -20,
+        "sourceLufs": -17.3,
+        "peakDb": -3.2
+      },
+      "provenance": {
+        "source": "sonniss:2024/BluezoneCorp - Retrofuturistic Computer",
+        "license": "Sonniss GDC Bundle License",
+        "original": "BluezoneCorp - Retrofuturistic Computer/Bluezone_BC0304_retrofuturistic_computer_button_013.wav",
+        "url": null
+      }
+    },
+    {
+      "id": "keyboard-05",
+      "kind": "sfx",
+      "category": "keyboard",
+      "store": "ext",
+      "file": "sfx/keyboard/keyboard-05.wav",
+      "sha256": "205d7e7c09efae6859af206dce95b36bcad7744298c68e4a3b11535a8b58c0cf",
+      "tags": [],
+      "note": "approximation: tiny mechanical click (switch-like), 40ms; stitch for typing",
+      "audio": {
+        "duration": 0.054,
+        "sampleRate": 48000,
+        "channels": 2,
+        "lufs": -20,
+        "sourceLufs": -22.1,
+        "peakDb": -1.6
+      },
+      "provenance": {
+        "source": "sonniss:2024/BluezoneCorp - Tiny Gears - Small Mechanism",
+        "license": "Sonniss GDC Bundle License",
+        "original": "BluezoneCorp - Tiny Gears - Small Mechanism/Bluezone_BC0301_tiny_gears_small_mechanism_click_003.wav",
+        "url": null
+      }
+    },
+    {
       "id": "lottie-arrow-01",
       "kind": "lottie",
       "category": "arrow",
@@ -2345,6 +2393,126 @@
       }
     },
     {
+      "id": "riser-05",
+      "kind": "sfx",
+      "category": "riser",
+      "store": "ext",
+      "file": "sfx/riser/riser-05.wav",
+      "sha256": "6ae28cf77ad504cc251933b134eb72b623bea8c87a9568b43cf2ecff6accda49",
+      "tags": [],
+      "note": "orchestral strings riser for editors; 8s source, first 5s kept",
+      "audio": {
+        "duration": 5,
+        "sampleRate": 48000,
+        "channels": 2,
+        "lufs": -20,
+        "sourceLufs": -22.3,
+        "peakDb": -3.8
+      },
+      "provenance": {
+        "source": "sonniss:2024/Orbital Emitter - Cinematic Transitions for Editors Volume 2",
+        "license": "Sonniss GDC Bundle License",
+        "original": "Orbital Emitter - Cinematic Transitions for Editors Volume 2/112,StringsSectionRiser.wav",
+        "url": null
+      }
+    },
+    {
+      "id": "riser-06",
+      "kind": "sfx",
+      "category": "riser",
+      "store": "ext",
+      "file": "sfx/riser/riser-06.wav",
+      "sha256": "a32582660fc5d0ba839d4ffb937f6a6f959e2eb093cda776b40c12b75dded37e",
+      "tags": [],
+      "note": "eerie metallic trailer riser; 14s source, cut to the 5s build ending at its peak",
+      "audio": {
+        "duration": 5,
+        "sampleRate": 48000,
+        "channels": 2,
+        "lufs": -20,
+        "sourceLufs": -18.4,
+        "peakDb": -5.7
+      },
+      "provenance": {
+        "source": "sonniss:2024/Jake Fielding - Haunted Metal Vol.2 - Cinematic Creaks & Risers",
+        "license": "Sonniss GDC Bundle License",
+        "original": "Jake Fielding - Haunted Metal Vol.2 - Cinematic Creaks & Risers/DSGNRise_Cinematic Metallic Riser, Trailer, Designed Eerie Wail_JF_Haunted Metal Vol 2_02.wav",
+        "url": null
+      }
+    },
+    {
+      "id": "riser-07",
+      "kind": "sfx",
+      "category": "riser",
+      "store": "ext",
+      "file": "sfx/riser/riser-07.wav",
+      "sha256": "9cc8b0f7a0bc266ce65901164c091c414048ca9f83de7ddbe38d70921c69ee55",
+      "tags": [],
+      "note": "big metallic trailer riser; 13s source, cut to the 5s build ending at its peak",
+      "audio": {
+        "duration": 5,
+        "sampleRate": 48000,
+        "channels": 2,
+        "lufs": -20,
+        "sourceLufs": -17.1,
+        "peakDb": -3.1
+      },
+      "provenance": {
+        "source": "sonniss:2024/Jake Fielding - Haunted Metal Vol.2 - Cinematic Creaks & Risers",
+        "license": "Sonniss GDC Bundle License",
+        "original": "Jake Fielding - Haunted Metal Vol.2 - Cinematic Creaks & Risers/DSGNRise_Cinematic Metallic Riser, Trailer, Designed,_JF_Haunted Metal Vol 2_67.wav",
+        "url": null
+      }
+    },
+    {
+      "id": "riser-08",
+      "kind": "sfx",
+      "category": "riser",
+      "store": "ext",
+      "file": "sfx/riser/riser-08.wav",
+      "sha256": "00ed016470b52c148dc0bf2d7e74e3861e3c7b53febb817af6f102978ce2bac6",
+      "tags": [],
+      "note": "short metallic riser, ~2.6s build cut at its peak",
+      "audio": {
+        "duration": 2.636,
+        "sampleRate": 48000,
+        "channels": 2,
+        "lufs": -20,
+        "sourceLufs": -18.4,
+        "peakDb": -3.7
+      },
+      "provenance": {
+        "source": "sonniss:2024/Jake Fielding - Haunted Metal Vol.2 - Cinematic Creaks & Risers",
+        "license": "Sonniss GDC Bundle License",
+        "original": "Jake Fielding - Haunted Metal Vol.2 - Cinematic Creaks & Risers/DSGNRise_Cinematic Metallic Riser, Trailer, Designed,_JF_Haunted Metal Vol 2_39.wav",
+        "url": null
+      }
+    },
+    {
+      "id": "riser-09",
+      "kind": "sfx",
+      "category": "riser",
+      "store": "ext",
+      "file": "sfx/riser/riser-09.wav",
+      "sha256": "6aafaf764f8463d1475a4ab77849a1448a02ab38f6fec259879d4873ebee2716",
+      "tags": [],
+      "note": "short groaning metal riser, ~2.4s build cut at its peak",
+      "audio": {
+        "duration": 2.4,
+        "sampleRate": 48000,
+        "channels": 2,
+        "lufs": -20,
+        "sourceLufs": -15.1,
+        "peakDb": -5.6
+      },
+      "provenance": {
+        "source": "sonniss:2024/Jake Fielding - Haunted Metal Vol.2 - Cinematic Creaks & Risers",
+        "license": "Sonniss GDC Bundle License",
+        "original": "Jake Fielding - Haunted Metal Vol.2 - Cinematic Creaks & Risers/DSGNRise_Cinematic Metallic Riser, Trailer, Designed Groan_JF_Haunted Metal Vol 2_08.wav",
+        "url": null
+      }
+    },
+    {
       "id": "rocket-01",
       "kind": "sfx",
       "category": "rocket",
@@ -2701,6 +2869,102 @@
         "source": "sonniss:2026/Jake Fielding - Cinematic Horn Braams",
         "license": "Sonniss GDC Bundle License",
         "original": "Jake Fielding - Cinematic Horn Braams/DSGNBram____Cinematic Horn Braam, Epic, Cinematic, Dark, Instrument, Huge-67.wav",
+        "url": null
+      }
+    },
+    {
+      "id": "swell-03",
+      "kind": "sfx",
+      "category": "swell",
+      "store": "ext",
+      "file": "sfx/swell/swell-03.wav",
+      "sha256": "e61072c42bfdff02f06736895630de8db6ec867f2126cadb1ab7dc09e793f72e",
+      "tags": [],
+      "note": "reversed metal tone, 2.5s crescendo to the end — classic reverse swell",
+      "audio": {
+        "duration": 2.51,
+        "sampleRate": 48000,
+        "channels": 2,
+        "lufs": -20,
+        "sourceLufs": -16.6,
+        "peakDb": -4.4
+      },
+      "provenance": {
+        "source": "sonniss:2024/Mechanical Wave - Torturing Metal",
+        "license": "Sonniss GDC Bundle License",
+        "original": "Mechanical Wave - Torturing Metal/METLTonl_Reversed Metal-28_MWSFX_TM.wav",
+        "url": null
+      }
+    },
+    {
+      "id": "swell-04",
+      "kind": "sfx",
+      "category": "swell",
+      "store": "ext",
+      "file": "sfx/swell/swell-04.wav",
+      "sha256": "f1fc97a8bef6304bb459fce397807ebc87b3ef231bc165eaf5f1eb890d09e663",
+      "tags": [],
+      "note": "short reversed glass swell, ~1.5s",
+      "audio": {
+        "duration": 3.328,
+        "sampleRate": 48000,
+        "channels": 2,
+        "lufs": -20,
+        "sourceLufs": -19,
+        "peakDb": -3.6
+      },
+      "provenance": {
+        "source": "sonniss:2024/Mechanical Wave - Glass",
+        "license": "Sonniss GDC Bundle License",
+        "original": "Mechanical Wave - Glass/GLASMisc_Reverse Glass Effect_04_MWSFX_GL.wav",
+        "url": null
+      }
+    },
+    {
+      "id": "swell-05",
+      "kind": "sfx",
+      "category": "swell",
+      "store": "ext",
+      "file": "sfx/swell/swell-05.wav",
+      "sha256": "97460a963e89bcbc629ac14984b6c148f9d5677b9fd381761b25a66b046cac92",
+      "tags": [],
+      "note": "synth-noise swell, slow rise to ~3s then release",
+      "audio": {
+        "duration": 5,
+        "sampleRate": 48000,
+        "channels": 2,
+        "lufs": -20,
+        "sourceLufs": -24.6,
+        "peakDb": -3
+      },
+      "provenance": {
+        "source": "sonniss:2024/Rogue Waves - Anime Studio",
+        "license": "Sonniss GDC Bundle License",
+        "original": "Rogue Waves - Anime Studio/WHSH_Whoosh Synth Noise 28_RogueWaves_AnimeStudio.wav",
+        "url": null
+      }
+    },
+    {
+      "id": "swell-06",
+      "kind": "sfx",
+      "category": "swell",
+      "store": "ext",
+      "file": "sfx/swell/swell-06.wav",
+      "sha256": "4ff11c18179afcee19e519bdc017f36ffde09ba0bce57e0f7bce3d700d49f2a8",
+      "tags": [],
+      "note": "tense metallic tone swelling to ~2.7s then fading; dark",
+      "audio": {
+        "duration": 5,
+        "sampleRate": 48000,
+        "channels": 2,
+        "lufs": -20,
+        "sourceLufs": -21.2,
+        "peakDb": -1.7
+      },
+      "provenance": {
+        "source": "sonniss:2024/Jake Fielding - Haunted Metal Vol.3 - Cinematic Tones & Textures",
+        "license": "Sonniss GDC Bundle License",
+        "original": "Jake Fielding - Haunted Metal Vol.3 - Cinematic Tones & Textures/DSGNDron_Tense Metallic Tone, Cinematic, Eerie, Wail,_JF_Haunted Metal Vol 3_26.wav",
         "url": null
       }
     },
@@ -3329,6 +3593,30 @@
       }
     },
     {
+      "id": "whoosh-cinematic-06",
+      "kind": "sfx",
+      "category": "whoosh-cinematic",
+      "store": "ext",
+      "file": "sfx/whoosh-cinematic/whoosh-cinematic-06.wav",
+      "sha256": "d1f96bf510a8d0b54a9c90200f5d539de2e9941f8641e2881974ae01374e4922",
+      "tags": [],
+      "note": "low sci-fi pass-by whoosh, ~1.5s body plus tail",
+      "audio": {
+        "duration": 3,
+        "sampleRate": 48000,
+        "channels": 2,
+        "lufs": -20,
+        "sourceLufs": -30.3,
+        "peakDb": -3.5
+      },
+      "provenance": {
+        "source": "sonniss:2024/Chupapsound - Essential Scifi",
+        "license": "Sonniss GDC Bundle License",
+        "original": "Chupapsound - Essential Scifi/WHOOSH PASS SF LOW.wav",
+        "url": null
+      }
+    },
+    {
       "id": "whoosh-fast-01",
       "kind": "sfx",
       "category": "whoosh-fast",
@@ -3425,6 +3713,30 @@
       }
     },
     {
+      "id": "whoosh-fast-05",
+      "kind": "sfx",
+      "category": "whoosh-fast",
+      "store": "ext",
+      "file": "sfx/whoosh-fast/whoosh-fast-05.wav",
+      "sha256": "d1741d9746b34b06b0a56ce1eabe1fd87cc7ce7fd53ad4042023d9ab72354c47",
+      "tags": [],
+      "note": "clean sci-fi fast whoosh, 1.3s",
+      "audio": {
+        "duration": 1.722,
+        "sampleRate": 48000,
+        "channels": 2,
+        "lufs": -20,
+        "sourceLufs": -13.5,
+        "peakDb": -6.7
+      },
+      "provenance": {
+        "source": "sonniss:2024/Rescopic Sound - Distinct Whooshes",
+        "license": "Sonniss GDC Bundle License",
+        "original": "Rescopic Sound - Distinct Whooshes/WHSH_Pure SciFi-Whoosh Fast 03_RSCPC_DW.wav",
+        "url": null
+      }
+    },
+    {
       "id": "whoosh-soft-01",
       "kind": "sfx",
       "category": "whoosh-soft",
@@ -3493,6 +3805,30 @@
         "source": "sonniss:2026/Cinematic Sound Design - Cartoon & Animation Vol 2",
         "license": "Sonniss GDC Bundle License",
         "original": "Cinematic Sound Design - Cartoon & Animation Vol 2/Cartoon Pull Swoosh Readout.wav",
+        "url": null
+      }
+    },
+    {
+      "id": "whoosh-soft-04",
+      "kind": "sfx",
+      "category": "whoosh-soft",
+      "store": "ext",
+      "file": "sfx/whoosh-soft/whoosh-soft-04.wav",
+      "sha256": "f10efb9765b4afc01ceae79444b33254d502e56235e14df74833bc12dbab683c",
+      "tags": [],
+      "note": "airy wind-gust whoosh; 3.8s source, 3s kept",
+      "audio": {
+        "duration": 3,
+        "sampleRate": 48000,
+        "channels": 2,
+        "lufs": -20,
+        "sourceLufs": -12.8,
+        "peakDb": -7.4
+      },
+      "provenance": {
+        "source": "sonniss:2024/Rescopic Sound - Distinct Whooshes",
+        "license": "Sonniss GDC Bundle License",
+        "original": "Rescopic Sound - Distinct Whooshes/WHSH_Airy-Whoosh Wind Gust 11_RSCPC_DW.wav",
         "url": null
       }
     }
