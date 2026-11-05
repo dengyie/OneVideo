@@ -3,7 +3,7 @@ import { readFileSync } from "node:fs";
 import { UserError, log, warn } from "../lib/project.mjs";
 import { CATALOG, extRoot, importCandidates, loadCatalog, mergeCatalogs, saveCatalog, searchCatalog, verifyCatalog, entryAvailable } from "../lib/library.mjs";
 
-const row = (e) => `${e.id.padEnd(24)} ${(e.store === "ext" ? "ext " : "repo")} ${entryAvailable(e) ? "✓" : "·"} ${String(e.audio?.duration ?? "").padStart(6)}s  ${e.provenance?.source ?? ""}${e.note ? ` — ${e.note}` : ""}`;
+const row = (e) => `${e.id.padEnd(24)} ${(e.store === "ext" ? "ext " : "repo")} ${entryAvailable(e) ? "✓" : "·"} ${String(e.audio?.duration ?? e.lottie?.duration ?? "").padStart(6)}s  ${e.provenance?.source ?? ""}${e.note ? ` — ${e.note}` : ""}`;
 
 export async function lib(args) {
   const [sub, ...rest] = args._;
@@ -12,9 +12,10 @@ export async function lib(args) {
     const entries = catalog.entries.filter((e) => (!args.category || e.category === args.category) && (!args.kind || e.kind === args.kind));
     if (args.json) return console.log(JSON.stringify(entries, null, 2));
     const byCat = new Map();
-    for (const e of entries) byCat.set(e.category, [...(byCat.get(e.category) ?? []), e]);
-    for (const [cat, es] of [...byCat].sort((a, b) => a[0].localeCompare(b[0]))) {
-      console.log(`${cat}  (default ${catalog.defaults[cat] ?? "—"})`);
+    for (const e of entries) { const k = `${e.kind ?? "sfx"}:${e.category}`; byCat.set(k, [...(byCat.get(k) ?? []), e]); }
+    for (const [key, es] of [...byCat].sort((a, b) => a[0].localeCompare(b[0]))) {
+      const def = catalog.defaults[key.startsWith("sfx:") ? key.slice(4) : key];
+      console.log(`${key}  (default ${def ?? "—"})`);
       for (const e of es) console.log(`  ${row(e)}`);
     }
     return log(`${entries.length} entries, ${byCat.size} categories · ✓ = file on this host (ext store: ${extRoot()})`);

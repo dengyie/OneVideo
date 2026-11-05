@@ -1,6 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { compileTimeline } from "../cli/lib/timeline.mjs";
+import { compileTimeline, overlaySound } from "../cli/lib/timeline.mjs";
+import { isMonoDark, tintLottie } from "../cli/lib/library.mjs";
 import { schemaGate } from "../cli/lib/gates.mjs";
 import { resolveCountry } from "../cli/lib/geo.mjs";
 import { collectIcons, resolveIcon } from "../cli/lib/icons.mjs";
@@ -72,4 +73,66 @@ test("compileTimeline marks full-frame scene types opaque", () => {
   const { timeline } = compileTimeline({ ...ex, storyboard: sb, assets: ex.fetchedAssets });
   assert.equal(timeline.scenes[1].opaque, true);
   assert.equal(timeline.scenes[2].opaque, false);
+});
+
+test("storyboard schema validates overlays", () => {
+  const ok = { id: "x", type: "kinetic", props: { lines: [{ text: "a" }] }, overlays: [
+    { type: "lottie", src: "check", at: 0.5, tint: "#ffffff" },
+    { type: "mark", kind: "circle", rect: [0.1, 0.1, 0.2, 0.1], sfx: "auto" },
+    { type: "stamp", text: "SOLD", sfx: { sound: "impact", volume: 0.4 } },
+    { type: "arrow", from: [0.1, 0.8], to: [0.5, 0.5], sfx: null },
+  ] };
+  assert.deepEqual(schemaGate("storyboard", { scenes: [ok] }), []);
+  const bad = schemaGate("storyboard", { scenes: [{ ...ok, overlays: [{ type: "sparkler" }] }] });
+  assert.ok(bad.some((i) => /type/.test(i.path + i.msg)));
+  assert.ok(schemaGate("storyboard", { scenes: [{ ...ok, overlays: [{ type: "lottie", src: "a", tint: "white" }] }] }).length > 0);
+});
+
+test("compileTimeline compiles overlays: timing, icons, auto sfx, lottie inlining, tint and credits", () => {
+  const ex = example({ media: ["sfx/whoosh.wav", "sfx/pop.wav", "sfx/ui-pop.wav", "music/bgm.wav"] });
+  const sb = structuredClone(ex.storyboard);
+  sb.scenes[1] = { ...sb.scenes[1], overlays: [
+    { type: "icon", icon: "rocket", at: 0.5, duration: 1, sfx: "auto" },
+    { type: "lottie", src: "check", at: 1 },
+    { type: "lottie", src: "lottie-check-02", at: 1.5 },
+  ] };
+  const { timeline, errors } = compileTimeline({ ...ex, config: { ...ex.config, look: { grain: 0.3 } }, storyboard: sb, assets: ex.fetchedAssets });
+  assert.deepEqual(errors, []);
+  const sc = timeline.scenes[1];
+  const [icon, noto, line] = sc.overlays;
+  assert.deepEqual([icon.t, icon.end], [0.5, 1.5]);
+  assert.ok(!("at" in icon) && !("duration" in icon) && !("sfx" in icon));
+  assert.equal(noto.end, +(sc.duration + 0.5).toFixed(3));
+  assert.ok(timeline.icons.rocket);
+  assert.ok(timeline.sfx.some((s) => s.sound === "ui-pop" && Math.abs(s.at - (sc.start + 0.5)) < 1e-6));
+  // The colour emoji is inlined as-is; the black line icon gets a tinted copy keyed by colour.
+  assert.equal(noto.src, "check");
+  assert.equal(line.src, `lottie-check-02#${timeline.theme.colors.text}`);
+  assert.deepEqual(Object.keys(timeline.lottie).sort(), ["check", line.src].sort());
+  assert.deepEqual(timeline.look, { grain: 0.3 });
+  assert.ok(timeline.libraryCredits.some((c) => /Noto/.test(c) && /CC BY/.test(c)));
+  const src = timeline.scenes.find((s) => s.type === "sources");
+  if (src && !sb.scenes.find((s) => s.id === src.id).props?.items?.length) assert.ok(src.props.items.some((l) => /Noto/.test(l)));
+
+  sb.scenes[1].overlays = [{ type: "lottie", src: "no-such-lottie" }];
+  const bad = compileTimeline({ ...ex, storyboard: sb, assets: ex.fetchedAssets }).errors;
+  assert.ok(bad.some((e) => /unknown lottie "no-such-lottie"/.test(e)));
+});
+
+test("overlaySound: explicit, auto, project default and silence", () => {
+  assert.equal(overlaySound({ type: "stamp" }, {}), null);
+  assert.equal(overlaySound({ type: "stamp" }, { overlays: "auto" }).sound, "impact");
+  assert.equal(overlaySound({ type: "stamp", sfx: null }, { overlays: "auto" }), null);
+  assert.equal(overlaySound({ type: "stamp", sfx: "whoosh-fast" }, {}).sound, "whoosh-fast");
+  assert.deepEqual(overlaySound({ type: "stamp", sfx: { sound: "boom", volume: 0.2 } }, {}), { sound: "boom", volume: 0.2 });
+});
+
+test("tintLottie recolours static colours; isMonoDark spots black line icons", () => {
+  const data = { layers: [{ shapes: [{ ty: "st", c: { a: 0, k: [0, 0, 0, 1] } }, { ty: "fl", c: { a: 0, k: [0.05, 0.05, 0.05, 1] } }] }] };
+  assert.equal(isMonoDark(data), true);
+  const t = tintLottie(data, "#ff0000");
+  assert.deepEqual(t.layers[0].shapes[0].c.k, [1, 0, 0, 1]);
+  assert.equal(isMonoDark(t), false);
+  assert.deepEqual(data.layers[0].shapes[0].c.k, [0, 0, 0, 1]);
+  assert.throws(() => tintLottie(data, "red"));
 });

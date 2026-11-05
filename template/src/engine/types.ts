@@ -27,6 +27,19 @@ export type CameraMove = "static" | "drift" | "push" | "pull" | "pan-left" | "pa
 export type Camera = { move: CameraMove; amount?: number };
 export type Background = "default" | "plain" | "grid" | "stars" | "media";
 
+export type Overlay = {
+  type: "lottie" | "icon" | "burst" | "confetti" | "arrow" | "mark" | "callout" | "stamp" | "lower-third" | "spotlight" | "flash" | "image";
+  t: number; end: number;
+  x?: number; y?: number; size?: number; color?: string;
+  src?: string; loop?: boolean; speed?: number;
+  icon?: string; label?: string; ring?: boolean; count?: number; origin?: "top" | "point";
+  from?: [number, number]; to?: [number, number]; curve?: number;
+  kind?: "circle" | "box" | "underline" | "highlight" | "strike"; rect?: [number, number, number, number];
+  text?: string; subtitle?: string; side?: "left" | "right"; rotate?: number;
+  asset?: string; shape?: "circle" | "rounded";
+};
+export type Look = { grain?: number; vignette?: number; leak?: number };
+
 export type Line = { text: string; start: number; end: number };
 
 export type Scene = {
@@ -50,6 +63,7 @@ export type Scene = {
   cues: Record<string, number>;
   lines: Line[];
   props: Record<string, any>;
+  overlays?: Overlay[];
 };
 
 export type Timeline = {
@@ -66,9 +80,12 @@ export type Timeline = {
   captions: { enabled: boolean; style: "line" | "karaoke" | "none"; items: { scene: string; text: string; start: number; end: number }[] };
   narration: [number, number][];
   music: { src: string; volume: number; duckTo: number; fade: number; credit?: string | null } | null;
-  sfx: { sound: string; src: string; at: number; volume: number }[];
+  sfx: { sound: string; src: string; at: number; volume: number; duration?: number }[];
   chapters: { title: string; start: number }[];
   assets: Record<string, { src: string; kind: "image" | "video"; credit: string }>;
   icons?: Record<string, { body: string; viewBox: string }>;
+  lottie?: Record<string, any>;
+  libraryCredits?: string[];
+  look?: Look | null;
   scenes: Scene[];
 };

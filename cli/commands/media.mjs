@@ -8,7 +8,7 @@ import { writeMusic, synthSfx, SFX, MUSIC_PRESETS } from "../lib/synth.mjs";
 import { writeWav } from "../lib/wav.mjs";
 import { checkProject, printIssues } from "../lib/check.mjs";
 import { search, fetchAsset, scoreCandidate, assetFileExists } from "../lib/assets.mjs";
-import { AUTO_TRANSITION_SFX, DIMENSIONS, sfxFile } from "../lib/timeline.mjs";
+import { AUTO_TRANSITION_SFX, DIMENSIONS, overlaySound, sfxFile } from "../lib/timeline.mjs";
 import { categories, entryPath, loadCatalog, resolveSfx } from "../lib/library.mjs";
 import { spokenLength } from "../lib/text.mjs";
 
@@ -37,6 +37,8 @@ export async function tts(args) {
   log(`timings: ${Object.keys(res.scenes).length} scenes, ${n} lines, narration ${res.totalNarration.toFixed(1)}s → plan/timings.json`);
 }
 
+const SYNTH_NEAREST = [[/whoosh|swish|whip|page/, "whoosh"], [/impact|boom|rocket|glitch|error/, "impact"], [/riser|swell/, "riser"], [/pop|click|shutter|marker|cash/, "pop"], [/ding|sting|success|crowd/, "chime"], [/tick|type|keyboard/, "tick"]];
+
 export async function music(args) {
   const project = loadProject();
   const { config, paths } = project;
@@ -48,6 +50,7 @@ export async function music(args) {
   for (const sb of pre.plan.storyboard?.scenes ?? []) {
     for (const fx of sb.sfx ?? []) sfxNames.add(fx.sound);
     for (const t of [sb.enter, sb.exit]) if (t?.sfx) sfxNames.add(t.sfx);
+    for (const ov of sb.overlays ?? []) { const s = overlaySound(ov, config.sfx); if (s?.sound) sfxNames.add(s.sound); }
   }
   // Library entries first (recorded, normalized), then procedural sounds; synth:<name> forces procedural.
   const catalog = loadCatalog();
@@ -62,7 +65,10 @@ export async function music(args) {
       used.push(`${name}→${lib.entry.id}`);
       continue;
     }
-    const proc = synthName ?? name;
+    // A library category whose files all live on another host falls back to the nearest synth.
+    const near = !synthName && !SFX[name] && categories(catalog).includes(name) ? SYNTH_NEAREST.find(([re]) => re.test(name))?.[1] : null;
+    if (near) warn(`sfx "${name}": no library file on this host; using procedural ${near} (render on the VM for the recorded sound)`);
+    const proc = synthName ?? near ?? name;
     if (!SFX[proc]) throw new UserError(`unknown sfx "${name}": not in the library (${categories(catalog).join(", ") || "empty; run: onevideo lib import"}) nor procedural (${Object.keys(SFX).join(", ")})`);
     if (!existsSync(file) || args.force) writeWav(file, synthSfx(proc));
     used.push(`${name}→synth`);

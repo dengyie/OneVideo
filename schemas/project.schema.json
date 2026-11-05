@@ -98,11 +98,17 @@
         },
         "protocol": {
           "description": "chat: POST /chat/completions with the style as the user turn and the text as the assistant turn (MiMo TTS); speech: OpenAI-style POST /audio/speech.",
-          "enum": ["chat", "speech"]
+          "enum": [
+            "chat",
+            "speech"
+          ]
         },
         "unit": {
           "description": "scene: one TTS call per scene for natural prosody, caption timing aligned from the pauses in the audio; line: one call per caption line (exact timing, choppier delivery).",
-          "enum": ["scene", "line"]
+          "enum": [
+            "scene",
+            "line"
+          ]
         },
         "style": {
           "description": "Delivery direction for the voice (tone, pace, emphasis). Sent as the chat user turn, or as instructions with protocol speech.",
@@ -230,6 +236,13 @@
           "type": "number",
           "minimum": 0,
           "maximum": 1
+        },
+        "overlays": {
+          "enum": [
+            "auto",
+            "none"
+          ],
+          "description": "auto: every overlay without its own sfx plays the sound for its type"
         }
       }
     },
@@ -272,6 +285,28 @@
     },
     "gates": {
       "type": "object"
+    },
+    "look": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "whole-video finish over every scene",
+      "properties": {
+        "grain": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "vignette": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "leak": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        }
+      }
     }
   }
 }

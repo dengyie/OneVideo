@@ -41,6 +41,10 @@ export function creditsText(timeline, research) {
     lines.push("素材来源：");
     for (const a of assets) lines.push(`- ${a.credit}`);
   }
+  if (timeline.libraryCredits?.length) {
+    if (!assets.length) lines.push("素材来源：");
+    for (const c of timeline.libraryCredits) lines.push(`- ${c.replace(/^动画：/, "动画 ")}`);
+  }
   const sources = researchSources(research);
   if (sources.length) {
     lines.push("数据来源：");

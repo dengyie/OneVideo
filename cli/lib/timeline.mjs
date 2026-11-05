@@ -1,11 +1,13 @@
 // Timeline compiler: script + storyboard + measured timings → plan/timeline.json.
 // The Remotion template reads only this file, so every timing decision lives here.
-import { existsSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { normalizeForMatch, spokenLength } from "./text.mjs";
 import { styleDef } from "./project.mjs";
 import { collectIcons, resolveIcon } from "./icons.mjs";
 import { resolveCountry } from "./geo.mjs";
+import { entryPath, isMonoDark, loadCatalog, resolveEntry, tintLottie } from "./library.mjs";
+import { parseWav } from "./wav.mjs";
 
 export const DIMENSIONS = { "16:9": [1920, 1080], "9:16": [1080, 1920], "1:1": [1080, 1080], "4:5": [1080, 1350] };
 export const DEFAULT_HOLD = 0.5;
@@ -80,6 +82,16 @@ export function transitionSfx(cfg, type) {
   return cfg[type] !== undefined ? cfg[type] : cfg["*"] ?? null;
 }
 
+// Overlay sounds: an overlay's `sfx` names one, "auto" picks by type, null mutes; with
+// config.sfx.overlays = "auto" every overlay without its own `sfx` gets the auto sound.
+export const OVERLAY_SFX = { icon: "ui-pop", burst: "ui-pop", confetti: "success-sting", arrow: "swish", mark: "marker", callout: "click", stamp: "impact", "lower-third": "whoosh-soft", spotlight: "swell", flash: "boom", image: "ui-pop", lottie: "ui-pop" };
+export function overlaySound(ov, cfg) {
+  const s = ov.sfx === undefined ? (cfg?.overlays === "auto" ? "auto" : null) : ov.sfx;
+  if (!s) return null;
+  const name = typeof s === "object" ? s.sound : s;
+  return { sound: name === "auto" ? OVERLAY_SFX[ov.type] ?? null : name, volume: typeof s === "object" ? s.volume : undefined };
+}
+
 // Scene types that paint the whole frame themselves (no theme background shows through).
 const OPAQUE_TYPES = new Set(["media", "focus", "split"]);
 
@@ -93,6 +105,9 @@ export function compileTimeline({ config, script, storyboard, timings, assets, r
   const assetById = new Map((assets?.items ?? []).map((a) => [a.id, a]));
   const usedAssets = {};
   const icons = {};
+  const lottie = {};
+  const libraryCredits = [];
+  let catalog = null;
   const scenes = [];
   const captions = [];
   const narration = [];
@@ -130,19 +145,52 @@ export function compileTimeline({ config, script, storyboard, timings, assets, r
       sfx.push({ sound: fx.sound, src: sfxFile(fx.sound), at: r3(start + clampT(res.t, duration)), volume: fx.volume ?? sfxCfg.volume });
     }
 
+    const overlays = [];
+    for (const [k, ov] of (sb.overlays ?? []).entries()) {
+      const where = `scene "${sb.id}" overlay ${k} (${ov.type})`;
+      const res = resolveAt(ov.at ?? 0, lines, duration);
+      if (res.error) { errors.push(`${where}: ${res.error}`); continue; }
+      const t = clampT(res.t, duration);
+      const { at, duration: d, sfx: _sfx, ...rest } = ov;
+      const o = { ...structuredClone(rest), t: r3(t), end: r3(d ? Math.min(duration + 0.5, t + d) : duration + 0.5) };
+      if (ov.type === "lottie") {
+        const src = ov.src;
+        if (!lottie[src]) {
+          catalog ??= loadCatalog();
+          const hit = typeof src === "string" ? resolveEntry(src, catalog, "lottie") : null;
+          const file = hit ? entryPath(hit.entry) : root && typeof src === "string" && src.endsWith(".json") ? join(root, "public", src) : null;
+          if (!file || !existsSync(file)) { errors.push(`${where}: unknown lottie "${src}" (library id/category, see onevideo lib list --kind lottie, or a .json under public/)`); continue; }
+          lottie[src] = JSON.parse(readFileSync(file, "utf8"));
+          const line = hit && libraryCredit(hit.entry);
+          if (line && !libraryCredits.includes(line)) libraryCredits.push(line);
+        }
+        // Explicit tint, or black line icons tinted to the theme's text colour so they read on dark backgrounds.
+        const tint = ov.tint ?? (isMonoDark(lottie[src]) ? theme.colors?.text : null);
+        if (tint) {
+          const key = `${src}#${tint}`;
+          try { lottie[key] ??= tintLottie(lottie[src], tint); } catch (e) { errors.push(`${where}: ${e.message}`); continue; }
+          o.src = key;
+          delete o.tint;
+        }
+      }
+      const snd = overlaySound(ov, sfxCfg);
+      if (snd?.sound) sfx.push({ sound: snd.sound, src: sfxFile(snd.sound), at: r3(start + t), volume: snd.volume ?? sfxCfg.volume });
+      overlays.push(o);
+    }
+
     const props = structuredClone(sb.props ?? {});
-    if (sb.type === "sources" && !props.items?.length && props.auto !== false) props.items = sourceList(research, assets);
+    if (sb.type === "sources" && !props.items?.length && props.auto !== false) props.items = sourceList(research, assets, libraryCredits);
     if (sb.type === "map") for (const h of props.highlight ?? []) {
       const id = resolveCountry(h.id);
       if (id) h.id = id; else errors.push(`scene "${sb.id}" map highlight: unknown country "${h.id}" (use a Natural Earth numeric id, ISO alpha-2 or English name)`);
     }
-    for (const name of collectIcons(props)) {
+    for (const name of collectIcons([props, overlays])) {
       if (icons[name]) continue;
       const icon = resolveIcon(name);
       if (icon) icons[name] = icon; else errors.push(`scene "${sb.id}" uses unknown icon "${name}" (Lucide name or flag:<iso2>)`);
     }
     if (sb.type === "unit-grid" && !icons[props.icon ?? "user-round"]) { const icon = resolveIcon(props.icon ?? "user-round"); if (icon) icons[props.icon ?? "user-round"] = icon; }
-    const refs = collectAssetRefs(props);
+    const refs = collectAssetRefs([props, overlays]);
     if (sb.backdrop) refs.add(sb.backdrop.asset);
     for (const id of refs) {
       const a = assetById.get(id);
@@ -180,6 +228,7 @@ export function compileTimeline({ config, script, storyboard, timings, assets, r
       cues,
       lines: lines.map((l) => ({ text: l.text, start: l.start, end: l.end })),
       props,
+      ...(overlays.length ? { overlays } : {}),
     });
     frame += durationInFrames;
   }
@@ -208,6 +257,13 @@ export function compileTimeline({ config, script, storyboard, timings, assets, r
   if (config.music?.file && !config.music?.credit) warnings.push("music.file has no music.credit; add the track title/author/license for the publish credits");
   const usedSfx = [...new Set(sfx.map((s) => s.sound))];
   if (root) for (const name of usedSfx) if (!existsSync(join(root, "public", sfxFile(name)))) errors.push(`sfx "${name}" missing: public/${sfxFile(name)}; run: onevideo music`);
+  // Library sounds run up to 8 s; the player keeps each one mounted for its real length.
+  const sfxLen = {};
+  if (root) for (const s of sfx) {
+    const f = join(root, "public", s.src);
+    if (sfxLen[s.src] === undefined && existsSync(f)) { try { sfxLen[s.src] = r3(parseWav(readFileSync(f)).duration); } catch { sfxLen[s.src] = null; } }
+    if (sfxLen[s.src]) s.duration = sfxLen[s.src];
+  }
 
   const timeline = {
     version: 1,
@@ -227,6 +283,10 @@ export function compileTimeline({ config, script, storyboard, timings, assets, r
     chapters,
     assets: usedAssets,
     icons,
+    // Only the variants overlays reference (a tinted copy replaces its untinted source).
+    lottie: Object.fromEntries(Object.entries(lottie).filter(([k]) => scenes.some((sc) => sc.overlays?.some((o) => o.src === k)))),
+    libraryCredits,
+    look: config.look ?? theme.look ?? null,
     scenes,
   };
   return { timeline, errors, warnings };
@@ -252,13 +312,21 @@ export function researchSources(research) {
 }
 
 // On-screen credits for the sources scene: research sources, then every asset's attribution.
-export function sourceList(research, assets) {
+export function sourceList(research, assets, extra = []) {
   const out = researchSources(research).map((s) => s.line);
   for (const a of assets?.items ?? []) {
     const line = `${a.kind === "video" ? "视频" : "图片"}：${credit(a)}`;
     if (!out.includes(line)) out.push(line);
   }
+  for (const line of extra) if (!out.includes(line)) out.push(line);
   return out;
+}
+
+// Library entries under an attribution licence (CC BY) owe a credit line in every video using them.
+export function libraryCredit(entry) {
+  const p = entry?.provenance ?? {};
+  if (!/cc[- ]?by/i.test(p.license ?? "")) return null;
+  return `动画：${[p.author ?? p.source, "CC BY 4.0"].filter(Boolean).join(" · ")}`;
 }
 
 function collectAssetRefs(v, out = new Set()) {

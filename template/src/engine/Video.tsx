@@ -8,6 +8,7 @@ import { Backdrop } from "../components/Backdrop";
 import { Credit, MediaFill } from "../components/Media";
 import { Header } from "../components/Header";
 import { Watermark } from "../components/Watermark";
+import { FilmLook, Overlays } from "../components/Overlay";
 import { Captions } from "./Captions";
 import { SCENES } from "../scenes";
 
@@ -141,6 +142,7 @@ const SceneFrame: React.FC<{ scene: Scene; length: number; children: React.React
         {solid && base}
         {children}
         <AbsoluteFill style={{ transform: cam || undefined }}>{content}</AbsoluteFill>
+        <Overlays />
       </AbsoluteFill>
     </>
   );
@@ -190,10 +192,11 @@ export const Video: React.FC<Timeline> = (timeline) => {
           />
         )}
         {timeline.sfx.map((s, i) => (
-          <Sequence key={`sfx-${i}`} name={`sfx ${s.sound}`} from={Math.max(0, Math.round(s.at * fps))} durationInFrames={Math.round(3 * fps)} layout="none">
+          <Sequence key={`sfx-${i}`} name={`sfx ${s.sound}`} from={Math.max(0, Math.round(s.at * fps))} durationInFrames={Math.round((s.duration ?? 3) * fps) + 2} layout="none">
             <Html5Audio src={staticFile(s.src)} volume={s.volume} />
           </Sequence>
         ))}
+        <FilmLook />
         {timeline.captions.enabled && timeline.captions.style !== "none" && <Captions />}
         {timeline.watermark && <Watermark text={timeline.watermark} />}
       </AbsoluteFill>
