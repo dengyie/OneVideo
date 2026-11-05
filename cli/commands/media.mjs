@@ -8,6 +8,7 @@ import { writeWav } from "../lib/wav.mjs";
 import { checkProject, printIssues } from "../lib/check.mjs";
 import { search, fetchAsset, scoreCandidate, assetFileExists } from "../lib/assets.mjs";
 import { DIMENSIONS } from "../lib/timeline.mjs";
+import { spokenLength } from "../lib/text.mjs";
 
 const list = (v) => (typeof v === "string" ? v.split(",").map((s) => s.trim()).filter(Boolean) : []);
 
@@ -22,8 +23,8 @@ export async function tts(args) {
     const sampleScript = { ...script, scenes: [{ id: "_sample", lines: [line] }] };
     const res = await runTts(project, sampleScript, { force: Boolean(args.force) });
     const s = res.scenes._sample;
-    const rate = line.text.length / Math.max(0.1, s.lines[0].end - s.lines[0].start);
-    log(`sample: public/${s.file} (${s.duration.toFixed(2)}s, ${rate.toFixed(1)} chars/s) — "${line.text}"`);
+    const rate = spokenLength(line.text) / Math.max(0.1, s.lines[0].end - s.lines[0].start);
+    log(`sample: public/${s.file} (${s.duration.toFixed(2)}s, ${rate.toFixed(1)} syllables/s) — "${line.text}"`);
     log(`voice ${ttsConfig(project.config).voice}; listen, then run: onevideo tts`);
     return;
   }

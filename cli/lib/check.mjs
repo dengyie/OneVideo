@@ -1,7 +1,7 @@
 // Collects every pre-compose issue for a project; used by `validate`, `timeline` and `render`.
 import { existsSync } from "node:fs";
 import { readJson } from "./project.mjs";
-import { schemaGate, numbersGate, captionGate, storyboardGate, rateGate, assetsGate, budgetGate, summarize } from "./gates.mjs";
+import { schemaGate, numbersGate, captionGate, storyboardGate, rateGate, assetsGate, budgetGate, timingsGate, summarize } from "./gates.mjs";
 import { compileTimeline } from "./timeline.mjs";
 
 export function loadPlan(project) {
@@ -26,16 +26,22 @@ export function checkProject(project, { needTimings = false } = {}) {
   if (!plan.storyboard) issues.push({ level: "error", gate: "files", msg: "missing plan/storyboard.json (stage: storyboard)" });
   else issues.push(...schemaGate("storyboard", plan.storyboard));
   if (plan.assets) issues.push(...schemaGate("assets", plan.assets));
-  const structural = summarize(issues).errors.length > 0;
+  // Content gates need well-formed inputs; a missing later-stage file must not hide script-stage errors.
+  const invalid = new Set(issues.filter((i) => i.level === "error" && i.gate.startsWith("schema:")).map((i) => i.gate.slice(7)));
+  const scriptOk = plan.script && !invalid.has("script") && !invalid.has("research") && !invalid.has("project");
+  const boardOk = scriptOk && plan.storyboard && !invalid.has("storyboard") && !invalid.has("assets");
 
   let timeline = null;
-  if (!structural) {
-    issues.push(...numbersGate(plan.script, plan.research, config));
+  if (scriptOk) {
+    issues.push(...numbersGate(plan.script, plan.research));
     issues.push(...captionGate(plan.script, config));
     issues.push(...budgetGate(plan.script, config));
+  }
+  if (boardOk) {
     issues.push(...storyboardGate(plan.storyboard, plan.script, config, plan.assets));
     if (plan.assets) issues.push(...assetsGate(plan.assets, config));
     if (plan.timings) {
+      issues.push(...timingsGate(plan.script, plan.timings, config));
       issues.push(...rateGate(plan.script, plan.timings, config));
       const res = compileTimeline({ config, script: plan.script, storyboard: plan.storyboard, timings: plan.timings, assets: plan.assets, research: plan.research, root: project.root });
       issues.push(...res.errors.map((msg) => ({ level: "error", gate: "timeline", msg })));

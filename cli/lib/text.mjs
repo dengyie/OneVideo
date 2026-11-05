@@ -75,7 +75,9 @@ function flushLong(lines, s, maxChars, pause) {
 const BUILTIN_RULES = [
   [/(\d+(?:\.\d+)?)\s*%/g, "百分之$1"],
   [/[×x](\d+(?:\.\d+)?)(?![A-Za-z])/g, "$1倍"],
-  [/(\d)\s*[~～–-]\s*(\d)/g, "$1到$2"],
+  // Ranges only with a tilde/en dash or a spaced hyphen; "2024-06" (date) and "-3" (negative) keep their reading.
+  [/(\d)\s*[~～–]\s*(\d)/g, "$1到$2"],
+  [/(\d)\s+-\s+(\d)/g, "$1到$2"],
   [/——|—/g, "，"],
   [/\bvs\.?\b/gi, "对比"],
 ];
@@ -93,6 +95,16 @@ export function speakable(text, lexicon = {}) {
 export function extractNumbers(text) {
   const re = /\d+(?:[.,]\d+)*\s*(?:万亿|亿|万|千|百|%|倍|年|月|日|美元|元)?/g;
   return [...text.matchAll(re)].map((m) => m[0].replace(/\s+/g, ""));
+}
+
+const MAGNITUDE = { 万亿: 1e12, 亿: 1e8, 万: 1e4, 千: 1e3, 百: 1e2 };
+
+// "1,000美元" → { value: 1000, unit: "美元", amount: 1000 }; amount applies Chinese magnitude units.
+export function parseNumber(token) {
+  const m = token.replace(/\s+/g, "").match(/^(\d+(?:[.,]\d+)*)(.*)$/);
+  if (!m) return null;
+  const value = Number(m[1].replace(/,/g, ""));
+  return { value, unit: m[2], amount: value * (MAGNITUDE[m[2]] ?? 1) };
 }
 
 export const normalizeForMatch = (s) => s.replace(/[\s，,。！？!?；;、：:“”"'‘’（）()《》【】\-—…]/g, "");

@@ -2,12 +2,13 @@
 import { existsSync, mkdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { execFileSync } from "node:child_process";
-import { UserError, loadProject, readJson, writeJson, log, warn, ONEVIDEO_ROOT } from "../lib/project.mjs";
+import { UserError, loadProject, pipelineDef, readJson, writeJson, log, warn, ONEVIDEO_ROOT } from "../lib/project.mjs";
+import { stageStatus } from "../lib/state.mjs";
 import { checkProject, printIssues } from "../lib/check.mjs";
 import { REMOTION_BIN, TEMPLATE_DIR, requireRemotion, run, ffmpeg } from "../lib/ffmpeg.mjs";
 import { runQc } from "../lib/qc.mjs";
 import { buildPublishKit } from "../lib/publish.mjs";
-import { resolveApiKey } from "../lib/http.mjs";
+import { resolveApiKey, trustedKeyHost } from "../lib/http.mjs";
 import { ttsConfig } from "../lib/tts.mjs";
 import * as media from "./media.mjs";
 
@@ -91,14 +92,20 @@ export async function qc(args) {
   return review;
 }
 
-export async function publish() {
+// Publishing needs the human review sign-off on the current QC report (onevideo approve review).
+export async function publish(args = {}) {
   const project = loadProject();
   const tl = readJson(project.paths.timeline);
   const script = readJson(project.paths.script);
   const research = existsSync(project.paths.research) ? readJson(project.paths.research) : null;
   const review = existsSync(project.paths.review) ? readJson(project.paths.review) : null;
-  if (!review) warn("no QC review yet; run: onevideo qc");
-  else if (review.verdict === "fail") throw new UserError("QC verdict is FAIL; fix and re-render before publishing");
+  if (!review) throw new UserError("no QC review yet; run: onevideo qc");
+  if (review.verdict === "fail") throw new UserError("QC verdict is FAIL; fix and re-render before publishing");
+  const reviewStage = stageStatus(project, pipelineDef(project.config.pipeline)).find((s) => s.id === "review");
+  if (reviewStage && reviewStage.status !== "approved") {
+    if (!args.force) throw new UserError(`review stage is ${reviewStage.status}; look at out/qc/frames/, then: onevideo approve review (or publish --force)`);
+    warn(`publishing without review approval (review stage is ${reviewStage.status})`);
+  }
   const kit = buildPublishKit({ timeline: tl, research, config: project.config, script });
   const dir = join(project.paths.out, "publish");
   mkdirSync(dir, { recursive: true });
@@ -108,7 +115,8 @@ export async function publish() {
   log(`publish kit → ${dir} (${Object.keys(kit.files).join(", ")})`);
 }
 
-// Full non-creative pass: voice → music → timeline → render → qc → publish.
+// Full non-creative pass: voice → music → timeline → render → qc. Publishing waits for the
+// human review sign-off, so build stops at the QC report.
 export async function build(args) {
   await media.tts({ _: [], force: args.forceTts });
   await media.music({ _: [] });
@@ -116,7 +124,7 @@ export async function build(args) {
   await render({ _: [], draft: args.draft });
   if (args.draft) return;
   const review = await qc({ _: [] });
-  if (review.verdict !== "fail") await publish();
+  if (review.verdict !== "fail") log("next: review out/qc/frames/, then: onevideo approve review && onevideo publish");
 }
 
 export async function doctor() {
@@ -132,8 +140,8 @@ export async function doctor() {
   let cfg = {};
   try { cfg = loadProject().config; add(true, "project", cfg.name); } catch { add(true, "project", "not inside a project (ok)"); }
   const t = ttsConfig(cfg);
-  const key = resolveApiKey(t.keyEnv);
-  add(Boolean(key), "tts key", key ? `found via ${key.source}` : `missing: set ${t.keyEnv}`);
+  const key = resolveApiKey(t.keyEnv, t.baseUrl);
+  add(Boolean(key), "tts key", key ? `found via ${key.source}` : trustedKeyHost(t.baseUrl) ? `missing: set ${t.keyEnv}` : `missing: ${new URL(t.baseUrl).host} needs its own keyEnv variable`);
   add(true, "pexels", process.env.PEXELS_API_KEY ? "PEXELS_API_KEY set" : "optional; unset (NASA/Wikimedia/Openverse still work)");
   add(existsSync(join(ONEVIDEO_ROOT, "template", "src", "index.ts")), "template", join(ONEVIDEO_ROOT, "template"));
   for (const [ok, name, detail] of checks) log(`${ok ? "✓" : "✗"} ${name.padEnd(9)} ${detail}`);

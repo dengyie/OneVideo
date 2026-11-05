@@ -15,7 +15,7 @@ export const MediaFill: React.FC<{ asset: string; motion?: Motion; fit?: "cover"
   const a = tl.assets[asset];
   if (!a) throw new Error(`asset "${asset}" not in timeline.assets`);
   const p = Math.min(1, t / Math.max(1, scene.duration));
-  const z = 0.08;
+  const z = 0.05; // 5% travel over the scene (references/motion-rules.md: 3–6%)
   const tf =
     motion === "in" ? `scale(${1 + z * p})` :
     motion === "out" ? `scale(${1 + z * (1 - p)})` :

@@ -8,12 +8,28 @@ import { UserError } from "./project.mjs";
 
 const UA = "OneVideo/0.1 (+https://github.com/dengyie/OneVideo)";
 
-// Key lookup order: explicit env name → ONEVIDEO_API_KEY → MANGO_API_KEY → ~/.zcode provider config.
+// Shared keys (ONEVIDEO_API_KEY, MANGO_API_KEY, ~/.zcode provider config) are only ever sent to
+// trusted hosts; ONEVIDEO_KEY_HOSTS (comma list) extends the default. Any other baseUrl must name
+// its own key variable via keyEnv, so a project file cannot redirect the shared key elsewhere.
+export const DEFAULT_KEY_HOSTS = ["api.mangoqwq.com"];
+const SHARED_KEY_ENVS = ["ONEVIDEO_API_KEY", "MANGO_API_KEY"];
+
+export function trustedKeyHost(baseUrl) {
+  const extra = (process.env.ONEVIDEO_KEY_HOSTS ?? "").split(",").map((h) => h.trim().toLowerCase()).filter(Boolean);
+  let host;
+  try { host = new URL(baseUrl).hostname.toLowerCase(); } catch { return false; }
+  return [...DEFAULT_KEY_HOSTS, ...extra].includes(host);
+}
+
+// Lookup order: keyEnv → ONEVIDEO_API_KEY → MANGO_API_KEY → ~/.zcode provider config (trusted hosts only).
 // The key is never printed; callers only learn where it came from.
-export function resolveApiKey(envName) {
-  for (const name of [envName, "ONEVIDEO_API_KEY", "MANGO_API_KEY"].filter(Boolean)) {
+export function resolveApiKey(envName, baseUrl) {
+  const trusted = trustedKeyHost(baseUrl);
+  const names = trusted ? [envName, ...SHARED_KEY_ENVS] : [envName].filter((n) => n && !SHARED_KEY_ENVS.includes(n));
+  for (const name of names.filter(Boolean)) {
     if (process.env[name]) return { key: process.env[name], source: `env ${name}` };
   }
+  if (!trusted) return null;
   const cfg = join(homedir(), ".zcode", "v2", "provider_config.json");
   if (existsSync(cfg)) {
     const m = readFileSync(cfg, "utf8").match(/sk-[A-Za-z0-9]{20,}/);
@@ -22,10 +38,14 @@ export function resolveApiKey(envName) {
   return null;
 }
 
-export function requireApiKey(envName) {
-  const k = resolveApiKey(envName);
-  if (!k) throw new UserError(`no API key: set ${envName ?? "MANGO_API_KEY"} (or ONEVIDEO_API_KEY)`);
-  return k.key;
+export function requireApiKey(envName, baseUrl) {
+  const k = resolveApiKey(envName, baseUrl);
+  if (k) return k.key;
+  if (!trustedKeyHost(baseUrl)) {
+    const host = (() => { try { return new URL(baseUrl).host; } catch { return String(baseUrl); } })();
+    throw new UserError(`no API key for ${host}: shared keys only go to ${DEFAULT_KEY_HOSTS.join(", ")}; set keyEnv to a dedicated variable (not ${SHARED_KEY_ENVS.join("/")}) and export it, or add the host to ONEVIDEO_KEY_HOSTS`);
+  }
+  throw new UserError(`no API key: set ${envName ?? "MANGO_API_KEY"} (or ONEVIDEO_API_KEY)`);
 }
 
 const quote = (s) => `"${String(s).replace(/\\/g, "\\\\").replace(/"/g, '\\"')}"`;

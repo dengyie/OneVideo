@@ -70,7 +70,7 @@
       "produces": [
         "plan/storyboard.json"
       ],
-      "approval": false,
+      "approval": true,
       "schema": "storyboard"
     },
     {
@@ -109,7 +109,7 @@
       "director": "stages/compose.md",
       "purpose": "Full-quality Remotion render.",
       "produces": [
-        "out"
+        "out/{name}.mp4"
       ],
       "approval": false,
       "command": "onevideo render"

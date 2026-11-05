@@ -140,7 +140,7 @@ export const IMAGE_DEFAULTS = { baseUrl: "https://api.mangoqwq.com/v1", model: "
 export async function generateImage(item, { dir, defaults = {} }) {
   const cfg = { ...IMAGE_DEFAULTS, ...defaults, ...(typeof item.generate === "object" ? item.generate : { prompt: item.generate }) };
   if (!cfg.prompt) throw new Error(`asset "${item.id}": generate.prompt is required`);
-  const key = requireApiKey(cfg.keyEnv);
+  const key = requireApiKey(cfg.keyEnv, cfg.baseUrl);
   const res = await request(`${cfg.baseUrl.replace(/\/$/, "")}/images/generations`, { method: "POST", key, json: { model: cfg.model, prompt: cfg.prompt, size: cfg.size, n: 1 }, timeoutSec: 300, retries: 2 });
   const j = JSON.parse(res.body.toString());
   const d = j.data?.[0];

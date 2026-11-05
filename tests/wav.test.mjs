@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { encodeWav, parseWav, toMono, trimSilence, concatWithGaps, rms } from "../cli/lib/wav.mjs";
+import { encodeWav, parseWav, toMono, trimSilence, concatWithGaps } from "../cli/lib/wav.mjs";
 
 test("encodeWav/parseWav round-trip", () => {
   const samples = Int16Array.from([0, 1000, -1000, 32767, -32768]);
@@ -30,5 +30,4 @@ test("concatWithGaps returns spans that include gaps", () => {
   assert.deepEqual(spans, [[0, 0.1], [0.2, 0.25]]);
   assert.equal(duration, 0.25);
   assert.equal(samples[150], 0);
-  assert.equal(rms(new Int16Array([3, -3])), 3);
 });

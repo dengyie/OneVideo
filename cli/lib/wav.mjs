@@ -97,9 +97,3 @@ export function concatWithGaps(clips, gapsSec, sampleRate) {
   });
   return { samples: out, spans, duration: total / sampleRate };
 }
-
-export function rms(samples) {
-  let s = 0;
-  for (let i = 0; i < samples.length; i++) s += samples[i] * samples[i];
-  return Math.sqrt(s / Math.max(1, samples.length));
-}

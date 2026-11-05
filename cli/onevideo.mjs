@@ -20,8 +20,8 @@ const COMMANDS = {
   stills: [render.stills, "stills [--scene id,id] [--at 0.7]   one JPEG per scene → out/stills/"],
   studio: [render.studio, "studio [--port 3000]         Remotion Studio on this project"],
   qc: [render.qc, "qc [--video file]            post-render review → plan/review.json"],
-  publish: [render.publish, "publish                      SRT/VTT, chapters, description → out/publish/"],
-  build: [render.build, "build [--draft]              tts → music → timeline → render → qc → publish"],
+  publish: [render.publish, "publish [--force]            SRT/VTT, chapters, description → out/publish/ (needs approved review)"],
+  build: [render.build, "build [--draft]              tts → music → timeline → render → qc (then approve review, publish)"],
   doctor: [render.doctor, "doctor                       environment check"],
 };
 

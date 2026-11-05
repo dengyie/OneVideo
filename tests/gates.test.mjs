@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { schemaGate, numbersGate, captionGate, storyboardGate, rateGate, assetsGate, budgetGate, normalizeLicense, summarize } from "../cli/lib/gates.mjs";
+import { schemaGate, numbersGate, captionGate, storyboardGate, rateGate, assetsGate, budgetGate, timingsGate, normalizeLicense, summarize } from "../cli/lib/gates.mjs";
 import { example } from "./helpers.mjs";
 
 const msgs = (issues, gate) => issues.filter((i) => !gate || i.gate === gate).map((i) => i.msg);
@@ -71,4 +71,33 @@ test("assetsGate requires attribution for CC BY and blocks unknown licenses", ()
   assert.ok(m.some((x) => /"b".*allowlist/.test(x)));
   assert.ok(m.some((x) => /"c" not fetched/.test(x)));
   assert.ok(m.some((x) => /"c" is 640x480/.test(x)));
+});
+
+test("numbersGate matches whole number tokens, not substrings of fact numbers", () => {
+  const research = { facts: [
+    { id: "y", claim: "2025年营收翻倍", source: { title: "t" } },
+    { id: "v", claim: "估值约 1.85万亿美元，员工 1,000 人", source: { title: "t" } },
+    { id: "p", claim: "募资", value: 85.7e9, unit: "USD", source: { title: "t" } },
+  ] };
+  const bad = (narration) => msgs(numbersGate({ scenes: [{ id: "s", narration }] }, research));
+  assert.ok(bad("规模达到 25 万亿。").some((x) => /"25万亿"/.test(x)), "25万亿 is not sourced by 2025年");
+  assert.ok(bad("增长 202%。").some((x) => /"202%"/.test(x)));
+  assert.deepEqual(bad("2025年，估值约1.85万亿。"), []);
+  assert.ok(bad("估值约1.8万亿。").some((x) => /"1.8万亿"/.test(x)));
+  assert.ok(bad("估值约1.85亿。").some((x) => /"1.85亿"/.test(x)), "units must agree");
+  assert.deepEqual(bad("员工1000人。"), [], "1,000 equals 1000");
+  assert.deepEqual(bad("募资857亿美元。"), [], "magnitude matches a numeric fact value");
+  assert.ok(bad("规模5万亿。").some((x) => /"5万亿"/.test(x)), "a single digit with a magnitude unit is a claim");
+  assert.deepEqual(bad("3 个原因。"), []);
+});
+
+test("timingsGate flags narration changed since tts", () => {
+  const ex = example();
+  assert.deepEqual(timingsGate(ex.script, ex.timings, ex.config), []);
+  const script = structuredClone(ex.script);
+  const s = script.scenes.find((x) => x.narration);
+  s.narration = s.narration.replace(/。/, "，而且现在改了。");
+  assert.ok(msgs(timingsGate(script, ex.timings, ex.config)).some((x) => x.includes(`scene "${s.id}"`) && /run: onevideo tts/.test(x)));
+  const voice = { ...ex.config, tts: { voice: "other" } };
+  assert.ok(timingsGate(ex.script, ex.timings, voice).length > 0, "a voice change invalidates timings");
 });

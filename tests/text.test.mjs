@@ -32,6 +32,9 @@ test("splitLines never cuts inside a number or Latin word", () => {
 test("speakable applies lexicon (longest first) and built-in rules", () => {
   assert.equal(speakable("SPCX涨了19%", { SPCX: "S P C X", SP: "错" }), "S P C X涨了百分之19");
   assert.equal(speakable("3~5年"), "3到5年");
+  assert.equal(speakable("3 - 5年"), "3到5年");
+  assert.equal(speakable("2024-06发布"), "2024-06发布", "a date is not a range");
+  assert.equal(speakable("气温-3度到-5度"), "气温-3度到-5度", "negatives keep their sign");
 });
 
 test("extractNumbers returns numbers with Chinese units", () => {

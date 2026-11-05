@@ -6,6 +6,8 @@
 onevideo publish
 ```
 
+前提：QC 不是 FAIL，且 `review` 阶段已审批（`onevideo approve review`）。重跑 qc 会让审批变 stale，需要重新看帧、重新审批。`--force` 只在用户明确同意跳过人工审阅时使用。
+
 生成：
 
 - `captions.srt` / `captions.vtt`：字幕（与成片一致的时间轴）

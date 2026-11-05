@@ -78,3 +78,11 @@ test("compileTimeline: a provided music file needs a credit", () => {
   assert.equal(timeline.music.src, "music/track.mp3");
   assert.ok(warnings.some((w) => /credit/.test(w)));
 });
+
+test("compileTimeline reports an unfetched asset instead of throwing", () => {
+  const ex = example();
+  const sb = structuredClone(ex.storyboard);
+  sb.scenes[0] = { ...sb.scenes[0], props: { ...sb.scenes[0].props, asset: "rocket" } };
+  const { errors } = compileTimeline({ ...ex, storyboard: sb, assets: { items: [{ id: "rocket", query: "falcon 9" }] } });
+  assert.ok(errors.some((e) => /asset "rocket" not fetched/.test(e)));
+});

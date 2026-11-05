@@ -40,7 +40,7 @@ export function resolveAt(at, lines, duration) {
 const clampT = (t, d) => Math.max(0, Math.min(d, t));
 const r3 = (x) => Math.round(x * 1000) / 1000;
 
-export function compileTimeline({ config, script, storyboard, timings, assets, research, root, strict = true }) {
+export function compileTimeline({ config, script, storyboard, timings, assets, research, root }) {
   const errors = [];
   const warnings = [];
   const fps = config.fps ?? 30;
@@ -94,6 +94,7 @@ export function compileTimeline({ config, script, storyboard, timings, assets, r
     for (const id of collectAssetRefs(props)) {
       const a = assetById.get(id);
       if (!a) { errors.push(`scene "${sb.id}" references unknown asset "${id}"`); continue; }
+      if (!a.file) { errors.push(`asset "${id}" not fetched yet; run: onevideo assets fetch`); continue; }
       if (root && !existsSync(join(root, "public", a.file))) errors.push(`asset "${id}" file missing: public/${a.file}; run: onevideo assets fetch`);
       usedAssets[id] = { src: a.file, kind: a.kind, credit: credit(a) };
     }
@@ -125,16 +126,14 @@ export function compileTimeline({ config, script, storyboard, timings, assets, r
     frame += durationInFrames;
   }
 
-  for (const s of script.scenes) if (!storyboard.scenes.some((b) => b.id === s.id)) errors.push(`script scene "${s.id}" missing from storyboard`);
-
   const totalFrames = frame;
   // music.file is a path under public/ (own or licensed track); otherwise the synthesized bgm.wav.
   const musicSrc = config.music?.file ?? "music/bgm.wav";
   const music = config.music?.enabled === false ? null : root && existsSync(join(root, "public", musicSrc))
     ? { src: musicSrc, volume: config.music?.volume ?? 0.22, duckTo: config.music?.duckTo ?? 0.07, fade: 1.2, credit: config.music?.file ? config.music?.credit ?? null : "OneVideo 程序化合成" }
     : null;
-  if (strict && config.music?.enabled !== false && !music) warnings.push(`no background music (public/${musicSrc})${config.music?.file ? "" : "; run: onevideo music"}`);
-  if (strict && config.music?.file && !config.music?.credit) warnings.push("music.file has no music.credit; add the track title/author/license for the publish credits");
+  if (config.music?.enabled !== false && !music) warnings.push(`no background music (public/${musicSrc})${config.music?.file ? "" : "; run: onevideo music"}`);
+  if (config.music?.file && !config.music?.credit) warnings.push("music.file has no music.credit; add the track title/author/license for the publish credits");
   const usedSfx = [...new Set(sfx.map((s) => s.sound))];
   if (root) for (const name of usedSfx) if (!existsSync(join(root, "public", "sfx", `${name}.wav`))) errors.push(`sfx "${name}" missing: public/sfx/${name}.wav; run: onevideo music`);
 

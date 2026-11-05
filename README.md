@@ -10,7 +10,7 @@ research → proposal → script → storyboard → assets → voice → compose
 ## 特性
 
 - **引擎共享，项目只存数据**：项目目录里只有 `onevideo.json`、`plan/*.json`、`public/`、`out/`，所有项目共用 `template/` 下的 Remotion 引擎。
-- **阶段状态机**：创作阶段要人工审批，审批时锁定产物哈希。上游改动后，下游自动标记为 stale。
+- **阶段状态机**：创作阶段要人工审批，审批时锁定产物哈希（按项目内相对路径计算，项目拷走不失效）。已审批的产物再被改动，该阶段变为 stale，需重新审批。改了 script 但没重跑 `tts`，timings 门控会直接报错，渲染被拦下。
 - **机械门控**：
   - 数字门控：旁白里的每个数字都要对上 research 里有来源的 fact，`claims` 引用的 fact id 必须存在。
   - 语速门控：按音节估算，范围 3.5–6.2 音节/秒。
@@ -43,7 +43,9 @@ cd my-video
 onevideo status          # 各阶段状态 + 下一步该读的导演文档
 onevideo validate        # schema + 门控
 onevideo tts --sample    # 先试听一句
-onevideo build           # tts → music → timeline → render → qc → publish
+onevideo build           # tts → music → timeline → render → qc
+onevideo approve review  # 逐张看完 out/qc/frames/ 之后
+onevideo publish         # 需要 review 已审批
 ```
 
 成片位于 `out/<name>.mp4`，审阅帧在 `out/qc/frames/`，发布包在 `out/publish/`。

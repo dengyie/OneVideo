@@ -6,7 +6,7 @@ import { join } from "node:path";
 import { request, requireApiKey, pool } from "./http.mjs";
 import { parseWav, readWav, toMono, trimSilence, concatWithGaps, writeWav } from "./wav.mjs";
 import { splitLines, speakable } from "./text.mjs";
-import { log } from "./project.mjs";
+import { log, UserError } from "./project.mjs";
 import { integratedLoudness, normalizeLoudness } from "./loudness.mjs";
 
 export const TTS_DEFAULTS = {
@@ -67,8 +67,9 @@ export async function runTts(project, script, { force = false, only = [], dry = 
       const hash = lineHash(speak, t);
       const file = join(paths.linesDir, `${hash}.wav`);
       const job = { scene: scene.id, text: l.text, speak, hash, file, pause: l.pause };
-      const forced = force && (only.length === 0 || only.includes(scene.id));
-      if (forced || !existsSync(file)) jobs.push(job);
+      // --only limits synthesis to those scenes; the others must already be cached.
+      const selected = only.length === 0 || only.includes(scene.id);
+      if (selected && (force || !existsSync(file))) jobs.push(job);
       return job;
     });
     return { id: scene.id, lines };
@@ -81,7 +82,7 @@ export async function runTts(project, script, { force = false, only = [], dry = 
   }
 
   if (jobs.length) {
-    const key = requireApiKey(t.keyEnv);
+    const key = requireApiKey(t.keyEnv, t.baseUrl);
     mkdirSync(paths.linesDir, { recursive: true });
     let done = 0;
     await pool(jobs, t.concurrency, async (job) => {
@@ -91,6 +92,8 @@ export async function runTts(project, script, { force = false, only = [], dry = 
       log(`  [${done}/${jobs.length}] ${job.scene}: ${job.text}`);
     });
   } else log("all lines cached");
+  const uncached = scenes.flatMap((s) => s.lines).filter((l) => !existsSync(l.file));
+  if (uncached.length) throw new UserError(`${uncached.length} line(s) outside --only are not synthesized yet (first: scene "${uncached[0].scene}"); run: onevideo tts`);
 
   const out = { sampleRate: t.sampleRate, voice: { model: t.model, voice: t.voice }, scenes: {} };
   const joinedById = {};

@@ -1,7 +1,8 @@
 // Pre-compose gates: catch structural, factual and pacing problems before spending a render.
 import { validate, loadSchema } from "./schema.mjs";
-import { extractNumbers, normalizeForMatch, visualLength, spokenLength } from "./text.mjs";
-import { sceneLines, captionMaxChars } from "./tts.mjs";
+import { extractNumbers, parseNumber, visualLength, spokenLength } from "./text.mjs";
+import { sceneLines, captionMaxChars, ttsConfig, lineHash } from "./tts.mjs";
+import { speakable } from "./text.mjs";
 
 export const STATIC_TYPES = new Set(["quote", "bullets", "title", "chapter", "sources"]);
 const DEFAULT_HOLD_EST = 0.5;
@@ -19,20 +20,31 @@ export function schemaGate(name, value) {
   return errors.map((m) => issue("error", `schema:${name}`, m));
 }
 
-// Every number spoken in narration must appear in a research fact (value, claim or quote),
-// so unsourced figures cannot slip into a data video.
+// Every number spoken in narration must equal a number in a research fact (claim, value or quote),
+// token for token: "25万亿" is not sourced by a "2025年" fact, and "1.8万亿" is not "1.85万亿".
+// Units must agree when both sides carry one; a numeric fact value also matches by magnitude ("857亿" = 85.7e9).
 export function numbersGate(script, research) {
   if (!research) return [issue("warn", "facts", "no plan/research.json; narration numbers are unchecked")];
-  const corpus = normalizeForMatch((research.facts ?? []).map((f) => [f.claim, f.value, f.quote].filter(Boolean).join(" ")).join(" | "));
+  const sourced = [];
+  const amounts = [];
+  for (const f of research.facts ?? []) {
+    for (const t of [f.claim, f.quote, typeof f.value === "string" ? f.value : null].filter(Boolean).flatMap(extractNumbers)) sourced.push(parseNumber(t));
+    if (typeof f.value === "number") { sourced.push({ value: f.value, unit: "" }); amounts.push(f.value); }
+  }
+  const same = (a, b) => Math.abs(a - b) <= 1e-9 * Math.max(1, Math.abs(a), Math.abs(b));
+  const isSourced = (n) =>
+    sourced.some((c) => same(c.value, n.value) && (!c.unit || !n.unit || c.unit === n.unit)) ||
+    (n.amount !== n.value && amounts.some((a) => same(a, n.amount)));
+  const allowed = new Set((research.allowNumbers ?? []).map((a) => String(a).replace(/[\s,]/g, "")));
   const out = [];
-  const allowed = new Set((research.allowNumbers ?? []).map(String));
   for (const s of script.scenes) {
     const text = s.narration ?? (s.lines ?? []).map((l) => (typeof l === "string" ? l : l.text)).join("");
-    for (const n of extractNumbers(text)) {
-      const digits = n.match(/\d+(?:[.,]\d+)*/)[0];
-      if (allowed.has(n) || allowed.has(digits)) continue;
-      if (/^\d$/.test(digits)) continue; // single digits ("3 个原因") are structure, not claims
-      if (!corpus.includes(normalizeForMatch(n)) && !corpus.includes(digits)) out.push(issue("error", "facts", `scene "${s.id}": number "${n}" not found in research facts (add a sourced fact or list it in research.allowNumbers)`));
+    for (const tok of extractNumbers(text)) {
+      const n = parseNumber(tok);
+      const plain = tok.replace(/,/g, "");
+      if (allowed.has(plain) || allowed.has(String(n.value))) continue;
+      if (!n.unit && Number.isInteger(n.value) && n.value < 10 && !/[.,]/.test(tok)) continue; // bare single digits ("3 个原因") are structure, not claims
+      if (!isSourced(n)) out.push(issue("error", "facts", `scene "${s.id}": number "${tok}" not found in research facts (add a sourced fact or list it in research.allowNumbers)`));
     }
   }
   for (const f of research.facts ?? []) if (!f.source?.url && !f.source?.title) out.push(issue("error", "facts", `fact "${f.id}" has no source`));
@@ -96,6 +108,21 @@ function cueRefs(v, out = []) {
       else if (k === "periodCues" && Array.isArray(x)) out.push(...x.filter((c) => typeof c === "string"));
       else cueRefs(x, out);
     }
+  }
+  return out;
+}
+
+// timings.json must match the current narration line for line (same text, pronunciation and voice);
+// otherwise captions and cues would be timed against audio of a different script.
+export function timingsGate(script, timings, config) {
+  const t = ttsConfig(config);
+  const lexicon = { ...(config.lexicon ?? {}), ...(script.lexicon ?? {}) };
+  const out = [];
+  for (const s of script.scenes) {
+    const want = sceneLines(s, config).map((l) => lineHash(l.speak ?? speakable(l.text, lexicon), t));
+    const have = (timings.scenes?.[s.id]?.lines ?? []).map((l) => l.hash);
+    if (!want.length && !have.length) continue;
+    if (want.join() !== have.join()) out.push(issue("error", "timings", `scene "${s.id}" narration or voice changed since tts; run: onevideo tts`));
   }
   return out;
 }
