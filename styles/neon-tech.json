@@ -25,7 +25,7 @@
     "#C0C0D0"
   ],
   "fonts": {
-    "body": "\"PingFang SC\", \"Noto Sans SC\", \"Microsoft YaHei\", sans-serif",
+    "body": "\"PingFang SC\", \"Noto Sans SC\", \"Noto Sans CJK SC\", \"Microsoft YaHei\", sans-serif",
     "number": "\"SF Pro Display\", \"Roboto Mono\", \"PingFang SC\", sans-serif"
   },
   "background": "grid",

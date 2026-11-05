@@ -33,6 +33,15 @@ npm link                 # 可选：全局提供 onevideo 命令
 onevideo doctor
 ```
 
+Linux 服务器（Debian/Ubuntu）另需 Chrome Headless Shell 的系统库和中文字体：
+
+```bash
+apt-get install -y --no-install-recommends libnss3 libdbus-1-3 libatk1.0-0 libatk-bridge2.0-0 libcups2 \
+  libxkbcommon0 libxcomposite1 libxdamage1 libxfixes3 libxrandr2 libgbm1 libasound2 libpango-1.0-0 libcairo2 fonts-noto-cjk
+```
+
+小内存机器（2 GB）渲染时用 `onevideo render --concurrency 1`，或在 `onevideo.json` 里设 `render.concurrency`。
+
 TTS 和生图使用 OpenAI 兼容接口，key 从环境变量 `MANGO_API_KEY` 读取（接口地址和 env 名可在 `onevideo.json` 里改），永远不会打印出来。
 
 ## 快速开始

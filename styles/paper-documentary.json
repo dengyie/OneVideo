@@ -25,7 +25,7 @@
     "#A89A86"
   ],
   "fonts": {
-    "body": "\"Songti SC\", \"Noto Serif SC\", \"STSong\", serif",
+    "body": "\"Songti SC\", \"Noto Serif SC\", \"Noto Serif CJK SC\", \"STSong\", serif",
     "number": "\"Baskerville\", \"Georgia\", \"Songti SC\", serif"
   },
   "background": "grid",
