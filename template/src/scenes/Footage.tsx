@@ -23,7 +23,7 @@ const TitleText: React.FC<{ title: Title }> = ({ title }) => {
   const k = easeOut(clamp01((local - 0.25) / 0.5));
   return (
     <div style={{ position: "absolute", left: (title.x ?? 0.5) * width, top: (title.y ?? 0.42) * height, transform: "translate(-50%, -50%)", textAlign: "center", opacity: 1 - gone }}>
-      {title.kicker && <div style={{ fontSize: size * 0.16, fontWeight: 700, letterSpacing: size * 0.04, color: theme.colors.highlight, opacity: k, marginBottom: size * 0.04 }}>{title.kicker}</div>}
+      {title.kicker && <div style={{ fontSize: size * 0.16, fontWeight: 700, letterSpacing: size * 0.04, whiteSpace: "nowrap", color: theme.colors.highlight, opacity: k, marginBottom: size * 0.04 }}>{title.kicker}</div>}
       <div style={{ overflow: slam ? "visible" : "hidden" }}>
         <div style={{
           fontSize: size, fontWeight: 900, lineHeight: 0.95, whiteSpace: "nowrap", letterSpacing: -0.03 * size, color: title.color ?? "#fff",

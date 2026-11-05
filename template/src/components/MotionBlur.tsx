@@ -2,15 +2,16 @@ import React from "react";
 import { AbsoluteFill } from "remotion";
 
 // Cheap motion blur: one directional Gaussian sized from how far the layer moves this frame
-// (a 180° shutter smears about half the per-frame travel), instead of sampling sub-frames, which
-// would multiply render cost on the 2 GB render node. Below ~0.6px it is skipped entirely.
+// (a 180° shutter smears half the per-frame travel; a box that long has σ ≈ 0.14 × travel),
+// instead of sampling sub-frames, which would multiply render cost on the 2 GB render node.
+// Below ~0.6px it is skipped entirely.
 export const MotionBlur: React.FC<{ id: string; vx: number; vy: number; radial?: number; style?: React.CSSProperties; children: React.ReactNode }> = ({
   id, vx, vy, radial = 0, style, children,
 }) => {
-  const k = 0.35;
+  const k = 0.15;
   const r = radial * 0.25 * k;
-  const sx = Math.min(40, Math.abs(vx) * k + r);
-  const sy = Math.min(40, Math.abs(vy) * k + r);
+  const sx = Math.min(16, Math.abs(vx) * k + r);
+  const sy = Math.min(16, Math.abs(vy) * k + r);
   const on = sx > 0.6 || sy > 0.6;
   const fid = `mb-${id.replace(/[^a-zA-Z0-9_-]/g, "_")}`;
   return (
