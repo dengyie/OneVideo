@@ -1,0 +1,34 @@
+{
+  "name": "window-reveal",
+  "title": "人物在前·竖窗开背景",
+  "description": "实拍人物站在前景，背后的世界从几道竖窗里打开（需要 onevideo depth）",
+  "tags": [
+    "品牌",
+    "深度",
+    "揭示",
+    "footage",
+    "promo"
+  ],
+  "scenes": [
+    {
+      "type": "footage",
+      "props": {
+        "asset": "{{person}}",
+        "dim": 0.1,
+        "windows": {
+          "asset": "{{world}}",
+          "count": 4,
+          "at": 0.6,
+          "stagger": 0.12
+        },
+        "title": {
+          "text": "{{headline}}",
+          "at": 1.6,
+          "y": 0.8,
+          "size": 140,
+          "behind": true
+        }
+      }
+    }
+  ]
+}

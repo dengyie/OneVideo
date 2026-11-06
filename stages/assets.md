@@ -44,6 +44,19 @@ onevideo assets fetch                                              # 下载缺�
 onevideo assets fetch --only launch --force                        # 重取单个
 ```
 
+## 真实界面（promo）
+
+```bash
+onevideo capture https://example.com/ --id home --device phone --rects card=.card,player=.player
+onevideo capture https://example.com/ --id detail --device phone --click ".card:nth-child(2)" --rects chapters=.chapters
+```
+
+- 自己起一个无头 Chrome（Remotion 的 chrome-headless-shell，或 `ONEVIDEO_CHROME`），临时 profile、随机端口，截完只关自己那一个；不连用户正在用的浏览器。
+- 视口：phone 390×844 @3x（iPhone UA、触屏）、tablet 820×1180 @2x、desktop 1440×900 @2x；`--full` 截整页，`--dark` 用深色模式，`--wait` 等待毫秒，`--click` 依次点选择器（如打开详情）后再截。
+- `--rects name=选择器` 量出元素在截图里的位置（0–1），写进条目的 `rects`，分镜里 `tap`/`expand.rect`/`focus` 直接写名字；选择器找不到会警告，分镜引用不存在的名字会报错。
+- 条目记为 `via: "capture"`、许可 `own`，截图设置保存在 `capture` 里，`assets fetch --force` 按同样设置重截。
+- 实拍里有黑屏的手机/电脑时：`onevideo screen <实拍素材> [--at 秒]` 找出屏幕四角，输出可直接粘进 `footage.props.screen` 的片段。
+
 ## 许可（详见 `references/licensing.md`）
 
 允许：PD/CC0、CC BY、CC BY-SA、Pexels/Pixabay License、generated、own。拒绝：NC、ND、未知许可。licensing 门在 validate 时检查。

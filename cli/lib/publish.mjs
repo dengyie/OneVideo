@@ -77,3 +77,12 @@ export function buildPublishKit({ timeline, research, config, script }) {
     },
   };
 }
+
+// Sound groups a timeline actually plays, each rendered alone as a stem for a later remix.
+export function stemGroups(timeline) {
+  return [
+    timeline.scenes.some((s) => s.audio) && "voice",
+    timeline.music && "music",
+    timeline.sfx?.length && "sfx",
+  ].filter(Boolean);
+}

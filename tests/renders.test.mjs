@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import { existsSync, mkdirSync, mkdtempSync, readFileSync, statSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { frameRange, readRenders, recordRender, resolveVideo, versionFile } from "../cli/lib/renders.mjs";
+import { adoptLegacy, frameRange, readRenders, recordRender, resolveVideo, versionFile } from "../cli/lib/renders.mjs";
 
 const TL = { fps: 30, duration: 10, scenes: [{ id: "a", from: 0, durationInFrames: 90 }, { id: "b", from: 90, durationInFrames: 120 }, { id: "c", from: 210, durationInFrames: 90 }] };
 
@@ -63,4 +63,21 @@ test("resolveVideo: newest, prev, vN, N, a path or an alias", () => {
   assert.throws(() => resolveVideo(p, "v9"), /no render v9/);
   render(p, {});
   assert.throws(() => resolveVideo(p, "v1"), /was pruned/);
+});
+
+test("adoptLegacy: an unversioned render becomes v1 instead of being overwritten", () => {
+  const p = project();
+  const alias = join(p.paths.out, "demo.mp4");
+  writeFileSync(alias, "old cut");
+  const old = adoptLegacy(p, alias);
+  assert.equal(old.v, 1);
+  assert.equal(old.legacy, true);
+  assert.equal(readFileSync(join(p.root, old.file), "utf8"), "old cut");
+  assert.ok(!existsSync(alias));
+  const r2 = render(p);
+  assert.equal(r2.v, 2);
+  // Now the alias is a logged version's link: nothing to adopt.
+  assert.equal(adoptLegacy(p, alias), null);
+  assert.equal(adoptLegacy(p, join(p.paths.out, "missing.mp4")), null);
+  assert.deepEqual(readRenders(p).map((r) => r.v), [1, 2]);
 });

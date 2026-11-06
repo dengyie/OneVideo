@@ -13,6 +13,8 @@ import { AUTO_TRANSITION_SFX, DIMENSIONS, MOTION_SFX, overlaySound, sfxFile, sfx
 import { categories, entryPath, loadCatalog, resolveSfx } from "../lib/library.mjs";
 import { spokenLength } from "../lib/text.mjs";
 import { beatsFile, ensureBeats, everyFourth, gridBeats } from "../lib/beats.mjs";
+import { captureUi, parseRects } from "../lib/capture.mjs";
+import { findScreen, frameRgb } from "../lib/screen.mjs";
 
 const list = (v) => (typeof v === "string" ? v.split(",").map((s) => s.trim()).filter(Boolean) : []);
 
@@ -158,6 +160,51 @@ export async function assets(args) {
     return;
   }
   throw new UserError("usage: onevideo assets <search|fetch> …");
+}
+
+// Real UI for a promo: open the page in our own headless Chrome at a device viewport, screenshot
+// it into public/assets/<id>.png and record it (with the rects a device scene can tap or open by
+// name) in plan/assets.json. The settings are kept, so assets fetch --force re-shoots it.
+export async function capture(args) {
+  const url = args._[0];
+  if (!url || !args.id) throw new UserError("usage: onevideo capture <url> --id <asset-id> [--device phone|tablet|desktop] [--wait ms] [--click sel,…] [--rects name=sel,…] [--full] [--dark]");
+  if (!/^[a-z0-9][a-z0-9_-]*$/.test(args.id)) throw new UserError(`--id "${args.id}": lowercase letters, digits, - and _`);
+  const project = loadProject();
+  const manifest = readJson(project.paths.assets, { items: [] });
+  const prev = manifest.items.find((x) => x.id === args.id);
+  const settings = { url, device: args.device ?? "phone", wait: Number(args.wait ?? 1500), click: list(args.click), selectors: parseRects(args.rects), full: Boolean(args.full), dark: Boolean(args.dark) };
+  const item = await captureItem({ ...prev, id: args.id, capture: settings }, project.p("public"));
+  manifest.items = prev ? manifest.items.map((x) => (x.id === args.id ? item : x)) : [...manifest.items, item];
+  writeJson(project.paths.assets, manifest);
+  log(`✓ ${item.id}: ${item.file} ${item.width}x${item.height} (${settings.device}${settings.full ? ", full page" : ""})`);
+  for (const [k, r] of Object.entries(item.rects ?? {})) log(`  rect ${k}: [${r.join(", ")}]`);
+}
+
+export async function captureItem(item, publicDir) {
+  const c = item.capture;
+  const shot = await captureUi({ url: c.url, device: c.device, wait: c.wait, click: c.click ?? [], rects: c.selectors ?? {}, full: c.full, dark: c.dark });
+  if (shot.missing.length) warn(`${item.id}: no element for rect(s) ${shot.missing.join(", ")}`);
+  mkdirSync(join(publicDir, "assets"), { recursive: true });
+  const file = `assets/${item.id}.png`;
+  writeFileSync(join(publicDir, file), shot.png);
+  const { generate: _g, query: _q, url: _u, ...rest } = item;
+  return { ...rest, kind: "image", file, via: "capture", license: item.license ?? "own", title: item.title ?? c.url, source: c.url, width: shot.width, height: shot.height, capture: { ...c, viewport: shot.viewport }, rects: shot.rects, fetchedAt: new Date().toISOString() };
+}
+
+// The four corners of a dark screen in footage (an image, or a video at --at seconds), printed as
+// the footage.props.screen snippet to paste into the storyboard.
+export async function screen(args) {
+  const id = args._[0];
+  if (!id) throw new UserError("usage: onevideo screen <asset-id> [--at s] [--threshold 40]");
+  const project = loadProject();
+  const item = readJson(project.paths.assets, { items: [] }).items.find((x) => x.id === id);
+  if (!item?.file) throw new UserError(`asset "${id}" is not fetched (onevideo assets fetch)`);
+  const { rgb, w, h } = await frameRgb(join(project.p("public"), item.file), { t: Number(args.at ?? 0), width: 640 });
+  const hit = findScreen(rgb, w, h, { threshold: Number(args.threshold ?? 40) });
+  if (!hit) throw new UserError(`no dark screen found in "${id}" (try --threshold 60, or a frame where the screen is off: --at s)`);
+  if (hit.border) warn("the darkest region touches the frame edge; check the corners on a still before using them");
+  log(`screen: ${(hit.share * 100).toFixed(1)}% of the frame`);
+  log(JSON.stringify({ screen: { asset: "<ui-asset-id>", corners: hit.corners, blend: "screen" } }));
 }
 
 // Append-only decision log: the latest entry per (category, subject) wins.

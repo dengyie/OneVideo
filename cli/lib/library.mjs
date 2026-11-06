@@ -239,6 +239,9 @@ export const recipeSlots = (recipe) => [...new Set([...JSON.stringify(recipe.sce
 export function fillRecipe(recipe, { id = recipe.name, vars = {} } = {}) {
   const missing = new Set();
   const fill = (v) => {
+    // A slot that is the whole value takes JSON as JSON (corners, rects): "{{corners}}" ← "[[0.4,0.2],…]".
+    const whole = typeof v === "string" && /^\{\{(\w+)\}\}$/.exec(v);
+    if (whole && whole[1] in vars && /^\s*[[{]/.test(String(vars[whole[1]]))) { try { return JSON.parse(vars[whole[1]]); } catch {} }
     if (typeof v === "string") return v.replace(/\{\{(\w+)\}\}/g, (m, k) => (k in vars ? String(vars[k]) : (missing.add(k), m)));
     if (Array.isArray(v)) return v.map(fill);
     if (v && typeof v === "object") return Object.fromEntries(Object.entries(v).map(([k, x]) => [k, fill(x)]));

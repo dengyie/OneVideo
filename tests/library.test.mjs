@@ -103,7 +103,7 @@ test("recipes: every recipe fills to a valid storyboard", async () => {
   assert.ok(recipes.length >= 10);
   for (const r of recipes) {
     assert.ok(r.name && r.title && r.description, `${r.name}: name/title/description`);
-    const vars = Object.fromEntries(recipeSlots(r).map((k) => [k, "a"]));
+    const vars = Object.fromEntries(recipeSlots(r).map((k) => [k, k === "corners" ? "[[0.4,0.2],[0.6,0.2],[0.6,0.8],[0.4,0.8]]" : "a"]));
     const { scenes, missing } = fillRecipe(r, { id: "x", vars });
     assert.deepEqual(missing, []);
     assert.equal(scenes[0].id, "x");

@@ -1,0 +1,23 @@
+{
+  "name": "promo-demo",
+  "title": "OneVideo 放映页 · 产品宣传示例",
+  "pipeline": "promo",
+  "style": "neon-tech",
+  "aspect": "16:9",
+  "fps": 30,
+  "language": "zh-CN",
+  "targetSeconds": 20,
+  "watermark": "OneVideo · 示例",
+  "sfx": {
+    "transition": "auto",
+    "volume": 0.5,
+    "motion": "auto"
+  },
+  "captions": {
+    "style": "line"
+  },
+  "tts": {
+    "voice": "白桦",
+    "style": "产品宣传旁白。轻快、干净、有笑意，语速中等偏快，句尾不拖。"
+  }
+}

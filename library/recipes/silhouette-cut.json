@@ -1,0 +1,38 @@
+{
+  "name": "silhouette-cut",
+  "title": "日常物件剪影卡点",
+  "description": "几样形状相同的日常物件，居中同尺寸，按音乐节拍硬切静帧，最后落品牌名",
+  "tags": [
+    "品牌",
+    "卡点",
+    "剪影",
+    "match cut",
+    "promo"
+  ],
+  "scenes": [
+    {
+      "type": "match-cut",
+      "enter": "cut",
+      "props": {
+        "items": [
+          {
+            "asset": "{{a}}"
+          },
+          {
+            "asset": "{{b}}"
+          },
+          {
+            "asset": "{{c}}"
+          },
+          {
+            "asset": "{{d}}"
+          }
+        ],
+        "every": "beat",
+        "size": 0.6,
+        "background": "{{background}}",
+        "title": "{{brand}}"
+      }
+    }
+  ]
+}

@@ -1,8 +1,10 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { compileTimeline, overlaySound } from "../cli/lib/timeline.mjs";
+import { compileTimeline, motionCues, overlaySound } from "../cli/lib/timeline.mjs";
+import { findScreen } from "../cli/lib/screen.mjs";
+import { normRects, parseRects } from "../cli/lib/capture.mjs";
 import { isMonoDark, tintLottie } from "../cli/lib/library.mjs";
-import { schemaGate } from "../cli/lib/gates.mjs";
+import { deviceGate, schemaGate } from "../cli/lib/gates.mjs";
 import { resolveCountry } from "../cli/lib/geo.mjs";
 import { collectIcons, resolveIcon } from "../cli/lib/icons.mjs";
 import { example } from "./helpers.mjs";
@@ -135,4 +137,82 @@ test("tintLottie recolours static colours; isMonoDark spots black line icons", (
   assert.equal(isMonoDark(t), false);
   assert.deepEqual(data.layers[0].shapes[0].c.k, [0, 0, 0, 1]);
   assert.throws(() => tintLottie(data, "red"));
+});
+
+test("a footage title fades out as a word lands on it, and keeps its time when the word is elsewhere", () => {
+  const ex = example();
+  const asset = ex.fetchedAssets.items[0].id;
+  const sb = structuredClone(ex.storyboard);
+  const hook = (overlays) => ({ ...sb.scenes[0], type: "footage", backdrop: undefined, shots: undefined, props: { asset, title: { text: "SpaceX", at: 0.5, y: 0.34, size: 300, duration: 4.8 } }, overlays });
+  sb.scenes[0] = hook([{ type: "word", text: "SPCX", style: "slam", at: 2, y: 0.5, size: 220 }]);
+  let { timeline, errors } = compileTimeline({ ...ex, storyboard: sb, assets: ex.fetchedAssets });
+  assert.deepEqual(errors, []);
+  assert.equal(timeline.scenes[0].props.title.duration, 1.2);
+  sb.scenes[0] = hook([{ type: "word", text: "x", at: 2, x: 0.9, y: 0.9, size: 60 }]);
+  ({ timeline } = compileTimeline({ ...ex, storyboard: sb, assets: ex.fetchedAssets }));
+  assert.equal(timeline.scenes[0].props.title.duration, 4.8);
+});
+
+test("device: steps get times, rect names resolve on the screen showing, results that hold too short warn, same device cuts", () => {
+  const ex = example();
+  const [a, b] = ex.fetchedAssets.items.map((x) => x.id);
+  const items = ex.fetchedAssets.items.map((x) => (x.id === a ? { ...x, rects: { buy: [0.1, 0.6, 0.8, 0.1] } } : x.id === b ? { ...x, rects: { card: [0.05, 0.3, 0.9, 0.2] } } : x));
+  const sb = structuredClone(ex.storyboard);
+  const dev = (id, steps) => ({ ...sb.scenes[0], id, type: "device", backdrop: undefined, shots: undefined, props: { device: "phone", screens: [{ id: "home", asset: a }, { id: "detail", asset: b }], steps } });
+  sb.scenes[0] = dev(sb.scenes[0].id, [{ at: 0.5, tap: "buy", label: "下单" }, { at: 1.2, screen: "detail", expand: { rect: "card" } }, { at: 1.6, collapse: true }]);
+  sb.scenes[1] = { ...dev(sb.scenes[1].id, [{ tap: [0.5, 0.5] }, { screen: 1 }]), enter: undefined };
+  const { timeline, errors } = compileTimeline({ ...ex, storyboard: sb, assets: { items }, config: { ...ex.config, beats: { snap: false } } });
+  assert.deepEqual(errors, []);
+  const [s0, s1] = timeline.scenes;
+  assert.deepEqual(s0.props.steps[0].tap, [0.5, 0.65]);
+  assert.deepEqual(s0.props.steps[1].expand.rect, [0.05, 0.3, 0.9, 0.2]);
+  assert.ok(s1.props.steps.every((st) => typeof st.t === "number"));
+  assert.equal(s1.transitionIn.type, "cut");
+  const warns = deviceGate(timeline, {});
+  assert.ok(warns.some((w) => w.msg.includes(`"${s0.id}" step 1`)));
+  assert.deepEqual(motionCues(s0).map((c) => c.role), ["tap", "expand"]);
+  const bad = compileTimeline({ ...ex, storyboard: { ...sb, scenes: [dev(sb.scenes[0].id, [{ at: 0.5, tap: "nope" }]), ...sb.scenes.slice(1)] }, assets: { items } });
+  assert.ok(bad.errors.some((e) => /no rect "nope"/.test(e)));
+});
+
+test("match-cut: stills on fixed spacing or on the beats, too few beats is an error", () => {
+  const ex = example();
+  const ids = ex.fetchedAssets.items.slice(0, 3).map((x) => x.id);
+  const sb = structuredClone(ex.storyboard);
+  sb.scenes[0] = { ...sb.scenes[0], type: "match-cut", backdrop: undefined, shots: undefined, overlays: undefined, props: { items: ids.map((asset) => ({ asset })), every: 0.4, from: 0.2 } };
+  const { timeline, errors } = compileTimeline({ ...ex, storyboard: sb, assets: ex.fetchedAssets });
+  assert.deepEqual(errors, []);
+  assert.deepEqual(timeline.scenes[0].props.items.map((i) => i.t), [0.2, 0.6, 1]);
+  assert.equal(timeline.scenes[0].opaque, true);
+  sb.scenes[0].props.every = "beat";
+  const res = compileTimeline({ ...ex, storyboard: sb, assets: ex.fetchedAssets, config: { ...ex.config, music: { enabled: false } } });
+  assert.ok(res.errors.some((e) => /match-cut: 3 stills but only 0 beats/.test(e)));
+});
+
+test("storyboard schema: device, match-cut, footage screen and windows", () => {
+  const ok = [
+    { id: "d", type: "device", props: { device: "browser", url: "x.com", screens: [{ asset: "a" }], steps: [{ at: 1, tap: "buy" }, { cue: "c", expand: { rect: [0, 0, 0.5, 0.5] } }, { at: 3, collapse: true, camera: "device" }] } },
+    { id: "m", type: "match-cut", props: { items: [{ asset: "a" }, { asset: "b", label: "x" }], every: "beat", title: "T" } },
+    { id: "f", type: "footage", props: { asset: "a", screen: { asset: "ui", corners: [[0.4, 0.2], [0.6, 0.2], [0.6, 0.8], [0.4, 0.8]], occlude: { asset: "m" } }, windows: { asset: "b", count: 4 } } },
+  ];
+  assert.deepEqual(schemaGate("storyboard", { scenes: ok }), []);
+  const bad = schemaGate("storyboard", { scenes: [{ id: "f", type: "footage", props: { asset: "a", screen: { asset: "ui", corners: [[0, 0], [1, 0], [1, 1]] } } }] });
+  assert.ok(bad.length);
+});
+
+test("findScreen: corners of a tilted dark quad on a bright frame, ignoring a dark border", () => {
+  const w = 200, h = 120, rgb = Buffer.alloc(w * h * 3, 200);
+  const quad = [[60, 20], [140, 30], [130, 100], [70, 95]];
+  const inside = (x, y) => quad.every(([x0, y0], i) => { const [x1, y1] = quad[(i + 1) % 4]; return (x1 - x0) * (y - y0) - (y1 - y0) * (x - x0) >= 0; });
+  for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) if (inside(x, y) || x < 8) rgb.fill(10, (y * w + x) * 3, (y * w + x) * 3 + 3);
+  const hit = findScreen(rgb, w, h);
+  assert.equal(hit.border, false);
+  hit.corners.forEach(([x, y], i) => { assert.ok(Math.abs(x * w - quad[i][0]) < 3, `x${i}`); assert.ok(Math.abs(y * h - quad[i][1]) < 3, `y${i}`); });
+  assert.equal(findScreen(Buffer.alloc(w * h * 3, 255), w, h), null);
+});
+
+test("capture: rect specs parse and boxes normalise to the image, clipped", () => {
+  assert.deepEqual(parseRects("buy=#buy, card=.card > a"), { buy: "#buy", card: ".card > a" });
+  assert.throws(() => parseRects("nope"), /name=selector/);
+  assert.deepEqual(normRects({ a: { x: 39, y: 84.4, w: 312, h: 84.4 }, off: { x: 500, y: 0, w: 10, h: 10 }, gone: null }, 390, 844), { a: [0.1, 0.1, 0.8, 0.1] });
 });

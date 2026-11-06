@@ -1,0 +1,59 @@
+{
+  "scenes": [
+    {
+      "id": "hook",
+      "type": "device",
+      "enter": "cut",
+      "intent": "手机入场，镜头推到播放器：一页放下所有视频",
+      "props": {
+        "device": "phone",
+        "url": "vedio.mangoqwq.com",
+        "caption": "一个链接",
+        "screens": [{ "id": "home", "asset": "home" }],
+        "steps": [
+          { "at": 0.9, "focus": "player", "camera": "page" },
+          { "at": 2.2, "camera": "device" }
+        ]
+      }
+    },
+    {
+      "id": "open",
+      "type": "device",
+      "intent": "点卡片 → 卡片从原位展开 → 停 ≥1 秒 → 收回，切到详情页",
+      "props": {
+        "device": "phone",
+        "url": "vedio.mangoqwq.com",
+        "screens": [{ "id": "home", "asset": "home" }, { "id": "detail", "asset": "detail" }],
+        "steps": [
+          { "at": 0.5, "tap": "card", "expand": { "rect": "card" } },
+          { "at": 2.0, "collapse": true },
+          { "at": 2.4, "screen": "detail", "focus": "summary" }
+        ]
+      }
+    },
+    {
+      "id": "chapters",
+      "type": "device",
+      "intent": "点章节条，章节放大停住",
+      "props": {
+        "device": "phone",
+        "url": "vedio.mangoqwq.com",
+        "screens": [{ "id": "detail", "asset": "detail" }],
+        "steps": [
+          { "at": 0.4, "tap": "chapters", "expand": { "rect": "chapters" } }
+        ]
+      }
+    },
+    {
+      "id": "cta",
+      "type": "title",
+      "enter": { "type": "zoom", "duration": 0.5 },
+      "intent": "收在网址上",
+      "props": {
+        "kicker": "OneVideo",
+        "title": "vedio.mangoqwq.com",
+        "subtitle": "打开就能看"
+      }
+    }
+  ]
+}

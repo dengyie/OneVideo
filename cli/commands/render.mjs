@@ -1,21 +1,21 @@
 // render / stills / studio / qc / publish / build / doctor
-import { existsSync, mkdirSync, writeFileSync } from "node:fs";
-import { join } from "node:path";
-import { availableParallelism, totalmem } from "node:os";
+import { existsSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { join, relative } from "node:path";
+import { availableParallelism, tmpdir, totalmem } from "node:os";
 import { execFileSync } from "node:child_process";
 import { UserError, loadProject, pipelineDef, readJson, writeJson, log, warn, ONEVIDEO_ROOT } from "../lib/project.mjs";
 import { stageStatus } from "../lib/state.mjs";
 import { checkProject, printIssues } from "../lib/check.mjs";
 import { REMOTION_BIN, TEMPLATE_DIR, requireRemotion, run, ffmpeg } from "../lib/ffmpeg.mjs";
 import { runQc } from "../lib/qc.mjs";
-import { buildPublishKit } from "../lib/publish.mjs";
+import { buildPublishKit, stemGroups } from "../lib/publish.mjs";
 import { resolveApiKey, trustedKeyHost } from "../lib/http.mjs";
 import { ttsConfig } from "../lib/tts.mjs";
 import * as media from "./media.mjs";
 import { assetFileExists, clipFrames, countFrames, framesDir, IMAGE_DEFAULTS, VIDEO_DEFAULTS } from "../lib/assets.mjs";
 import { llmConfig } from "../lib/llm.mjs";
 import { ensureBeats } from "../lib/beats.mjs";
-import { frameRange, localStamp, readRenders, recordRender, resolveVideo, timelineHash, versionFile } from "../lib/renders.mjs";
+import { adoptLegacy, frameRange, localStamp, readRenders, recordRender, resolveVideo, timelineHash, versionFile } from "../lib/renders.mjs";
 
 const ENTRY = "src/index.ts";
 const COMPOSITION = "OneVideo";
@@ -73,6 +73,10 @@ export async function render(args) {
   const range = args.frames ? String(args.frames).split("-").map(Number) : frameRange(tl, { scenes: args.scenes, from: args.from, to: args.to });
   const part = Boolean(range) && !(range[0] === 0 && range[1] >= Math.round(tl.duration * tl.fps) - 1);
   const alias = args.out ? null : part ? join(project.paths.out, `${project.config.name}.part.mp4`) : draft ? join(project.paths.out, `${project.config.name}.draft.mp4`) : videoPath(project);
+  if (alias) {
+    const old = adoptLegacy(project, alias, { draft, part });
+    if (old) log(`kept the unversioned ${relative(project.root, alias)} as v${old.v} (${old.file})`);
+  }
   const { v, file } = args.out ? { v: null, file: args.out } : versionFile(project, { draft, part });
   const flags = [
     "render", ENTRY, COMPOSITION, file, ...commonFlags(project),
@@ -115,7 +119,7 @@ export async function versions(args) {
   for (const r of renders) {
     const kind = [r.draft ? "draft" : "full", r.part ? "part" : null].filter(Boolean).join("+");
     const span = r.part ? `from ${r.offset}s, ${r.frames[1] - r.frames[0] + 1}f${r.scenes ? ` ${r.scenes.join(",")}` : ""}` : "whole";
-    log(`  ${`v${r.v}`.padEnd(5)} ${localStamp(r.at)}  ${kind.padEnd(10)} ${span.padEnd(20)} tl ${r.timeline}  ${r.pruned ? "(pruned) " : ""}${r.note ?? ""}`);
+    log(`  ${`v${r.v}`.padEnd(5)} ${localStamp(r.at)}  ${kind.padEnd(10)} ${span.padEnd(20)} tl ${r.timeline ?? "—".padEnd(12)}  ${r.pruned ? "(pruned) " : ""}${r.note ?? ""}`);
   }
   log(`compare two: onevideo sheet --video v${renders.at(-1).v} --vs v${renders.at(-2)?.v ?? renders.at(-1).v}`);
 }
@@ -188,6 +192,32 @@ export async function publish(args = {}) {
   writeJson(project.paths.publish, kit.publish);
   for (const w of kit.publish.warnings) warn(w);
   log(`publish kit → ${dir} (${Object.keys(kit.files).join(", ")})`);
+  if (args.stems) await stems({ _: [] });
+}
+
+// Voice, music and sound effects as separate WAVs at the mix's own levels (ducking included),
+// so the cut can be remixed or re-voiced elsewhere; summed they give the published mix.
+export async function stems(args = {}) {
+  requireRemotion();
+  const project = loadProject();
+  if (!existsSync(project.paths.timeline)) throw new UserError("no timeline yet; run: onevideo timeline");
+  const tl = readJson(project.paths.timeline);
+  const groups = stemGroups(tl).filter((g) => !args.only || String(args.only).split(",").includes(g));
+  if (!groups.length) throw new UserError("the timeline plays no sound to split");
+  const dir = join(project.paths.out, "publish", "stems");
+  mkdirSync(dir, { recursive: true });
+  const tmp = mkdtempSync(join(tmpdir(), "ov-stem-"));
+  try {
+    for (const g of groups) {
+      const props = join(tmp, `${g}.json`), file = join(dir, `${g}.wav`);
+      writeJson(props, { ...tl, stem: g });
+      await run(REMOTION_BIN, ["render", ENTRY, COMPOSITION, file, `--props=${props}`, `--public-dir=${project.p("public")}`, "--codec=wav", "--log=error"], { cwd: TEMPLATE_DIR });
+      log(`✓ ${relative(project.root, file)}`);
+    }
+  } finally {
+    rmSync(tmp, { recursive: true, force: true });
+  }
+  log(`stems → ${relative(project.root, dir)}/ (${groups.join(", ")}; together they are the published mix)`);
 }
 
 // Missing licensed files are fetched, clips get their frame sequences, and depth / luma maps are

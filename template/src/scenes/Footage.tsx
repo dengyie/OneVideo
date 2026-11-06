@@ -39,8 +39,28 @@ const TitleText: React.FC<{ title: Title }> = ({ title }) => {
 // Footage as the hero: full-bleed, light grade, speed ramps (slow-mo on the key moment, then
 // back up to speed), optional title behind the subject. Punch-ins come from the scene's shots.
 
-export const FootageScene: React.FC<{ asset: string; startFrom?: number; ramp?: Ramp; dim?: number; title?: Title; tint?: string }> = ({
-  asset, startFrom = 0, ramp, dim = 0.12, title, tint,
+// A homography taking the unit square onto a quad (TL, TR, BR, BL in px), as a CSS matrix3d for an
+// element of w×h with transform-origin 0 0 — how a flat capture lands on a screen filmed at an angle.
+export function quadMatrix(q: [number, number][], w: number, h: number): string {
+  const [[x0, y0], [x1, y1], [x2, y2], [x3, y3]] = q;
+  const dx1 = x1 - x2, dx2 = x3 - x2, dx3 = x0 - x1 + x2 - x3, dy1 = y1 - y2, dy2 = y3 - y2, dy3 = y0 - y1 + y2 - y3;
+  const det = dx1 * dy2 - dx2 * dy1 || 1e-9;
+  const g = (dx3 * dy2 - dx2 * dy3) / det, k = (dx1 * dy3 - dx3 * dy1) / det;
+  const a = x1 - x0 + g * x1, b = x3 - x0 + k * x3, d = y1 - y0 + g * y1, e = y3 - y0 + k * y3;
+  return `matrix3d(${[a / w, d / w, 0, g / w, b / h, e / h, 0, k / h, 0, 0, 1, 0, x0, y0, 0, 1].map((n) => +n.toFixed(9)).join(",")})`;
+}
+
+// Real UI on a phone/laptop filmed with a dark screen: the capture is pinned to the four screen
+// corners (onevideo screen finds them), blended with "screen" so the glass keeps its reflections,
+// and a finger or hand in front is drawn again on top — from a mask (white = in front) or the
+// depth matte. Holds for a static device; a moving one needs tracked corners.
+type ScreenInsert = { asset: string; corners: [number, number][]; t?: number; blend?: "screen" | "normal"; opacity?: number; occlude?: { asset?: string; matte?: Matte } };
+
+// Background revealed through vertical windows that open behind the subject (depth matte).
+type Windows = { asset: string; count?: number; t?: number; stagger?: number; gap?: number; matte?: Matte };
+
+export const FootageScene: React.FC<{ asset: string; startFrom?: number; ramp?: Ramp; dim?: number; title?: Title; tint?: string; screen?: ScreenInsert; windows?: Windows }> = ({
+  asset, startFrom = 0, ramp, dim = 0.12, title, tint, screen, windows,
 }) => {
   const tl = useTimeline();
   const { width, height } = useVideoConfig();
@@ -53,9 +73,33 @@ export const FootageScene: React.FC<{ asset: string; startFrom?: number; ramp?: 
   const depth = depthSrc(a, s);
   const local = t - (title?.t ?? 0.2);
   const cut = title?.behind && photo && depth && local >= 0 && (title.duration === undefined || local < title.duration + 0.3);
+  const base = (extra: React.CSSProperties = {}) => (a.kind === "video" ? <ClipVideo a={a} style={{ ...style, ...extra }} time={s} /> : <Img src={staticFile(a.src)} style={{ ...style, ...extra }} />);
+  const ins = screen && tl.assets[screen.asset];
+  const insOn = screen ? easeOut((t - (screen.t ?? 0)) / 0.3) : 0;
+  const mask = screen?.occlude?.asset ? tl.assets[screen.occlude.asset] : undefined;
+  const win = windows && tl.assets[windows.asset];
+  const n = windows?.count ?? 4, gap = windows?.gap ?? 0.02;
   return (
     <AbsoluteFill style={{ backgroundColor: "#000", overflow: "hidden" }}>
-      {a.kind === "video" ? <ClipVideo a={a} style={style} time={s} /> : <Img src={staticFile(a.src)} style={style} />}
+      {base()}
+      {ins && insOn > 0 && (
+        <div style={{ position: "absolute", left: 0, top: 0, width, height, transformOrigin: "0 0", transform: quadMatrix(screen.corners.map(([x, y]) => [x * width, y * height]), width, height), mixBlendMode: (screen.blend ?? "screen") === "screen" ? "screen" : "normal", opacity: (screen.opacity ?? 1) * insOn }}>
+          {ins.kind === "video" ? <ClipVideo a={ins} style={{ ...style, objectPosition: "top" }} time={Math.max(0, t - (screen.t ?? 0))} /> : <Img src={staticFile(ins.src)} style={{ ...style, objectFit: "fill" }} />}
+        </div>
+      )}
+      {ins && insOn > 0 && mask && base({ maskImage: `url(${staticFile(mask.src)})`, WebkitMaskImage: `url(${staticFile(mask.src)})`, maskMode: "luminance", maskSize: "100% 100%", WebkitMaskSize: "100% 100%" } as React.CSSProperties)}
+      {ins && insOn > 0 && !mask && screen.occlude?.matte && photo && depth && <ForegroundCut photo={photo} depth={depth} width={width} height={height} matte={screen.occlude.matte} />}
+      {win && Array.from({ length: n }, (_, i) => {
+        const o = easeInOut((t - (windows.t ?? 0.4) - i * (windows.stagger ?? 0.12)) / 0.6);
+        if (o <= 0) return null;
+        const cw = 100 / n, half = (cw * (1 - gap) * (1 - o)) / 2 + (cw * gap) / 2;
+        return (
+          <AbsoluteFill key={i} style={{ clipPath: `inset(0 ${100 - (i + 1) * cw + half}% 0 ${i * cw + half}%)` }}>
+            {win.kind === "video" ? <ClipVideo a={win} style={style} time={Math.max(0, t)} /> : <Img src={staticFile(win.src)} style={{ ...style, transform: `scale(${lerp(1.15, 1.03, o)})` }} />}
+          </AbsoluteFill>
+        );
+      })}
+      {win && photo && depth && t > (windows.t ?? 0.4) && <ForegroundCut photo={photo} depth={depth} width={width} height={height} matte={windows.matte} />}
       {tint && <AbsoluteFill style={{ background: tint, mixBlendMode: "soft-light" }} />}
       <AbsoluteFill style={{ background: `linear-gradient(180deg, rgba(0,0,0,${dim * 0.5}) 0%, rgba(0,0,0,${dim}) 55%, rgba(0,0,0,${Math.min(0.85, dim + 0.35)}) 100%)` }} />
       {title && <TitleText title={title} />}

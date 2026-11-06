@@ -193,7 +193,8 @@
             "nasa",
             "wikimedia",
             "openverse",
-            "pexels"
+            "pexels",
+            "capture"
           ]
         },
         "takes": {
@@ -217,6 +218,68 @@
         "inspect": {
           "type": "object",
           "description": "generated video: the vision check of the take (score, issues by second, kept [start, seconds])"
+        },
+        "capture": {
+          "type": "object",
+          "additionalProperties": false,
+          "description": "how onevideo capture shot this UI: re-run with the same settings to refresh it",
+          "properties": {
+            "url": {
+              "type": "string"
+            },
+            "device": {
+              "enum": [
+                "phone",
+                "tablet",
+                "desktop"
+              ]
+            },
+            "viewport": {
+              "type": "array",
+              "items": {
+                "type": "integer",
+                "minimum": 1
+              },
+              "minItems": 2,
+              "maxItems": 2
+            },
+            "full": {
+              "type": "boolean"
+            },
+            "dark": {
+              "type": "boolean"
+            },
+            "wait": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "click": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "selectors": {
+              "type": "object",
+              "additionalProperties": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        "rects": {
+          "type": "object",
+          "description": "named regions of a UI capture, [x, y, w, h] in 0–1 of the image (onevideo capture --rects)",
+          "additionalProperties": {
+            "type": "array",
+            "items": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1
+            },
+            "minItems": 4,
+            "maxItems": 4
+          }
         }
       }
     }

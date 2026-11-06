@@ -59,7 +59,9 @@ export const normTransition = (t) => (t == null ? null : typeof t === "string" ?
 // The boundary between two scenes is one transition: the incoming scene's enter wins, then the
 // outgoing scene's exit, then the style's default. Narration never moves; only visuals overlap.
 export function boundaryTransition(prev, next, theme, fps) {
-  const spec = normTransition(next.enter) ?? normTransition(prev.exit) ?? normTransition(theme.transition) ?? { type: "fade" };
+  // One device across several scenes stays put: the screen changes, the device never re-enters.
+  const sameDevice = prev.type === "device" && next.type === "device" && (prev.props?.device ?? null) === (next.props?.device ?? null);
+  const spec = normTransition(next.enter) ?? normTransition(prev.exit) ?? (sameDevice ? { type: "cut" } : null) ?? normTransition(theme.transition) ?? { type: "fade" };
   const want = Math.round((spec.duration ?? TRANSITION_DURATION[spec.type] ?? 0.5) * fps);
   // Never let a transition eat more than 40% of either scene.
   const frames = spec.type === "cut" ? 0 : Math.max(2, Math.min(want, Math.floor(prev.durationInFrames * 0.4), Math.floor(next.durationInFrames * 0.4)));
@@ -98,8 +100,8 @@ export function overlaySound(ov, cfg) {
 // config.sfx.motion = "auto": the picture's own moves make sound. A canvas flight whooshes (a long
 // one cinematically), a hard cut or a slammed word lands with an impact, a push-in breathes a soft
 // whoosh, footage ramping back up to speed rushes. Each role's variants rotate through the library.
-export const MOTION_SFX = { fly: "whoosh-soft", flyLong: "whoosh-cinematic", cut: "impact", push: "whoosh-soft", slam: "impact", ramp: "whoosh-cinematic" };
-const MOTION_GAIN = { fly: 0.8, flyLong: 0.9, cut: 0.5, push: 0.45, slam: 0.7, ramp: 0.85 };
+export const MOTION_SFX = { fly: "whoosh-soft", flyLong: "whoosh-cinematic", cut: "impact", push: "whoosh-soft", slam: "impact", ramp: "whoosh-cinematic", tap: "click", expand: "whoosh-soft", page: "swish", still: "tick" };
+const MOTION_GAIN = { fly: 0.8, flyLong: 0.9, cut: 0.5, push: 0.45, slam: 0.7, ramp: 0.85, tap: 0.7, expand: 0.55, page: 0.5, still: 0.35 };
 const slamWord = (ov) => ov.type === "word" && (ov.style ?? "slam") === "slam";
 
 // Motion events of a compiled scene, in absolute seconds.
@@ -117,6 +119,13 @@ export function motionCues(sc) {
     else if (Math.abs(sh.zoom - sc.shots[i - 1].zoom) >= 0.12) at(sh.t, "push");
   }
   for (const ov of sc.overlays ?? []) if (slamWord(ov)) at(ov.t, "slam");
+  // A device taps, opens cards and turns pages; a match cut ticks on every still.
+  if (sc.type === "device") for (const st of sc.props.steps ?? []) {
+    if (st.tap) at(st.t, "tap");
+    if (st.expand) at(st.t + (st.tap ? 0.25 : 0), "expand");
+    else if (st.screen !== undefined && !st.tap) at(st.t, "page");
+  }
+  if (sc.type === "match-cut") for (const [i, it] of (sc.props.items ?? []).entries()) if (i) at(it.t, "still");
   if (sc.type === "footage") {
     let speed = 1;
     for (const r of sc.props.ramp ?? []) { if (speed < 1 && r.speed > 1.3) at((r.t ?? 0) - 0.15, "ramp"); speed = r.speed; }
@@ -131,7 +140,7 @@ export function sfxVariants(cat, catalog) {
 }
 
 // Scene types that paint the whole frame themselves (no theme background shows through).
-const OPAQUE_TYPES = new Set(["media", "focus", "split", "footage", "parallax"]);
+const OPAQUE_TYPES = new Set(["media", "focus", "split", "footage", "parallax", "match-cut"]);
 
 // Auto shot track: one framing per caption line, alternating moves and hard cuts, never far
 // enough in to lose a header or a card at the edge.
@@ -213,6 +222,47 @@ function resolvePropTimes(type, props, ctx, errors, where) {
     fix(props.title, "title");
   }
   if (type === "parallax") fix(props.title, "title");
+  if (type === "footage") { fix(props.screen, "screen"); fix(props.windows, "windows"); }
+  if (type === "device") {
+    // Taps land on the beat; steps without a time spread over the first three quarters.
+    const steps = props.steps ?? [];
+    steps.forEach((st, i) => { fix(st, `step ${i}`, st.tap ? "beat" : null); st.t ??= r3(Math.min(ctx.duration, 0.6 + (i * Math.max(0, 0.75 * ctx.duration - 0.6)) / Math.max(1, steps.length - 1 || 1))); });
+    steps.sort((a, b) => a.t - b.t);
+  }
+  if (type === "match-cut") {
+    // `every`: seconds per still, or "beat" / "bar" to cut on the music from `from` seconds on.
+    const items = props.items ?? [], every = props.every ?? 0.5, from = props.from ?? 0;
+    const grid = every === "bar" ? ctx.downbeats : every === "beat" ? ctx.beats : null;
+    const local = (grid ?? []).map((b) => b - ctx.start).filter((b) => b >= from - 1e-3 && b < ctx.duration);
+    if (grid && local.length < items.length) errors.push(`${where} match-cut: ${items.length} stills but only ${local.length} ${every}s from ${from}s in the scene (no music beats? use every: <seconds>)`);
+    const step = typeof every === "number" ? every : 0.5;
+    items.forEach((it, i) => { fix(it, `item ${i}`, "beat"); it.t ??= r3(grid ? local[i] ?? from + i * step : from + i * step); });
+  }
+}
+
+// Device steps may name a region by the capture's rects (onevideo capture --rects): a tap lands
+// on its centre, expand/focus take the rect. Names are looked up on the screen showing at the step.
+export function resolveDeviceRects(props, assetById, errors, where) {
+  const screens = props.screens ?? [];
+  const idx = (s) => (typeof s === "number" ? s : screens.findIndex((x) => x.id === s));
+  let cur = 0;
+  const rect = (name, label) => {
+    const r = assetById.get(screens[cur]?.asset)?.rects?.[name];
+    if (!r) errors.push(`${where} ${label}: no rect "${name}" on screen ${screens[cur]?.id ?? cur} (rects come from onevideo capture --rects)`);
+    return r ?? [0.25, 0.25, 0.5, 0.5];
+  };
+  for (const [i, st] of (props.steps ?? []).entries()) {
+    if (st.screen !== undefined) {
+      if (idx(st.screen) < 0 || idx(st.screen) >= screens.length) errors.push(`${where} step ${i}: unknown screen "${st.screen}"`);
+      else cur = idx(st.screen);
+    }
+    if (typeof st.tap === "string") { const r = rect(st.tap, `step ${i} tap`); st.tap = [r3(r[0] + r[2] / 2), r3(r[1] + r[3] / 2)]; }
+    if (typeof st.focus === "string") st.focus = rect(st.focus, `step ${i} focus`);
+    if (st.expand && typeof st.expand.rect === "string") st.expand.rect = rect(st.expand.rect, `step ${i} expand`);
+    if (st.expand && typeof st.expand.to === "string") st.expand.to = rect(st.expand.to, `step ${i} expand.to`);
+    // A tap that opens a card with no rect of its own grows the region around the tap.
+    if (st.expand && !st.expand.rect && Array.isArray(st.tap)) st.expand.rect = [r3(Math.max(0, st.tap[0] - 0.2)), r3(Math.max(0, st.tap[1] - 0.06)), 0.4, 0.12];
+  }
 }
 
 // Moments a viewer feels as hits, in seconds with a weight: scene boundaries, hard shot cuts and
@@ -365,6 +415,7 @@ export function compileTimeline({ config, script, storyboard, timings, assets, r
       }
     }
     resolvePropTimes(sb.type, props, ctx, errors, `scene "${sb.id}"`);
+    if (sb.type === "device") resolveDeviceRects(props, assetById, errors, `scene "${sb.id}"`);
     if (sb.type === "canvas") lastCanvas = { items: props.items ?? [], path: props.path ?? [] };
     let shots;
     if (sb.shots) {
@@ -476,6 +527,13 @@ export function compileTimeline({ config, script, storyboard, timings, assets, r
     for (const [i, a] of words.entries()) {
       const b = words.slice(i + 1).find((w) => w.t < a.end && overlaps(wordBox(a, width, height), wordBox(w, width, height)));
       if (b) a.end = r3(Math.max(a.t + 0.4, b.t));
+    }
+    // A footage title still up when a word lands on it fades out as the word arrives.
+    const title = (sc.type === "footage" || sc.type === "parallax") && sc.props.title;
+    if (title) {
+      const t0 = title.t ?? 0.2, box = wordBox({ ...title, size: title.size ?? 260, y: title.y ?? 0.42 }, width, height);
+      const hit = words.find((w) => w.t > t0 && w.t < t0 + (title.duration ?? Infinity) + 0.3 && overlaps(box, wordBox(w, width, height)));
+      if (hit) title.duration = r3(Math.max(0.4, hit.t - t0 - 0.3));
     }
     for (const c of captions) {
       if (c.scene !== sc.id) continue;

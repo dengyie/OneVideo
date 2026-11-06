@@ -37,12 +37,15 @@ OneVideo 把“做一条视频”拆成 10 个阶段。每个阶段都有一份�
 ## 命令
 
 ```bash
-onevideo init <dir> --pipeline data-explainer|documentary|shorts [--style midnight-data] [--aspect 16:9] [--example spacex-motion|spacex-ipo]
+onevideo init <dir> --pipeline data-explainer|documentary|shorts|promo [--style midnight-data] [--aspect 16:9] [--example spacex-motion|spacex-ipo|promo-demo]
 onevideo status | validate [--strict] | approve <stage> [--note …]
 onevideo tts [--sample|--dry|--force|--only a,b]   # 逐句合成 → plan/timings.json（含响度归一化）
 onevideo music [--preset ambient|pulse|documentary|bright]
 onevideo assets search <q> [--provider nasa,wikimedia,openverse,pexels] | assets fetch [--only a,b] [--force]   # 含 generate：AI 生图 / 生视频
 onevideo depth [asset ids] [--step N]               # 深度图 + 亮度网格：主体穿越、关键词避让、自动加底、字幕避让
+onevideo capture <url> --id x [--device phone|tablet|desktop] [--click sel] [--rects name=sel,…] [--full] [--dark]   # 真实界面截图（自起无头 Chrome）
+onevideo screen <asset> [--at s] [--threshold 40]   # 找实拍里黑屏的四角 → footage.screen 片段
+onevideo stems                                     # 按 stem 分组导出分轨 wav → out/publish/stems/
 onevideo timeline | stills [--scene id] [--at 0.3,0.7] | studio
 onevideo render [--draft] [--scenes a,b | --from s --to s] [--note …]   # 每次一个版本 → out/versions/vN
 onevideo versions                                   # 渲染记录：版本、范围、时间轴哈希、备注
@@ -50,7 +53,7 @@ onevideo handoff [--lock …] [--next …]              # 交接页 → plan/han
 onevideo lib list|search|recipe <name> --id x --set k=v   # 音效 / Lottie / 镜头配方
 onevideo sheet [--fps 1] [--from s] [--to s] [--video v3] [--vs prev]   # 联系表 → out/qc/sheet-NN.jpg；--vs 新旧对比
 onevideo look [--focus "字幕可读性"] [--models a,b]   # 视觉模型看片 → out/qc/look.json
-onevideo qc | publish | build [--draft] | doctor | decide <category> <subject> --selected X
+onevideo qc | publish [--stems] | build [--draft] | doctor | decide <category> <subject> --selected X
 ```
 
 未全局安装时，用 `node <repo>/cli/onevideo.mjs …` 调用。
@@ -62,4 +65,4 @@ onevideo qc | publish | build [--draft] | doctor | decide <category> <subject> -
 - 场景与动效：`references/motion-rules.md`（先读）· `references/scene-catalog.md`
 - 数据与授权：`references/data-integrity.md` · `references/licensing.md`
 - 质检：`references/qc-thresholds.md`
-- 示例：`examples/spacex-motion/`（动效引擎示范，36s）· `examples/spacex-ipo/`（数据图表版，85s）；`onevideo init demo --example spacex-motion`
+- 示例：`examples/spacex-motion/`（动效引擎示范，36s）· `examples/spacex-ipo/`（数据图表版，85s）· `examples/promo-demo/`（promo 流水线：capture 截图 + device 场景，20s）；`onevideo init demo --example spacex-motion`

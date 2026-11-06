@@ -1,0 +1,128 @@
+{
+  "name": "promo",
+  "description": "Product promo (16:9 or 9:16, 20–60 s): real UI captured from the product, one device across the cut, tap → open → result.",
+  "defaults": {
+    "style": "neon-tech",
+    "aspect": "16:9",
+    "fps": 30,
+    "targetSeconds": 40,
+    "music": {
+      "preset": "bright",
+      "volume": 0.26,
+      "duckTo": 0.1
+    },
+    "sfx": {
+      "transition": "auto",
+      "motion": "auto",
+      "volume": 0.5
+    },
+    "captions": {
+      "style": "line"
+    }
+  },
+  "sceneMix": {
+    "prefer": [
+      "device",
+      "match-cut",
+      "kinetic",
+      "footage",
+      "title"
+    ],
+    "limit": {
+      "static": 0.25
+    }
+  },
+  "stages": [
+    {
+      "id": "proposal",
+      "director": "stages/proposal.md",
+      "purpose": "Who it is for, the one job the product does for them, the 3 moments to show, length and aspect.",
+      "produces": [
+        "plan/proposal.md"
+      ],
+      "approval": true
+    },
+    {
+      "id": "script",
+      "director": "stages/script.md",
+      "purpose": "Hook in the first 2 seconds; ≤ 250 characters total.",
+      "produces": [
+        "plan/script.json"
+      ],
+      "approval": true,
+      "schema": "script"
+    },
+    {
+      "id": "storyboard",
+      "director": "stages/storyboard.md",
+      "purpose": "A visual change every 2–4 seconds.",
+      "produces": [
+        "plan/storyboard.json"
+      ],
+      "approval": true,
+      "schema": "storyboard"
+    },
+    {
+      "id": "assets",
+      "director": "stages/assets.md",
+      "purpose": "Real UI: onevideo capture <url> --id … --rects …  per screen (own product, license own); footage / stills for brand beats.",
+      "produces": [
+        "plan/assets.json"
+      ],
+      "approval": false,
+      "schema": "assets",
+      "optional": false,
+      "command": "onevideo capture <url> --id <screen> --device phone --rects name=selector"
+    },
+    {
+      "id": "voice",
+      "director": "stages/voice.md",
+      "purpose": "Sentence-level TTS; measured line timings drive every frame.",
+      "produces": [
+        "plan/timings.json"
+      ],
+      "approval": false,
+      "command": "onevideo tts --sample  →  onevideo tts"
+    },
+    {
+      "id": "compose",
+      "director": "stages/compose.md",
+      "purpose": "Compile the timeline, procedural music/SFX, per-scene stills for a visual check.",
+      "produces": [
+        "plan/timeline.json"
+      ],
+      "approval": false,
+      "command": "onevideo music && onevideo timeline && onevideo stills"
+    },
+    {
+      "id": "render",
+      "director": "stages/compose.md",
+      "purpose": "Full-quality Remotion render.",
+      "produces": [
+        "out/{name}.mp4"
+      ],
+      "approval": false,
+      "command": "onevideo render"
+    },
+    {
+      "id": "review",
+      "director": "stages/review.md",
+      "purpose": "Automated QC plus a look at every sampled frame; human sign-off.",
+      "produces": [
+        "plan/review.json"
+      ],
+      "approval": true,
+      "command": "onevideo qc"
+    },
+    {
+      "id": "publish",
+      "director": "stages/publish.md",
+      "purpose": "Captions, chapters, description and credits.",
+      "produces": [
+        "plan/publish.json"
+      ],
+      "approval": false,
+      "command": "onevideo publish"
+    }
+  ]
+}

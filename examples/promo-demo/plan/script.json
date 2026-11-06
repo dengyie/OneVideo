@@ -1,0 +1,34 @@
+{
+  "title": "OneVideo 放映页",
+  "summary": "一个链接看完我们做的每一支视频：点开详情，按章节跳着看。",
+  "scenes": [
+    {
+      "id": "hook",
+      "beat": "hook",
+      "question": "这个链接里有什么？",
+      "chapter": "开场",
+      "narration": "我们做的每一支视频，都放在这一个页面里。"
+    },
+    {
+      "id": "open",
+      "beat": "build",
+      "question": "怎么看某一支？",
+      "chapter": "点开",
+      "narration": "挑一支，点开，简介和下载一屏看完。"
+    },
+    {
+      "id": "chapters",
+      "beat": "turn",
+      "question": "长视频怎么办？",
+      "chapter": "章节",
+      "narration": "想看哪一段，点章节直接跳过去。"
+    },
+    {
+      "id": "cta",
+      "beat": "landing",
+      "question": "去哪看？",
+      "chapter": "收尾",
+      "narration": "打开链接，现在就能看。"
+    }
+  ]
+}

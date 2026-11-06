@@ -1,0 +1,27 @@
+{
+  "name": "screen-insert",
+  "title": "实拍黑屏贴真 UI",
+  "description": "实拍静止的手机/电脑黑屏，把真实界面透视贴进四角，滤色保留玻璃反光，手指用遮罩压在上面",
+  "tags": [
+    "产品",
+    "实拍",
+    "合成",
+    "UI",
+    "promo"
+  ],
+  "scenes": [
+    {
+      "type": "footage",
+      "props": {
+        "asset": "{{footage}}",
+        "dim": 0.08,
+        "screen": {
+          "asset": "{{ui}}",
+          "corners": "{{corners}}",
+          "at": 0.3,
+          "blend": "screen"
+        }
+      }
+    }
+  ]
+}

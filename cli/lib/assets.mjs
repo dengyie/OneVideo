@@ -168,6 +168,9 @@ export async function fetchAsset(item, { publicDir, aspect = 16 / 9, gen = {} })
   const dir = join(publicDir, "assets");
   mkdirSync(dir, { recursive: true });
 
+  // A UI capture re-shoots itself with the settings it was taken with.
+  if (item.capture?.url) return (await import("../commands/media.mjs")).captureItem(item, publicDir);
+
   if (item.generate) {
     const opts = { dir, publicDir, aspect: gen.aspect, llm: gen.llm, lookup: gen.lookup, onWarn: gen.onWarn ?? (() => {}) };
     try {

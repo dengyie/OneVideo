@@ -1,0 +1,19 @@
+{
+  "topic": "OneVideo 放映页",
+  "question": "拿到放映页链接，点开能做什么？",
+  "audience": "第一次打开放映页的朋友",
+  "asOf": "2026-11-07",
+  "facts": [
+    {
+      "id": "site",
+      "claim": "放映页 vedio.mangoqwq.com 列出全部已发布视频，详情页带简介、章节跳转和下载",
+      "value": "vedio.mangoqwq.com",
+      "confidence": "confirmed",
+      "source": {
+        "publisher": "OneVideo",
+        "title": "web/site/index.html",
+        "date": "2026-11-07"
+      }
+    }
+  ]
+}

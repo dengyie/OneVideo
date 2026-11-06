@@ -1,7 +1,7 @@
 // Every render is kept as out/versions/v<N>[-draft][-part].mp4 and logged in out/renders.json, so
 // the director can compare a new cut with the last one instead of judging it from memory. The
 // usual names (out/<name>.mp4, .draft.mp4, .part.mp4) point at the newest of each kind.
-import { copyFileSync, existsSync, linkSync, mkdirSync, rmSync, statSync } from "node:fs";
+import { copyFileSync, existsSync, linkSync, mkdirSync, renameSync, rmSync, statSync } from "node:fs";
 import { createHash } from "node:crypto";
 import { join, relative, resolve } from "node:path";
 import { UserError, readJson, writeJson } from "./project.mjs";
@@ -57,6 +57,19 @@ export function recordRender(project, entry, { alias, keep = project.config.rend
   mkdirSync(project.paths.out, { recursive: true });
   writeJson(logPath(project), { renders });
   return renders.at(-1);
+}
+
+// A render made before versioning (out/<name>.mp4 that no logged version points at) becomes the
+// first version instead of being overwritten by the next render, so it can still be compared.
+export function adoptLegacy(project, alias, { draft = false, part = false } = {}) {
+  if (!alias || !existsSync(alias)) return null;
+  const renders = readRenders(project);
+  if (renders.some((r) => !r.pruned && sameFile(alias, join(project.root, r.file)))) return null;
+  const { v, file } = versionFile(project, { draft, part });
+  mkdirSync(join(project.paths.out, "versions"), { recursive: true });
+  renameSync(alias, file);
+  const at = statSync(file).mtime.toISOString();
+  return recordRender(project, { v, file, at, draft, part, offset: 0, timeline: null, legacy: true, note: "imported: rendered before versioning" }, { alias: null });
 }
 
 // A video argument for sheet / look / qc: nothing (the newest render), "v3", "3", "prev" (the one

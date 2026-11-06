@@ -28,9 +28,11 @@
 | `focus` | 一张照片里逐个推近细节并手绘圈出 | `asset`、`regions[{x,y,w,h}]`（0–1 坐标） | 区域 `label`、`shape`（box/circle）、`zoom`、`cue`；`hold` 结尾拉回全图 |
 | `split` | 左右（竖屏为上下）对照，或 `mode:"pip"` 画中画 | `left`、`right`（`{asset,title,text,value,format,caption}`） | `ratio`、`corner`、各侧 `cue` |
 | `photo-stack` | 多张照片像相纸一样逐张落到桌面 | `items[{asset}]`（≤8） | `caption`、`cue`、`title` |
-| `footage` | 实拍做主角：全屏、变速、标题压在主体后面 | `asset` | `startFrom`、`ramp[{at,speed}]`（如 0.35 慢动作再回 1.6 倍）、`title{text,behind,matte,style,kicker}`（`behind` 需先 `onevideo depth`）、`dim`、`tint` |
+| `footage` | 实拍做主角：全屏、变速、标题压在主体后面 | `asset` | `startFrom`、`ramp[{at,speed}]`（如 0.35 慢动作再回 1.6 倍）、`title{text,behind,matte,style,kicker}`（`behind` 需先 `onevideo depth`）、`dim`、`tint`、`screen{asset,corners,t,blend,opacity,occlude}`（把真实界面贴进实拍里的屏幕：四角透视映射，`blend:"screen"` 保留屏幕反光，`occlude.asset` 黑白遮罩或 `occlude.matte` 深度挡住手指；角点用 `onevideo screen <asset>` 自动找，只适合机位固定的画面）、`windows{asset,count,t,stagger,gap,matte}`（竖条窗口依次打开露出另一张画面，主体按深度压在窗口前） |
 | `parallax` | 一张照片做 2.5D 视差推拉 | `asset`（图片） | `move`（dolly-in/dolly-out/truck-left/truck-right/crane-up/orbit）、`amount`、`title`；有深度图时按深度分层，否则按“下近上远”渐变 |
 | `canvas` | 无限画布：元素变形 + 镜头连续飞行，代替翻页 | — | `items[{id,type,x,y,w,h,value,label,at,morph[{at,type,…}]}]`（stat/text/bar/dot/image，坐标为布局单位，首屏 0–1920×0–1080）、`path[{at,focus,zoom,cut,fly}]`、`links[{from,to,at}]`、`inherit`（接着上一个 canvas 的世界和镜头）、`floor`（随镜头移动的点阵地面，近层 1:1、远层 0.35 视差；有 backdrop 时默认关）。卡片会随镜头速度惯性倾斜，最多 9°；stat 入场分层：底板从强调色边擦开，标签随后滑入，数字最后升起；数字计数时逐位翻牌（里程表式，低位多转几圈、从左到右依次落定，转得快时纵向拖影） |
+| `device` | 产品演示：真实界面装进一台手机/浏览器/笔记本，同一台设备跨场景不离场 | `screens[{id,asset}]`（`onevideo capture` 截的图） | `device`（phone/browser/laptop，默认竖屏 phone、横屏 browser）、`steps[{at,tap,expand{rect,to,asset},collapse,screen,scroll,focus,camera}]`、`url`（地址栏）、`zoom`、`caption`。`tap`/`rect`/`focus` 可以写坐标，也可以写 capture 时 `--rects` 量出的名字；点按出涟漪，`expand` 让卡片从原位弹开、背后压暗，`collapse` 或换页时收回；镜头自动接力：点按前 0.6s 推到页面，展开时推到结果，收回拉回整机。相邻两个同种设备场景默认硬切、不重复入场。点按吸附拍点，没写时间的步骤在 0.6s 到 75% 时长间均匀排开；结果停留不足 1s 时 deviceGate 警告（`gates.deviceHold`） |
+| `match-cut` | 剪影/轮廓匹配剪辑：几张图在同一位置按拍点硬切 | `items[{asset}]`（≥2） | `every`（秒、`"beat"`、`"bar"`，从 `from` 起算；拍点不够会报错）、各项 `t`/`x`/`y`/`scale`/`label`、`size`（默认 0.62）、`background`、`flash`（每切一下白闪）、`title`（收尾标题）；每次切换有 1.06 倍冲击 |
 
 ## 场景通用字段
 

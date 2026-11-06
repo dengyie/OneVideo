@@ -105,4 +105,6 @@ export type Timeline = {
   // Music beat times in seconds (empty without music); shots and cues can snap to them.
   beats?: number[];
   scenes: Scene[];
+  // Set only for a stem render: the one sound group to play.
+  stem?: "voice" | "music" | "sfx";
 };

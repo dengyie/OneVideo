@@ -225,6 +225,25 @@ export function rhythmGate(timeline, config) {
   return out;
 }
 
+// A product demo is read on its results: after a card opens, a page turns or the camera lands on
+// a result, it has to hold long enough to be read before the next step moves it on.
+export const DEVICE_HOLD = 1.0;
+export function deviceGate(timeline, config) {
+  const hold = config.gates?.deviceHold ?? DEVICE_HOLD;
+  const out = [];
+  for (const sc of timeline.scenes) {
+    if (sc.type !== "device") continue;
+    const steps = sc.props.steps ?? [];
+    for (const [i, st] of steps.entries()) {
+      if (!(st.expand || st.screen !== undefined || st.camera === "result")) continue;
+      const arrive = st.t + (st.tap ? 0.25 : 0) + 0.55;
+      const next = steps[i + 1]?.t ?? sc.duration;
+      if (next - arrive < hold) out.push(issue("warn", "device", `scene "${sc.id}" step ${i} (${st.t}s): the result holds ${Math.max(0, next - arrive).toFixed(2)}s before ${steps[i + 1] ? `step ${i + 1}` : "the scene ends"} — give it ${hold}s+ (gates.deviceHold)`));
+    }
+  }
+  return out;
+}
+
 // Audience-question order: every narrated scene answers the question the viewer has right now
 // ("what is it?" → "why?" → "so what?"). Writing it down catches scenes that answer nothing.
 export function questionGate(script) {

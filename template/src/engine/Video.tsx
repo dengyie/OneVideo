@@ -194,6 +194,8 @@ const SceneFrame: React.FC<{ scene: Scene; length: number; children: React.React
 export const Video: React.FC<Timeline> = (timeline) => {
   const { fps } = useVideoConfig();
   const { theme, music } = timeline;
+  // A stem render (onevideo stems) plays one sound group and mutes the rest.
+  const play = (group: NonNullable<Timeline["stem"]>) => !timeline.stem || timeline.stem === group;
   return (
     <TimelineContext.Provider value={timeline}>
       <AbsoluteFill style={{ backgroundColor: theme.colors.bg, fontFamily: theme.fonts.body, color: theme.colors.text }}>
@@ -219,7 +221,7 @@ export const Video: React.FC<Timeline> = (timeline) => {
                   </SceneFrame>
                 </SceneContext.Provider>
               </Sequence>
-              {scene.audio && (
+              {scene.audio && play("voice") && (
                 <Sequence name={`${scene.id} · voice`} from={scene.from} durationInFrames={scene.durationInFrames} layout="none">
                   <Html5Audio src={staticFile(scene.audio)} />
                 </Sequence>
@@ -227,7 +229,7 @@ export const Video: React.FC<Timeline> = (timeline) => {
             </React.Fragment>
           );
         })}
-        {music && (
+        {music && play("music") && (
           <Html5Audio
             src={staticFile(music.src)}
             trimBefore={music.offset ? Math.round(music.offset * fps) : undefined}
@@ -235,7 +237,7 @@ export const Video: React.FC<Timeline> = (timeline) => {
             volume={(f) => musicGain(f / fps, timeline.duration, music, timeline.narration)}
           />
         )}
-        {timeline.sfx.map((s, i) => (
+        {play("sfx") && timeline.sfx.map((s, i) => (
           <Sequence key={`sfx-${i}`} name={`sfx ${s.sound}`} from={Math.max(0, Math.round(s.at * fps))} durationInFrames={Math.round((s.duration ?? 3) * fps) + 2} layout="none">
             <Html5Audio src={staticFile(s.src)} volume={s.volume} />
           </Sequence>

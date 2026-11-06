@@ -1,0 +1,52 @@
+{
+  "name": "device-tour",
+  "title": "真机演示：点击→展开→结果",
+  "description": "同一台手机贯穿：真实截图在屏上，点击有涟漪，卡片从原位置展开，镜头 设备→页面→结果 接力，结果停 1 秒以上",
+  "tags": [
+    "产品",
+    "演示",
+    "UI",
+    "手机",
+    "promo"
+  ],
+  "scenes": [
+    {
+      "type": "device",
+      "props": {
+        "device": "phone",
+        "screens": [
+          {
+            "id": "home",
+            "asset": "{{home}}"
+          },
+          {
+            "id": "detail",
+            "asset": "{{detail}}"
+          }
+        ],
+        "steps": [
+          {
+            "at": 0.8,
+            "tap": "{{target}}",
+            "label": "{{step1}}"
+          },
+          {
+            "at": 1.3,
+            "expand": {
+              "rect": "{{target}}"
+            }
+          },
+          {
+            "at": 3.2,
+            "collapse": true
+          },
+          {
+            "at": 3.8,
+            "screen": "detail",
+            "label": "{{step2}}"
+          }
+        ]
+      }
+    }
+  ]
+}

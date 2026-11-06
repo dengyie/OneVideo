@@ -14,6 +14,7 @@ onevideo publish
 - `chapters.txt`：章节时间戳（来自脚本 `chapter` 字段，首个章节从 00:00 开始）
 - `description.txt`：标题、摘要、章节、资料来源、素材署名
 - `plan/publish.json`：上述内容的结构化版本 + 警告
+- `--stems`（或单独 `onevideo stems`）：按组导出分轨到 `out/publish/stems/`——`voice.wav`、`music.wav`、`sfx.wav`，以及给音效写了 `stem` 的自定义组；各轨相加等于成片混音，方便在剪辑软件里重新混音
 
 QC 结论为 fail 时拒绝生成。发布到具体平台（B站、YouTube、视频号）由用户操作；本工具不上传。
 

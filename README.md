@@ -29,7 +29,8 @@ research → proposal → script → storyboard → assets → voice → compose
 - **交接页**：`onevideo handoff` 生成 `plan/handoff.md`，记录阶段、已定参数、版本、看片意见和待处理问题，手写的“锁定 / 下一轮只改”跨次保留，换会话或交给子 agent 时不丢上下文。
 - **程序化配乐和音效**：零依赖合成，没有版权问题。
 - **渲染后 QC**：检查编码、分辨率、帧率、时长、响度、真峰值、旁白中的静音、黑帧、冻结画面、静态占比，并按场景抽帧供人工审阅。
-- **发布包**：SRT/VTT 字幕、章节时间戳、带全部来源与素材署名的简介。
+- **发布包**：SRT/VTT 字幕、章节时间戳、带全部来源与素材署名的简介；`publish --stems` 另出旁白 / 音乐 / 音效分轨。
+- **产品宣传（promo 流水线）**：`onevideo capture` 用自己起的无头 Chrome 按手机/平板/桌面视口截真实界面，并量出元素位置；`device` 场景把界面装进同一台设备，点按 → 卡片展开 → 停在结果上，镜头自动接力；`match-cut` 剪影匹配剪辑；`footage.screen` 把界面透视贴进实拍里的屏幕（`onevideo screen` 自动找角点），`footage.windows` 竖条窗口转场。
 
 ## 安装
 
@@ -94,12 +95,12 @@ ln -s "$PWD" ~/.claude/skills/onevideo
 |---|---|
 | `cli/` | `onevideo` 命令，零 npm 依赖 |
 | `template/` | Remotion 引擎（场景组件、风格、动效） |
-| `pipelines/` | data-explainer / documentary / shorts 的阶段定义 |
+| `pipelines/` | data-explainer / documentary / shorts / promo 的阶段定义 |
 | `stages/` | 每个阶段的导演文档 |
 | `styles/` | 视觉风格 token |
 | `schemas/` | 项目与各 plan 产物的 JSON Schema |
 | `references/` | 中文写作、TTS 读音、数据可信、授权、场景、动效、QC 阈值 |
-| `examples/` | `spacex-motion`（动效引擎示范）、`spacex-ipo`（数据图表版） |
+| `examples/` | `spacex-motion`（动效引擎示范）、`spacex-ipo`（数据图表版）、`promo-demo`（产品宣传：capture + device） |
 | `tests/` | `npm test`（node:test） |
 
 ## 许可

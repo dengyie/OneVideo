@@ -57,11 +57,11 @@ export async function lib(args) {
     if (!rest[0]) {
       if (args.json) return console.log(JSON.stringify(recipes, null, 2));
       for (const r of recipes) console.log(`${r.name.padEnd(20)} ${r.title} — ${r.description}${r.notes ? `（${r.notes}）` : ""}\n${"".padEnd(20)} 场景: ${r.scenes.map((s) => s.type).join(" + ")} · 槽位: ${recipeSlots(r).join(", ")}`);
-      return log(`${recipes.length} recipes · onevideo lib recipe <name> [--id scene-id] [--set k=v,k2=v2]`);
+      return log(`${recipes.length} recipes · onevideo lib recipe <name> [--id scene-id] [--set k=v,k2=v2 (a JSON value fills a whole slot)]`);
     }
     const r = recipes.find((x) => x.name === rest[0]);
     if (!r) throw new UserError(`unknown recipe "${rest[0]}" (${recipes.map((x) => x.name).join(", ")})`);
-    const vars = Object.fromEntries(String(args.set ?? "").split(",").filter(Boolean).map((kv) => { const i = kv.indexOf("="); return [kv.slice(0, i), kv.slice(i + 1)]; }));
+    const vars = Object.fromEntries(String(args.set ?? "").split(/,(?=\w+=)/).filter(Boolean).map((kv) => { const i = kv.indexOf("="); return [kv.slice(0, i), kv.slice(i + 1)]; }));
     const { scenes, missing } = fillRecipe(r, { id: typeof args.id === "string" ? args.id : undefined, vars });
     console.log(JSON.stringify(scenes, null, 2));
     if (missing.length) warn(`unfilled slots: ${missing.join(", ")} — replace the {{…}} strings before validate`);
