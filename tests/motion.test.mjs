@@ -256,3 +256,14 @@ test("rhythm: long stills and transition runs warn; a covered word leaves when t
   assert.equal(b.end, Math.round((b.t + 1) * 1000) / 1000); // the far-off word does not cut it short
   assert.ok(c.end > c.t + 0.9);
 });
+
+test("depthStep: dense only for clips with a title cut out behind the subject", async () => {
+  const { depthStep } = await import("../cli/lib/assets.mjs");
+  const sb = { scenes: [
+    { type: "footage", props: { asset: "a", title: { text: "X", behind: true } } },
+    { type: "footage", props: { asset: "b", title: { text: "Y" } } },
+  ] };
+  assert.equal(depthStep(sb, "a"), 2);
+  assert.equal(depthStep(sb, "b"), 8);
+  assert.equal(depthStep(null, "b"), 2);
+});

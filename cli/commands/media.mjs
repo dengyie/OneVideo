@@ -7,7 +7,7 @@ import { runTts, ttsConfig, sceneLines } from "../lib/tts.mjs";
 import { writeMusic, synthSfx, SFX, MUSIC_PRESETS } from "../lib/synth.mjs";
 import { writeWav } from "../lib/wav.mjs";
 import { checkProject, printIssues } from "../lib/check.mjs";
-import { search, fetchAsset, scoreCandidate, assetFileExists, depthPath, lumaPath, framesDir, countFrames } from "../lib/assets.mjs";
+import { search, fetchAsset, scoreCandidate, assetFileExists, depthPath, depthStep, lumaPath, framesDir, countFrames } from "../lib/assets.mjs";
 import { run } from "../lib/ffmpeg.mjs";
 import { AUTO_TRANSITION_SFX, DIMENSIONS, MOTION_SFX, overlaySound, sfxFile, sfxVariants } from "../lib/timeline.mjs";
 import { categories, entryPath, loadCatalog, resolveSfx } from "../lib/library.mjs";
@@ -188,6 +188,7 @@ export async function depth(args) {
   for (const id of ids ?? []) if (!items.some((a) => a.id === id)) throw new UserError(`unknown asset "${id}"`);
   if (!todo.length) return log("no image/video assets to process");
   const script = join(ONEVIDEO_ROOT, "cli", "py", "depth.py");
+  const storyboard = existsSync(project.paths.storyboard) ? readJson(project.paths.storyboard) : null;
   for (const a of todo) {
     const out = project.p("public", depthPath(a));
     let src = project.p("public", a.file);
@@ -195,14 +196,16 @@ export async function depth(args) {
     if (a.kind === "video") {
       src = project.p("public", framesDir(a.file));
       if (!countFrames(src)) throw new UserError(`asset "${a.id}" has no frame sequence yet; run: onevideo stills (or render) once to extract it`);
-      extra.push("--step", String(args.step ?? 2));
+      extra.push("--step", String(args.step ?? depthStep(storyboard, a.id)));
     }
     // The luma grid is cheap: made whenever it is missing, even when the depth map already exists.
     if (!existsSync(project.p("public", lumaPath(a))) || args.force) {
       await run(py, [join(ONEVIDEO_ROOT, "cli", "py", "luma.py"), src, project.p("public", lumaPath(a)), ...extra], { cwd: project.root });
       log(`✓ ${a.id}: public/${lumaPath(a)}`);
     }
-    if (existsSync(out) && !args.force) { log(`✓ ${a.id}: public/${depthPath(a)} (exists; --force to redo)`); continue; }
+    // A sparse clip map is redone once a title behind its subject needs it denser.
+    const meta = join(out, "meta.json"), have = a.kind === "video" && existsSync(meta) ? readJson(meta).step : 0;
+    if (existsSync(out) && !args.force && !(have > Number(extra[1]))) { log(`✓ ${a.id}: public/${depthPath(a)} (exists; --force to redo)`); continue; }
     log(`depth: ${a.id} → public/${depthPath(a)}`);
     const t0 = Date.now();
     await run(py, [script, model, src, out, ...extra], { cwd: project.root, stdio: "inherit" });

@@ -30,7 +30,7 @@ onevideo status | validate [--strict] | approve <stage> [--note …]
 onevideo tts [--sample|--dry|--force|--only a,b]   # 逐句合成 → plan/timings.json（含响度归一化）
 onevideo music [--preset ambient|pulse|documentary|bright]
 onevideo assets search <q> [--provider nasa,wikimedia,openverse,pexels] | assets fetch
-onevideo depth [asset ids] [--step 2]               # 深度图 + 亮度网格：主体穿越、关键词避让、自动加底、字幕避让
+onevideo depth [asset ids] [--step N]               # 深度图 + 亮度网格：主体穿越、关键词避让、自动加底、字幕避让
 onevideo timeline | stills [--scene id] [--at 0.3,0.7] | studio | render [--draft]
 onevideo lib list|search|recipe <name> --id x --set k=v   # 音效 / Lottie / 镜头配方
 onevideo qc | publish | build [--draft] | doctor | decide <category> <subject> --selected X

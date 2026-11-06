@@ -225,3 +225,10 @@ export async function generateImage(item, { dir, defaults = {} }) {
 }
 
 export const assetFileExists = (publicDir, item) => Boolean(item.file) && existsSync(join(publicDir, item.file));
+
+// Frames between depth maps of a clip: every 2nd only where a footage title is cut out behind the
+// subject; dives, word dodging and scrims sample a few moments, so every 8th does.
+export function depthStep(storyboard, id) {
+  if (!storyboard) return 2;
+  return storyboard.scenes.some((s) => s.type === "footage" && s.props?.asset === id && s.props?.title?.behind) ? 2 : 8;
+}

@@ -16,7 +16,7 @@ const COMMANDS = {
   music: [media.music, "music [--preset ambient|pulse|documentary|bright] [--force]   procedural BGM + SFX"],
   timeline: [media.timeline, "timeline [--force]           compile plan/timeline.json"],
   assets: [media.assets, "assets search <query> [--provider …] [--kind video] | assets fetch [--only id] [--force]"],
-  depth: [media.depth, "depth [asset ids] [--step 2] [--force]   depth maps for parallax / text-behind-subject (VM python + ONNX)"],
+  depth: [media.depth, "depth [asset ids] [--step N] [--force]   depth maps for parallax / text-behind-subject (VM python + ONNX)"],
   decide: [media.decide, "decide <category> <subject> --selected X [--options a,b] [--reason …]"],
   render: [render.render, "render [--draft] [--frames 0-90] [--concurrency 4] [--force]"],
   stills: [render.stills, "stills [--scene id,id] [--at 0.7|0.3,0.9]   JPEG per scene (and fraction) → out/stills/"],
