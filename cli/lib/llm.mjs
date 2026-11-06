@@ -17,21 +17,28 @@ export function imagePart(src, mime) {
   return { type: "image_url", image_url: { url: `data:${type};base64,${buf.toString("base64")}` } };
 }
 
-// The first JSON object or array in a reply, tolerating ```json fences and surrounding prose.
-export function parseJsonReply(text) {
+// The first JSON object or array in a reply, tolerating ```json fences and surrounding prose. With
+// `partial`, a reply cut off mid-way (relays cap output, reasoning tokens included) is closed after
+// its last complete element instead of rejected; the result then carries a `truncated` marker.
+export function parseJsonReply(text, { partial = false } = {}) {
   const s = String(text ?? "").replace(/```(?:json)?/gi, "");
   const start = s.search(/[[{]/);
   if (start < 0) throw new Error(`no JSON in reply: ${s.slice(0, 120)}`);
-  const open = s[start], close = open === "{" ? "}" : "]";
-  let depth = 0, inStr = false;
+  const stack = [];
+  let inStr = false, cut = null;
   for (let i = start; i < s.length; i++) {
     const c = s[i];
     if (inStr) { if (c === "\\") i++; else if (c === '"') inStr = false; continue; }
     if (c === '"') inStr = true;
-    else if (c === open) depth++;
-    else if (c === close && --depth === 0) return JSON.parse(s.slice(start, i + 1));
+    else if (c === "{" || c === "[") stack.push(c === "{" ? "}" : "]");
+    else if (c === "}" || c === "]") {
+      stack.pop();
+      if (!stack.length) return JSON.parse(s.slice(start, i + 1));
+      cut = { at: i + 1, close: stack.slice().reverse().join("") };
+    }
   }
-  throw new Error(`unterminated JSON in reply: ${s.slice(start, start + 120)}`);
+  if (partial && cut) return Object.assign(JSON.parse(s.slice(start, cut.at) + cut.close), { truncated: true });
+  throw new Error(`unterminated JSON in reply (${s.length - start} chars): ${s.slice(start, start + 120).replace(/\s+/g, " ")}`);
 }
 
 // One user turn (text + optional images) → { text, model } or, with json, { data, model }.
@@ -49,7 +56,7 @@ export async function ask({ prompt, images = [], system, json = false, maxTokens
       const text = j.choices?.[0]?.message?.content;
       if (!text?.trim()) throw new Error(`empty reply${j.error ? `: ${JSON.stringify(j.error).slice(0, 160)}` : ""}`);
       if (/^⚠️? ?Upstream .* empty response/i.test(text)) throw new Error("upstream returned an empty response");
-      return json ? { data: parseJsonReply(text), model } : { text, model };
+      return json ? { data: parseJsonReply(text, { partial: true }), model } : { text, model };
     } catch (e) {
       failures.push(`${model}: ${e.message.split("\n")[0].slice(0, 200)}`);
     }

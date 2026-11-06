@@ -97,6 +97,11 @@ test("ask walks the model list and parses JSON replies", async () => {
   } finally { r.close(); }
   assert.deepEqual(parseJsonReply("x [1, [2]] y"), [1, [2]]);
   assert.throws(() => parseJsonReply("nothing here"), /no JSON/);
+  // A reply the relay cut off keeps its complete notes.
+  const cut = parseJsonReply('```json\n{"score": 6, "notes": [{"cell": 1, "issue": "a"}, {"cell": 2, "issue": "b \\"}\\""}, {"cell": 3, "iss', { partial: true });
+  assert.deepEqual(cut.notes.map((n) => n.cell), [1, 2]);
+  assert.equal(cut.truncated, true);
+  assert.throws(() => parseJsonReply('{"a": [1', { partial: false }), /unterminated/);
 });
 
 test("contact sheet geometry and scene lookup", () => {

@@ -108,14 +108,18 @@ export async function sheet(args) {
   }
 }
 
-const LOOK_PROMPT = (sheets, scenes, focus) => `You are reviewing a rendered narrated video as a film editor. The images are contact sheets: each cell is one frame, read row by row, left to right, cell 0 first.
-${sheets.map((s, k) => `Sheet ${k}: ${s.cells} cells, cell i shows t = ${s.t0 + s.step / 2}s + i×${s.step}s.`).join("\n")}
+// One sheet per call: relays cap a reply's tokens (reasoning included), so a whole-video review
+// in one answer comes back cut off.
+const LOOK_PROMPT = (s, scenes, focus) => `You are reviewing a rendered narrated video as a film editor. The image is a contact sheet: each cell is one frame, read row by row, left to right, cell 0 first. ${s.cells} cells; cell i shows t = ${s.t0 + s.step / 2}s + i×${s.step}s.
 
-Timeline (scene id, type, start–end seconds, narration lines):
+Timeline around this stretch (scene id, type, start–end seconds, narration lines with their times):
 ${scenes}
 
 Judge what a viewer sees: stretches where nothing new happens on screen (more than ~4 s), text that is hard to read or collides with other text or covers the subject, awkward composition or cropping, a visual that does not match its narration line, jarring or repetitive transitions, blank/black/broken frames, inconsistent look between scenes. Ignore things that are fine. ${focus ? `Pay extra attention to: ${focus}.` : ""}
-Reply only JSON: {"score": <1-10 overall>, "summary": "<two sentences, Chinese>", "notes": [{"sheet": <k>, "cell": <i>, "severity": "high|medium|low", "issue": "<Chinese>", "fix": "<concrete change, Chinese>"}]}`;
+Keep it short: at most 5 notes, the most important first, each issue and fix under 40 characters.
+Reply only JSON: {"score": <1-10 for this stretch>, "summary": "<one sentence, Chinese>", "notes": [{"cell": <i>, "severity": "high|medium|low", "issue": "<Chinese>", "fix": "<concrete change, Chinese>"}]}`;
+
+const sceneLine = (s) => `- ${s.id} (${s.type}) ${s.start.toFixed(1)}–${(s.start + s.duration).toFixed(1)}s: ${(s.lines ?? []).map((l) => `[${(s.start + l.start).toFixed(1)}s] ${l.text}`).join(" ")}`;
 
 export async function look(args) {
   const project = loadProject();
@@ -124,23 +128,31 @@ export async function look(args) {
   const tl = existsSync(project.paths.timeline) ? readJson(project.paths.timeline) : null;
   const outDir = join(project.paths.out, "qc");
   const { sheets } = await writeSheets(video, outDir, { fps: args.fps !== undefined ? Number(args.fps) : undefined, from: Number(args.from ?? 0), to: args.to !== undefined ? Number(args.to) : undefined, width: 400 });
-  const scenes = (tl?.scenes ?? [])
-    .map((s) => `- ${s.id} (${s.type}) ${s.start.toFixed(1)}–${(s.start + s.duration).toFixed(1)}s: ${(s.lines ?? []).map((l) => `[${(s.start + l.start).toFixed(1)}s] ${l.text}`).join(" ")}`)
-    .join("\n") || "(no timeline)";
   const config = { llm: { ...project.config.llm, ...(args.models ? { models: String(args.models).split(",") } : {}) } };
   log(`look: ${sheets.length} sheet(s) → ${llmConfig(config).models.join(" / ")}`);
-  const { data, model } = await ask({ prompt: LOOK_PROMPT(sheets, scenes, args.focus), images: sheets.map((s) => imagePart(s.file)), json: true, maxTokens: 4000, config });
-  const notes = (Array.isArray(data.notes) ? data.notes : [])
-    .map((n) => {
-      const s = sheets[n.sheet] ?? sheets[0];
-      const cell = Math.max(0, Math.min(s.cells - 1, Number(n.cell) || 0));
-      const t = cellTime(s, cell);
-      return { t, scene: sceneAt(tl, t), severity: ["high", "medium", "low"].includes(n.severity) ? n.severity : "medium", issue: String(n.issue ?? ""), fix: String(n.fix ?? "") };
-    })
-    .sort((a, b) => a.t - b.t);
-  const result = { at: new Date().toISOString(), model, video: relative(project.root, video), score: data.score ?? null, summary: data.summary ?? "", sheets: sheets.map((s) => relative(project.root, s.file)), notes };
+  const reviews = [], notes = [];
+  for (const [k, s] of sheets.entries()) {
+    const end = s.t0 + s.cells * s.step;
+    const scenes = (tl?.scenes ?? []).filter((sc) => sc.start < end && sc.start + sc.duration > s.t0).map(sceneLine).join("\n") || "(no timeline)";
+    try {
+      const { data, model } = await ask({ prompt: LOOK_PROMPT(s, scenes, args.focus), images: [imagePart(s.file)], json: true, maxTokens: 4000, config });
+      reviews.push({ sheet: relative(project.root, s.file), model, score: Number(data.score) || null, summary: String(data.summary ?? ""), truncated: !!data.truncated });
+      for (const n of Array.isArray(data.notes) ? data.notes : []) {
+        const t = cellTime(s, Math.max(0, Math.min(s.cells - 1, Number(n.cell) || 0)));
+        notes.push({ t, scene: sceneAt(tl, t), severity: ["high", "medium", "low"].includes(n.severity) ? n.severity : "medium", issue: String(n.issue ?? ""), fix: String(n.fix ?? "") });
+      }
+      log(`  sheet ${k + 1}: ${data.score ?? "?"}/10 (${model})${data.truncated ? " [reply cut off; kept complete notes]" : ""} ${data.summary ?? ""}`);
+    } catch (e) {
+      warn(`sheet ${k + 1}: ${e.message}`);
+    }
+  }
+  if (!reviews.length) throw new UserError("no sheet was reviewed; check the model list (onevideo doctor) or pass --models");
+  notes.sort((a, b) => a.t - b.t);
+  const scored = reviews.filter((r) => r.score);
+  const score = scored.length ? +(scored.reduce((a, r) => a + r.score, 0) / scored.length).toFixed(1) : null;
+  const result = { at: new Date().toISOString(), video: relative(project.root, video), score, reviews, notes };
   writeJson(join(outDir, "look.json"), result);
-  log(`score ${result.score ?? "?"}/10 (${model}) — ${result.summary}`);
+  log(`score ${score ?? "?"}/10 over ${reviews.length}/${sheets.length} sheet(s)`);
   const icon = { high: "✗", medium: "⚠", low: "·" };
   for (const n of notes) log(`${icon[n.severity]} ${n.t.toFixed(1).padStart(5)}s ${String(n.scene ?? "").padEnd(10)} ${n.issue}${n.fix ? `\n         → ${n.fix}` : ""}`);
   if (!notes.length) warn("no notes returned; check the sheets yourself");
