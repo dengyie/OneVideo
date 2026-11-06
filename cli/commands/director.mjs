@@ -51,7 +51,7 @@ function encodePng(rgb, w, h) {
 }
 
 async function frameRgb(video, t, w, h, tmp) {
-  const f = join(tmp, "cell.rgb");
+  const f = join(tmp, `cell-${t}.rgb`);
   rmSync(f, { force: true });
   await ffmpeg(["-y", "-v", "error", "-ss", String(t), "-i", video, "-frames:v", "1", "-vf", `scale=${w}:${h}`, "-pix_fmt", "rgb24", "-c:v", "rawvideo", "-f", "image2", "-update", "1", f]);
   return existsSync(f) ? readFileSync(f) : null; // past the last frame: leave the cell black
@@ -71,12 +71,15 @@ export async function writeSheets(video, outDir, opts) {
       s.file = join(outDir, `sheet-${String(k + 1).padStart(2, "0")}.jpg`);
       const W = s.cols * w + (s.cols + 1) * PAD, H = s.rows * h + (s.rows + 1) * PAD;
       const grid = Buffer.alloc(W * H * 3);
-      for (let i = 0; i < s.cells; i++) {
-        // Sample mid-interval so a cell shows its second, not the cut at its edge.
-        const cell = await frameRgb(video, Math.min(cellTime(s, i), duration - 0.05), w, h, tmp);
-        if (!cell) continue;
-        const x0 = PAD + (i % s.cols) * (w + PAD), y0 = PAD + Math.floor(i / s.cols) * (h + PAD);
-        for (let y = 0; y < h; y++) cell.copy(grid, ((y0 + y) * W + x0) * 3, y * w * 3, (y + 1) * w * 3);
+      // Sample mid-interval so a cell shows its second, not the cut at its edge; a few seeks at a time.
+      for (let i0 = 0; i0 < s.cells; i0 += 4) {
+        const idx = Array.from({ length: Math.min(4, s.cells - i0) }, (_, d) => i0 + d);
+        const cells = await Promise.all(idx.map((i) => frameRgb(video, Math.min(cellTime(s, i), duration - 0.05), w, h, tmp)));
+        for (const [n, cell] of cells.entries()) {
+          if (!cell) continue;
+          const i = idx[n], x0 = PAD + (i % s.cols) * (w + PAD), y0 = PAD + Math.floor(i / s.cols) * (h + PAD);
+          for (let y = 0; y < h; y++) cell.copy(grid, ((y0 + y) * W + x0) * 3, y * w * 3, (y + 1) * w * 3);
+        }
       }
       const png = join(tmp, "sheet.png");
       writeFileSync(png, encodePng(grid, W, H));
