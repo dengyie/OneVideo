@@ -15,6 +15,15 @@ OneVideo 把“做一条视频”拆成 10 个阶段。每个阶段都有一份�
 4. 分镜按动效引擎写，不要做成一页一张卡：先读 `references/motion-rules.md`，参考 `examples/spacex-motion`。实拍做主角（`footage` 变速、标题压在主体后），数字进 `canvas` 连续飞行，每个场景都有 `shots`，钩子和结论每句一个 `word` 关键词，有音乐时写 `music.offset: "auto"`。`onevideo timeline` 报出的 rhythm 警告（画面超过 4.5s 没有新东西、连续相同转场）要处理掉，或者向用户说明为什么保留。
 5. 渲染后必须执行 `onevideo qc`，并**逐张看** `out/qc/frames/`，确认画面没问题后再 `approve review`。
 
+## 你是导演
+
+节奏由你把控：每个镜头为什么在这里、停多久、怎么切，都由你决定并写进分镜。CLI 和模型只是工具，它们给出的结论要由你核实后再采用。
+
+- **缺画面就自己做**：`assets.json` 里写 `generate`，可以生图（`variants: 2–4` 出多张，由视觉模型按 `brief` 挑一张，所有备选都留在 `public/assets/<id>.take<k>.*`，觉得它挑得不对就写 `pick` 改掉），也可以生视频（`kind: "video"`，`from: <图片 id>` 把一张图做成首帧动起来）。生成失败时会回落到同一条目的 `url` / `query`，所以关键素材最好留一个备选来源。能找到真实素材时优先用真实素材，生成的素材只用来补镜头、做氛围、做概念画面，不能冒充新闻实拍。
+- **看片**：`onevideo sheet` 把成片按秒铺成联系表（`out/qc/sheet-NN.jpg`，同时输出每个场景从哪一格开始）。用 Read 看联系表，比逐帧翻快得多。`onevideo look` 再请视觉模型按剪辑标准过一遍，结果写进 `out/qc/look.json`，每条意见带时间点和场景。它只是第二意见：先在联系表或 `stills` 里确认问题确实存在，再改分镜。
+- **迭代**：改分镜 → `timeline`（处理 rhythm 警告）→ `render --draft` → `sheet` / `look` → 再改。每一轮只改最影响观感的两三处。
+- **并行**：调研、找素材、生素材互相独立，可以交给子 agent 并行做。分镜和节奏由你自己写，不要外包。
+
 ## 硬规则
 
 - 旁白里的每个数字都要能在 `plan/research.json` 的 facts 里找到，facts 必须有来源（numbers 门控）。不要为了过门控而编造来源。
@@ -29,10 +38,12 @@ onevideo init <dir> --pipeline data-explainer|documentary|shorts [--style midnig
 onevideo status | validate [--strict] | approve <stage> [--note …]
 onevideo tts [--sample|--dry|--force|--only a,b]   # 逐句合成 → plan/timings.json（含响度归一化）
 onevideo music [--preset ambient|pulse|documentary|bright]
-onevideo assets search <q> [--provider nasa,wikimedia,openverse,pexels] | assets fetch
+onevideo assets search <q> [--provider nasa,wikimedia,openverse,pexels] | assets fetch [--only a,b] [--force]   # 含 generate：AI 生图 / 生视频
 onevideo depth [asset ids] [--step N]               # 深度图 + 亮度网格：主体穿越、关键词避让、自动加底、字幕避让
 onevideo timeline | stills [--scene id] [--at 0.3,0.7] | studio | render [--draft]
 onevideo lib list|search|recipe <name> --id x --set k=v   # 音效 / Lottie / 镜头配方
+onevideo sheet [--fps 1] [--from s] [--to s]        # 联系表 → out/qc/sheet-NN.jpg
+onevideo look [--focus "字幕可读性"] [--models a,b]   # 视觉模型看片 → out/qc/look.json
 onevideo qc | publish | build [--draft] | doctor | decide <category> <subject> --selected X
 ```
 

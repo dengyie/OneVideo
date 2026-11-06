@@ -20,7 +20,9 @@ research → proposal → script → storyboard → assets → voice → compose
 - **画面感知**：`onevideo depth` 生成深度图和亮度网格，编译器据此让 through 冲向主体、关键词避开主体、亮背景上的字自动加底、字幕在主体占满底部时移到顶部。
 - **节奏门控**：编译后检查画面超过 4.5s 没有新元素的空档和连续相同转场，避免做成翻页 PPT。
 - **场景库**：标题、数据卡、柱状图竞赛、折线、对比、时间线、引用、图片/视频 Ken Burns、章节卡、片尾等；风格和动效节奏可配置。
-- **素材**：NASA、Wikimedia Commons、Openverse 免 key 可用；Pexels（可选）；也可以通过 OpenAI 兼容接口生图。授权信息自动进入简介。
+- **素材**：NASA、Wikimedia Commons、Openverse 免 key 可用；Pexels（可选）。授权信息自动进入简介。
+- **AI 生成素材**：通过 OpenAI 兼容接口生图（一次出多张，由视觉模型挑一张，备选全部保留）和生视频（文生视频，或用 `from` 把一张图做成首帧图生视频）。按模型顺序依次回退，生成失败时回落到检索素材。
+- **导演工具**：`onevideo sheet` 把成片铺成联系表；`onevideo look` 请视觉模型按剪辑标准审片，每条意见对应到时间点和场景，写进 `out/qc/look.json`。
 - **程序化配乐和音效**：零依赖合成，没有版权问题。
 - **渲染后 QC**：检查编码、分辨率、帧率、时长、响度、真峰值、旁白中的静音、黑帧、冻结画面、静态占比，并按场景抽帧供人工审阅。
 - **发布包**：SRT/VTT 字幕、章节时间戳、带全部来源与素材署名的简介。
@@ -55,7 +57,7 @@ export ONEVIDEO_PY=/opt/onevideo-py/bin/python ONEVIDEO_DEPTH_MODEL=$PWD/depth-a
 
 渲染并发默认按 CPU 核数和内存自动选（每 1.5 GB 内存一个，最多 4 个，2 GB 机器为 1）；需要时用 `--concurrency N` 或 `onevideo.json` 的 `render.concurrency` 覆盖。
 
-TTS 和生图使用 OpenAI 兼容接口，key 从环境变量 `MANGO_API_KEY` 读取（接口地址和 env 名可在 `onevideo.json` 里改），永远不会打印出来。
+TTS、生图、生视频和看片（视觉模型）都走 OpenAI 兼容接口，key 从环境变量 `MANGO_API_KEY` 读取，永远不会打印出来。接口地址、env 名和模型顺序分别在 `onevideo.json` 的 `tts` / `image` / `video` / `llm` 段配置，`onevideo doctor` 会列出当前生效的模型顺序。
 
 ## 快速开始
 
