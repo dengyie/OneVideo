@@ -42,23 +42,30 @@ export function parseJsonReply(text, { partial = false } = {}) {
 }
 
 // One user turn (text + optional images) → { text, model } or, with json, { data, model }.
-// A model that errors, returns nothing or (with json) unparseable text is skipped for the next.
+// A model that errors or returns nothing is skipped for the next; unparseable JSON gets one more try.
 export async function ask({ prompt, images = [], system, json = false, maxTokens = 2000, config = {} }) {
   const cfg = llmConfig(config);
   const key = requireApiKey(cfg.keyEnv, cfg.baseUrl);
   const content = images.length ? [{ type: "text", text: prompt }, ...images.map((im) => (im.type ? im : imagePart(im)))] : prompt;
   const messages = [...(system ? [{ role: "system", content: system }] : []), { role: "user", content }];
   const failures = [];
-  for (const model of [].concat(cfg.models)) {
+  for (const model of [].concat(cfg.models)) for (let take = 1; take <= (json ? 2 : 1); take++) {
     try {
       const res = await request(`${cfg.baseUrl.replace(/\/$/, "")}/chat/completions`, { method: "POST", key, json: { model, messages, max_tokens: maxTokens, temperature: 0.2 }, timeoutSec: 180, retries: 1 });
       const j = JSON.parse(res.body.toString());
       const text = j.choices?.[0]?.message?.content;
       if (!text?.trim()) throw new Error(`empty reply${j.error ? `: ${JSON.stringify(j.error).slice(0, 160)}` : ""}`);
       if (/^⚠️? ?Upstream .* empty response/i.test(text)) throw new Error("upstream returned an empty response");
-      return json ? { data: parseJsonReply(text, { partial: true }), model } : { text, model };
+      if (!json) return { text, model };
+      try {
+        return { data: parseJsonReply(text, { partial: true }), model };
+      } catch (e) {
+        e.retry = true; // a garbled answer is often a one-off: ask the same model once more
+        throw e;
+      }
     } catch (e) {
       failures.push(`${model}: ${e.message.split("\n")[0].slice(0, 200)}`);
+      if (!e.retry) break;
     }
   }
   throw new Error(`no model answered (${failures.join("; ")})`);

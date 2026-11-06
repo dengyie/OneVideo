@@ -95,6 +95,11 @@ test("ask walks the model list and parses JSON replies", async () => {
     const res = await ask({ prompt: "hi", json: true, config: { llm: { baseUrl: r.base, keyEnv: "OV_TEST_KEY", models: ["gone", "blank", "good"] } } });
     assert.deepEqual(res, { data: { ok: true, s: "a } b" }, model: "good" });
     await assert.rejects(ask({ prompt: "hi", config: { llm: { baseUrl: r.base, keyEnv: "OV_TEST_KEY", models: ["gone"] } } }), /no model answered \(gone: HTTP 500/);
+    let flaky = 0;
+    const r2 = await relay({ "/v1/chat/completions": () => chat(flaky++ ? '{"best": 2}' : "截断的文字") });
+    try {
+      assert.deepEqual(await ask({ prompt: "hi", json: true, config: { llm: { baseUrl: r2.base, keyEnv: "OV_TEST_KEY", models: ["flaky"] } } }), { data: { best: 2 }, model: "flaky" });
+    } finally { r2.close(); }
   } finally { r.close(); }
   assert.deepEqual(parseJsonReply("x [1, [2]] y"), [1, [2]]);
   assert.throws(() => parseJsonReply("nothing here"), /no JSON/);
