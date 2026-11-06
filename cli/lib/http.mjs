@@ -1,8 +1,8 @@
 // HTTP via curl: Cloudflare-fronted relays reject Node's fetch fingerprint.
 // The curl config (URL, headers, body) goes through stdin so secrets never appear in argv.
 import { execFile } from "node:child_process";
-import { readFileSync, existsSync } from "node:fs";
-import { homedir } from "node:os";
+import { readFileSync, existsSync, mkdtempSync, writeFileSync, rmSync } from "node:fs";
+import { homedir, tmpdir } from "node:os";
 import { join } from "node:path";
 import { UserError } from "./project.mjs";
 
@@ -65,17 +65,32 @@ function runCurl(config, timeoutSec = 180) {
   });
 }
 
-// JSON payloads travel inline in the config as a quoted data-binary value.
+// JSON payloads travel in the config as a quoted data-binary value.
 export async function request(url, { method = "GET", headers = {}, json, key, timeoutSec, retries = 3, accept } = {}) {
   const lines = [`url = ${quote(url)}`, `request = ${quote(method)}`, `user-agent = ${quote(UA)}`, "location"];
   if (key) lines.push(`header = ${quote(`Authorization: Bearer ${key}`)}`);
   if (accept) lines.push(`header = ${quote(`Accept: ${accept}`)}`);
   for (const [k, v] of Object.entries(headers)) lines.push(`header = ${quote(`${k}: ${v}`)}`);
+  // Inline images make bodies of megabytes; those go through a private temp file (0600) instead.
+  let bodyDir = null;
   if (json !== undefined) {
+    const body = JSON.stringify(json);
     lines.push(`header = ${quote("Content-Type: application/json")}`);
-    lines.push(`data-binary = ${quote(JSON.stringify(json))}`);
+    if (body.length > 256 * 1024) {
+      bodyDir = mkdtempSync(join(tmpdir(), "ov-body-"));
+      writeFileSync(join(bodyDir, "body.json"), body, { mode: 0o600 });
+      lines.push(`data-binary = ${quote(`@${join(bodyDir, "body.json")}`)}`);
+    } else lines.push(`data-binary = ${quote(body)}`);
   }
   const config = lines.join("\n") + "\n";
+  try {
+    return await send(url, config, timeoutSec, retries);
+  } finally {
+    if (bodyDir) rmSync(bodyDir, { recursive: true, force: true });
+  }
+}
+
+async function send(url, config, timeoutSec, retries) {
   let last;
   for (let attempt = 1; attempt <= retries + 1; attempt++) {
     try {

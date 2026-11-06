@@ -1,0 +1,105 @@
+{
+  "sampleRate": 24000,
+  "voice": {
+    "model": "mimo-v2.5-tts",
+    "voice": "白桦",
+    "protocol": "chat",
+    "unit": "scene"
+  },
+  "scenes": {
+    "hook": {
+      "file": "audio/hook.wav",
+      "duration": 11.11,
+      "lines": [
+        {
+          "text": "2026年6月12日，SpaceX在纳斯达克上市",
+          "speak": "2026年6月12日，SpaceX在纳斯达克上市",
+          "hash": "df342916a5852edd.0",
+          "start": 0.15,
+          "end": 4.97
+        },
+        {
+          "text": "代码SPCX",
+          "speak": "代码S P C X",
+          "hash": "df342916a5852edd.1",
+          "start": 5.21,
+          "end": 6.3
+        },
+        {
+          "text": "一家造火箭的公司，凭什么值一万多亿美元",
+          "speak": "一家造火箭的公司，凭什么值一万多亿美元",
+          "hash": "df342916a5852edd.2",
+          "start": 6.98,
+          "end": 10.76
+        }
+      ]
+    },
+    "ipo": {
+      "file": "audio/ipo.wav",
+      "duration": 12.14,
+      "lines": [
+        {
+          "text": "发行价135美元，募资约857亿美元",
+          "speak": "发行价135美元，募资约857亿美元",
+          "hash": "334a291bff40619d.0",
+          "start": 0.15,
+          "end": 4.59
+        },
+        {
+          "text": "是史上规模最大的IPO",
+          "speak": "是史上规模最大的I P O",
+          "hash": "334a291bff40619d.1",
+          "start": 4.96,
+          "end": 6.85
+        },
+        {
+          "text": "首日收盘上涨约19%，市值约2.1万亿美元",
+          "speak": "首日收盘上涨约百分之19，市值约2.1万亿美元",
+          "hash": "334a291bff40619d.2",
+          "start": 7.49,
+          "end": 11.79
+        }
+      ]
+    },
+    "revenue": {
+      "file": "audio/revenue.wav",
+      "duration": 10.54,
+      "lines": [
+        {
+          "text": "撑起估值的是星链",
+          "speak": "撑起估值的是星链",
+          "hash": "8eaaaea2965a98e4.0",
+          "start": 0.15,
+          "end": 1.85
+        },
+        {
+          "text": "2025年收入约187亿美元",
+          "speak": "2025年收入约187亿美元",
+          "hash": "8eaaaea2965a98e4.1",
+          "start": 2.39,
+          "end": 5.22
+        },
+        {
+          "text": "以星链为主的连接业务贡献约114亿",
+          "speak": "以星链为主的连接业务贡献约114亿",
+          "hash": "8eaaaea2965a98e4.2",
+          "start": 5.56,
+          "end": 8.7
+        },
+        {
+          "text": "占比超过六成",
+          "speak": "占比超过六成",
+          "hash": "8eaaaea2965a98e4.3",
+          "start": 8.93,
+          "end": 10.19
+        }
+      ]
+    }
+  },
+  "loudness": {
+    "measured": -22.213,
+    "target": -16,
+    "gainDb": 6.213
+  },
+  "totalNarration": 33.79
+}

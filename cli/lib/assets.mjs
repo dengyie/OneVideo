@@ -1,10 +1,11 @@
 // Licensed media sourcing. Keyless providers: NASA Images (photos + video), Wikimedia Commons
 // (photos + video), Openverse (photos). Optional: Pexels (PEXELS_API_KEY, photos + video) and
-// AI image generation (OpenAI-compatible relay). Videos are cut to a short silent H.264 clip.
+// AI image and video generation (OpenAI-compatible relay). Videos are cut to a short silent H.264 clip.
 import { existsSync, mkdirSync, readdirSync, rmSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { ffmpeg, ffprobe } from "./ffmpeg.mjs";
 import { getJson, download, request, requireApiKey } from "./http.mjs";
+import { ask, imagePart } from "./llm.mjs";
 
 const stripHtml = (s) => String(s ?? "").replace(/<[^>]+>/g, "").replace(/&amp;/g, "&").replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/\s+/g, " ").trim();
 const enc = encodeURIComponent;
@@ -159,11 +160,21 @@ export async function search(query, { providers = DEFAULT_PROVIDER_ORDER, kind =
 const extOf = (url, fallback) => (String(url).match(/\.(jpe?g|png|webp|mp4|webm|mov)(?:$|[?#])/i)?.[1].toLowerCase().replace("jpeg", "jpg") ?? fallback);
 
 // Resolve one manifest item to a local file; returns the updated item.
-export async function fetchAsset(item, { publicDir, aspect = 16 / 9, imageDefaults = {} }) {
+// `gen` carries generation settings: { aspect: "16:9", image, video, llm, lookup, onWarn }. A failed
+// generation falls back to the stock search when the item also has a query.
+export async function fetchAsset(item, { publicDir, aspect = 16 / 9, gen = {} }) {
   const dir = join(publicDir, "assets");
   mkdirSync(dir, { recursive: true });
 
-  if (item.generate) return generateImage(item, { dir, defaults: imageDefaults });
+  if (item.generate) {
+    const opts = { dir, publicDir, aspect: gen.aspect, llm: gen.llm, lookup: gen.lookup, onWarn: gen.onWarn ?? (() => {}) };
+    try {
+      return item.kind === "video" ? await generateVideo(item, { ...opts, defaults: gen.video ?? {} }) : await generateImage(item, { ...opts, defaults: gen.image ?? {} });
+    } catch (e) {
+      if (!item.query && !item.url) throw e;
+      opts.onWarn(`${item.id}: ${e.message}; falling back to ${item.url ? "url" : `search "${item.query}"`}`);
+    }
+  }
 
   let chosen = null;
   if (item.url) chosen = { url: item.url, license: item.license, author: item.author, title: item.title, source: item.source ?? item.url, provider: "url", kind: item.kind ?? "image" };
@@ -205,23 +216,122 @@ export async function fetchAsset(item, { publicDir, aspect = 16 / 9, imageDefaul
   };
 }
 
-export const IMAGE_DEFAULTS = { baseUrl: "https://api.mangoqwq.com/v1", model: "gpt-image-2.5", size: "1536x1024", keyEnv: "MANGO_API_KEY" };
+export const IMAGE_DEFAULTS = { baseUrl: "https://api.mangoqwq.com/v1", models: ["gpt-image-2.5", "grok-imagine-image-quality"], keyEnv: "MANGO_API_KEY" };
+export const VIDEO_DEFAULTS = { baseUrl: "https://api.mangoqwq.com/v1", models: ["grok-imagine-video", "grok-imagine-video-1.5"], duration: 6, resolution: "720p", keyEnv: "MANGO_API_KEY", pollSec: 5, timeoutSec: 900 };
+const IMAGE_SIZE = { "16:9": "1536x1024", "9:16": "1024x1536", "1:1": "1024x1024" };
 
-export async function generateImage(item, { dir, defaults = {} }) {
-  const cfg = { ...IMAGE_DEFAULTS, ...defaults, ...(typeof item.generate === "object" ? item.generate : { prompt: item.generate }) };
+// item.generate (string prompt or object) over project defaults; `model` pins one model, `models` is
+// the fallback order. Relay channels come and go, so each model is tried until one delivers.
+function genConfig(item, base, defaults) {
+  const own = typeof item.generate === "object" ? item.generate : { prompt: item.generate };
+  const cfg = { ...base, ...defaults, ...own };
+  cfg.models = [].concat(own.model ?? own.models ?? defaults.model ?? defaults.models ?? base.models);
   if (!cfg.prompt) throw new Error(`asset "${item.id}": generate.prompt is required`);
+  return cfg;
+}
+
+const imageExt = (buf) => (buf[0] === 0x89 ? "png" : buf[0] === 0xff ? "jpg" : "webp");
+
+async function firstModel(cfg, what, fn) {
+  const failures = [];
+  for (const model of cfg.models) {
+    try { return { model, ...(await fn(model)) }; } catch (e) { failures.push(`${model}: ${e.message.split("\n")[0].slice(0, 200)}`); }
+  }
+  throw new Error(`${what} failed on every model (${failures.join("; ")})`);
+}
+
+async function imageTake(cfg, key, model) {
+  // OpenAI image models always answer in base64; others (grok) are asked to, since their URLs can
+  // point at the relay's loopback.
+  const json = { model, prompt: cfg.prompt, size: cfg.size, n: 1, ...(/^gpt-image|^dall-e/.test(model) ? {} : { response_format: "b64_json" }) };
+  const res = await request(`${cfg.baseUrl.replace(/\/$/, "")}/images/generations`, { method: "POST", key, json, timeoutSec: 300, retries: 1 });
+  const d = JSON.parse(res.body.toString()).data?.[0];
+  if (d?.b64_json) return { buf: Buffer.from(d.b64_json, "base64") };
+  if (d?.url) return { buf: await download(d.url) };
+  throw new Error(`no image in reply: ${res.body.subarray(0, 200).toString()}`);
+}
+
+// `variants: N` makes N takes and lets a vision model pick the one that fits the brief (`pick`
+// overrides with an index); every take stays on disk as <id>.take<k>.<ext> for the director.
+export async function generateImage(item, { dir, defaults = {}, aspect = "16:9", llm = {}, onWarn = () => {} }) {
+  const cfg = genConfig(item, { ...IMAGE_DEFAULTS, size: IMAGE_SIZE[aspect] ?? IMAGE_SIZE["16:9"] }, defaults);
   const key = requireApiKey(cfg.keyEnv, cfg.baseUrl);
-  const res = await request(`${cfg.baseUrl.replace(/\/$/, "")}/images/generations`, { method: "POST", key, json: { model: cfg.model, prompt: cfg.prompt, size: cfg.size, n: 1 }, timeoutSec: 300, retries: 2 });
-  const j = JSON.parse(res.body.toString());
-  const d = j.data?.[0];
-  let buf;
-  if (d?.b64_json) buf = Buffer.from(d.b64_json, "base64");
-  else if (d?.url) buf = await download(d.url);
-  else throw new Error(`image API returned no image: ${res.body.subarray(0, 200).toString()}`);
-  const ext = buf[0] === 0x89 ? "png" : buf[0] === 0xff ? "jpg" : "webp";
-  const file = `assets/${item.id}.${ext}`;
-  writeFileSync(join(dir, `${item.id}.${ext}`), buf);
-  return { ...item, file, kind: "image", via: "generate", license: "generated", author: cfg.model, title: item.title ?? cfg.prompt.slice(0, 80), fetchedAt: new Date().toISOString() };
+  const n = Math.max(1, Math.min(4, cfg.variants ?? 1));
+  const takes = [];
+  for (let k = 0; k < n; k++) {
+    try {
+      const t = await firstModel(cfg, `image "${item.id}"`, (model) => imageTake(cfg, key, model));
+      const file = n > 1 ? `assets/${item.id}.take${k}.${imageExt(t.buf)}` : `assets/${item.id}.${imageExt(t.buf)}`;
+      writeFileSync(join(dir, file.slice("assets/".length)), t.buf);
+      takes.push({ ...t, file });
+    } catch (e) {
+      if (k === n - 1 && !takes.length) throw e;
+      onWarn(`${item.id} take ${k}: ${e.message}`);
+    }
+  }
+  let best = 0, pickedBy = null, pickReason = null;
+  if (takes.length > 1 && Number.isInteger(cfg.pick)) best = Math.min(cfg.pick, takes.length - 1);
+  else if (takes.length > 1) {
+    try {
+      const { data, model } = await ask({
+        prompt: `These are ${takes.length} takes (in order, 0-based) for one shot of a narrated video, framed ${aspect}.\nBrief: ${cfg.prompt}${cfg.brief ? `\nWhat the shot must do: ${cfg.brief}` : ""}\nPick the take that best fits the brief: clear subject, believable detail, no garbled text, logos or watermarks, room for an on-screen title. Reply only JSON {"best": <index>, "reason": "<one sentence>"}.`,
+        images: takes.map((t) => imagePart(t.buf, `image/${imageExt(t.buf) === "jpg" ? "jpeg" : imageExt(t.buf)}`)), json: true, maxTokens: 400, config: { llm },
+      });
+      if (Number.isInteger(data.best) && data.best >= 0 && data.best < takes.length) [best, pickedBy, pickReason] = [data.best, model, data.reason ?? null];
+    } catch (e) {
+      onWarn(`${item.id}: vision pick failed, keeping take 0 (${e.message})`);
+    }
+  }
+  const chosen = takes[best];
+  let file = chosen.file;
+  if (takes.length > 1) {
+    file = `assets/${item.id}.${imageExt(chosen.buf)}`;
+    writeFileSync(join(dir, file.slice("assets/".length)), chosen.buf);
+  }
+  return {
+    ...item, file, kind: "image", via: "generate", license: "generated", author: chosen.model, title: item.title ?? cfg.prompt.slice(0, 80),
+    ...(takes.length > 1 ? { takes: takes.map((t) => t.file), picked: best, ...(pickedBy ? { pickedBy, pickReason } : {}) } : {}),
+    fetchedAt: new Date().toISOString(),
+  };
+}
+
+const sleep = (s) => new Promise((r) => setTimeout(r, s * 1000));
+
+// Text- or image-to-video through the relay's /videos task API: submit, poll, download, then the
+// same cut + frame sequence as any fetched clip. `from: <asset id>` animates that (already
+// fetched) image as the first frame.
+export async function generateVideo(item, { publicDir, defaults = {}, aspect = "16:9", lookup = () => null }) {
+  const cfg = genConfig(item, VIDEO_DEFAULTS, defaults);
+  const key = requireApiKey(cfg.keyEnv, cfg.baseUrl);
+  const base = cfg.baseUrl.replace(/\/$/, "");
+  let image;
+  if (cfg.from) {
+    const src = lookup(cfg.from);
+    if (!src?.file || !existsSync(join(publicDir, src.file))) throw new Error(`asset "${item.id}": generate.from "${cfg.from}" is not fetched yet`);
+    image = { url: imagePart(join(publicDir, src.file)).image_url.url };
+  }
+  const t = await firstModel(cfg, `video "${item.id}"`, async (model) => {
+    const json = { model, prompt: cfg.prompt, duration: Math.round(cfg.duration), aspect_ratio: aspect, resolution: cfg.resolution, ...(image ? { image } : {}) };
+    const sub = JSON.parse((await request(`${base}/videos`, { method: "POST", key, json, timeoutSec: 120, retries: 1 })).body.toString());
+    if (!sub.id) throw new Error(`no task id: ${JSON.stringify(sub).slice(0, 200)}`);
+    const deadline = Date.now() + cfg.timeoutSec * 1000;
+    for (;;) {
+      const st = JSON.parse((await request(`${base}/videos/${sub.id}`, { key, timeoutSec: 60, retries: 2 })).body.toString());
+      if (/^(completed|succeeded|done)$/.test(st.status ?? st.state)) break;
+      if (/^(failed|error|cancelled|canceled)$/.test(st.status ?? st.state)) throw new Error(st.error?.message ?? `task ${st.status}`);
+      if (Date.now() > deadline) throw new Error(`task ${sub.id} still ${st.status} after ${cfg.timeoutSec}s`);
+      await sleep(cfg.pollSec);
+    }
+    return { buf: (await request(`${base}/videos/${sub.id}/content`, { key, timeoutSec: 600, retries: 2 })).body, task: sub.id };
+  });
+  const dir = join(publicDir, "assets");
+  const file = `assets/${item.id}.mp4`;
+  const raw = join(dir, `${item.id}.src.mp4`);
+  writeFileSync(raw, t.buf);
+  let dims;
+  try { dims = await cutClip(raw, join(publicDir, file), item.clip); } finally { rmSync(raw, { force: true }); }
+  await clipFrames(join(publicDir, file), join(publicDir, framesDir(file)));
+  return { ...item, file, kind: "video", via: "generate", license: "generated", author: t.model, title: item.title ?? cfg.prompt.slice(0, 80), ...dims, fetchedAt: new Date().toISOString() };
 }
 
 export const assetFileExists = (publicDir, item) => Boolean(item.file) && existsSync(join(publicDir, item.file));

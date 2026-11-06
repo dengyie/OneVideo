@@ -135,12 +135,15 @@ export async function assets(args) {
     const manifest = readJson(paths.assets, { items: [] });
     const only = list(args.only);
     let changed = 0, failed = 0;
-    for (let i = 0; i < manifest.items.length; i++) {
+    const gen = { aspect: config.aspect ?? "16:9", image: config.image, video: config.video, llm: config.llm, onWarn: warn, lookup: (id) => manifest.items.find((x) => x.id === id) };
+    // Clips animated from a generated still come after the still.
+    const order = manifest.items.map((_, i) => i).sort((a, b) => Boolean(manifest.items[a].generate?.from) - Boolean(manifest.items[b].generate?.from));
+    for (const i of order) {
       const item = manifest.items[i];
       if (only.length && !only.includes(item.id)) continue;
       if (assetFileExists(project.p("public"), item) && !args.force) continue;
       try {
-        const updated = await fetchAsset(item, { publicDir: project.p("public"), aspect: w / h, imageDefaults: config.image });
+        const updated = await fetchAsset(item, { publicDir: project.p("public"), aspect: w / h, gen });
         manifest.items[i] = updated;
         changed++;
         log(`✓ ${item.id}: ${updated.file} · ${updated.license}${updated.author ? ` · ${updated.author.slice(0, 40)}` : ""}`);

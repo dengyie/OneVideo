@@ -12,7 +12,8 @@ import { buildPublishKit } from "../lib/publish.mjs";
 import { resolveApiKey, trustedKeyHost } from "../lib/http.mjs";
 import { ttsConfig } from "../lib/tts.mjs";
 import * as media from "./media.mjs";
-import { assetFileExists, clipFrames, countFrames, framesDir } from "../lib/assets.mjs";
+import { assetFileExists, clipFrames, countFrames, framesDir, IMAGE_DEFAULTS, VIDEO_DEFAULTS } from "../lib/assets.mjs";
+import { llmConfig } from "../lib/llm.mjs";
 import { ensureBeats } from "../lib/beats.mjs";
 
 const ENTRY = "src/index.ts";
@@ -201,6 +202,12 @@ export async function doctor() {
   add(Boolean(key), "tts key", key ? `found via ${key.source}` : trustedKeyHost(t.baseUrl) ? `missing: set ${t.keyEnv}` : `missing: ${new URL(t.baseUrl).host} needs its own keyEnv variable`);
   add(true, "pexels", process.env.PEXELS_API_KEY ? "PEXELS_API_KEY set" : "optional; unset (NASA/Wikimedia/Openverse still work)");
   add(existsSync(join(ONEVIDEO_ROOT, "template", "src", "index.ts")), "template", join(ONEVIDEO_ROOT, "template"));
+  // Generation and review share the relay key; listing the model order is enough here (no calls).
+  const genKey = (c) => resolveApiKey(c.keyEnv, c.baseUrl);
+  const img = { ...IMAGE_DEFAULTS, ...cfg.image }, vid = { ...VIDEO_DEFAULTS, ...cfg.video }, llm = llmConfig(cfg);
+  const models = (c) => [].concat(c.model ?? c.models).join(" → ");
+  add(true, "generate", `optional; image ${models(img)}${genKey(img) ? "" : " (no key)"} · video ${models(vid)}${genKey(vid) ? "" : " (no key)"}`);
+  add(true, "look", `optional; ${models(llm)}${genKey(llm) ? "" : " (no key)"}`);
   const depth = media.depthTools();
   add(true, "depth", depth.missing ? `optional; ${depth.missing}` : `${depth.py} + ${depth.model}`);
   for (const [ok, name, detail] of checks) log(`${ok ? "✓" : "✗"} ${name.padEnd(9)} ${detail}`);

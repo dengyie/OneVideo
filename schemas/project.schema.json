@@ -262,7 +262,38 @@
       }
     },
     "image": {
-      "type": "object"
+      "type": "object",
+      "description": "defaults for generated images: models (fallback order) or model, size, baseUrl, keyEnv",
+      "properties": {
+        "baseUrl": { "type": "string" },
+        "keyEnv": { "type": "string" },
+        "model": { "type": "string" },
+        "models": { "type": "array", "items": { "type": "string" } },
+        "size": { "type": "string" }
+      }
+    },
+    "video": {
+      "type": "object",
+      "description": "defaults for generated clips (POST /videos task API)",
+      "properties": {
+        "baseUrl": { "type": "string" },
+        "keyEnv": { "type": "string" },
+        "model": { "type": "string" },
+        "models": { "type": "array", "items": { "type": "string" } },
+        "duration": { "type": "number", "minimum": 1, "maximum": 15 },
+        "resolution": { "type": "string" },
+        "pollSec": { "type": "number" },
+        "timeoutSec": { "type": "number" }
+      }
+    },
+    "llm": {
+      "type": "object",
+      "description": "chat/vision models for onevideo look and picking generated takes; the first model that answers wins",
+      "properties": {
+        "baseUrl": { "type": "string" },
+        "keyEnv": { "type": "string" },
+        "models": { "type": "array", "items": { "type": "string" } }
+      }
     },
     "publish": {
       "type": "object",

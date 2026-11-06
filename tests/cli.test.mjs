@@ -113,3 +113,26 @@ test("render concurrency defaults by cores and memory", async () => {
   assert.equal(autoConcurrency(16, 64e9), 4);
   assert.equal(autoConcurrency(8, 4e9), 2);
 });
+
+// The baseline a fresh project starts from: the motion example compiles with recorded voice
+// timings, stand-in media and no rhythm warnings — no TTS, network or render needed.
+test("init --example spacex-motion compiles to a rhythm-clean timeline", () => {
+  const dir = join(mkdtempSync(join(tmpdir(), "ov-smoke-")), "spacex-motion");
+  assert.equal(ov(ROOT, "init", dir, "--example", "spacex-motion").status, 0);
+  cpSync(join(ROOT, "tests", "fixtures", "spacex-motion-timings.json"), join(dir, "plan", "timings.json"));
+  const manifest = json(join(dir, "plan", "assets.json"));
+  for (const a of manifest.items) a.file = `assets/${a.id}.${a.kind === "video" ? "mp4" : "jpg"}`;
+  writeFileSync(join(dir, "plan", "assets.json"), JSON.stringify(manifest));
+  const config = json(join(dir, "onevideo.json"));
+  const sfx = ["whoosh-soft", "whoosh-cinematic", "ui-pop", "impact-05", "whoosh", "pop", "success-sting"].map((s) => `sfx/${s}.wav`);
+  for (const f of [...manifest.items.map((a) => a.file), ...sfx, config.music.file]) {
+    mkdirSync(join(dir, "public", f, ".."), { recursive: true });
+    writeFileSync(join(dir, "public", f), "");
+  }
+  const r = ov(dir, "timeline");
+  assert.equal(r.status, 0, r.stdout + r.stderr);
+  assert.doesNotMatch(r.stdout + r.stderr, /\[rhythm\]/);
+  const t = json(join(dir, "plan", "timeline.json"));
+  assert.deepEqual(t.scenes.map((s) => s.id).slice(0, 3), ["hook", "ipo", "revenue"]);
+  assert.ok(t.duration > 30 && t.duration < 45, `duration ${t.duration}`);
+});

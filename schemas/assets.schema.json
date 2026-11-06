@@ -101,8 +101,46 @@
                 },
                 "size": {
                   "type": "string"
+                },
+                "models": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "description": "fallback order; model pins one"
+                },
+                "variants": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "maximum": 4,
+                  "description": "image: make N takes; a vision model picks the best (or pick)"
+                },
+                "pick": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "description": "image: take index to keep instead of the vision pick"
+                },
+                "brief": {
+                  "type": "string",
+                  "description": "what the shot must do, for the vision pick"
+                },
+                "from": {
+                  "type": "string",
+                  "description": "video: id of an image asset to animate as the first frame"
+                },
+                "duration": {
+                  "type": "number",
+                  "minimum": 1,
+                  "maximum": 15,
+                  "description": "video: seconds (default 6)"
+                },
+                "resolution": {
+                  "type": "string",
+                  "description": "video: e.g. 720p"
                 }
-              }
+              },
+              "description": "AI generation through the relay. kind image: /images/generations; kind video: /videos (text-to-video, or image-to-video with from). A failure falls back to query/url when present.",
+              "additionalProperties": false
             }
           ]
         },
@@ -147,6 +185,24 @@
             "wikimedia",
             "openverse",
             "pexels"
+          ]
+        },
+        "takes": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "picked": {
+          "type": "integer"
+        },
+        "pickedBy": {
+          "type": "string"
+        },
+        "pickReason": {
+          "type": [
+            "string",
+            "null"
           ]
         }
       }
