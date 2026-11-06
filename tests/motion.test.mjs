@@ -167,6 +167,11 @@ test("subject: nearest pixels' centroid, cover-fitted, pulled toward the centre;
   for (let y = 2; y <= 4; y++) for (let x = 11; x <= 13; x++) px[y * w + x] = 230;
   const c = nearCentroid(px, w, h, 0.08);
   assert.ok(Math.abs(c.x - 12.5 / 16) < 1e-9 && Math.abs(c.y - 3.5 / 9) < 1e-9);
+  // A ground plane brightening toward the bottom is ignored; on its own it gives no subject.
+  const ground = Uint8Array.from(px, (v, i) => (v === 230 ? v : 40 + Math.floor(i / w) * 25));
+  const g = nearCentroid(ground, w, h);
+  assert.ok(Math.abs(g.x - 12.5 / 16) < 1e-9 && Math.abs(g.y - 3.5 / 9) < 0.1);
+  assert.equal(nearCentroid(Uint8Array.from(ground, (v, i) => 40 + Math.floor(i / w) * 25), w, h), null);
   // A 4:3 layer covering 16:9 is cropped top and bottom.
   assert.deepEqual(coverPoint({ x: 0.5, y: 0 }, 4, 3, 16, 9), { x: 0.5, y: -1 / 6 });
   assert.equal(rampTime(2, [], 30), 2);

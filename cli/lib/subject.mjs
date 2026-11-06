@@ -1,5 +1,5 @@
-// Where a scene's subject sits on its last frame, from the asset's depth map: the centroid of the
-// nearest ~8% of pixels. A "through" transition dives toward it instead of the frame centre.
+// Where a scene's subject sits on its last frame, from the asset's depth map: the centroid of what
+// stands out nearest. A "through" transition dives toward it instead of the frame centre.
 import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { decodeGrayPng } from "./qc.mjs";
@@ -23,9 +23,20 @@ export function rampTime(t, ramp, fps, blend = 0.3) {
 }
 
 // Centroid of the nearest `share` of pixels (near = white), weighted by how far past the cut each is.
-export function nearCentroid(px, w, h, share = 0.08) {
+// Depth is taken relative to its row median first, so a floor or water plane (near at the bottom,
+// even across the row) doesn't count; null when nothing stands out by `min`.
+export function nearCentroid(px, w, h, share = 0.08, min = 24) {
+  const d = new Uint8Array(px.length);
+  for (let y = 0; y < h; y++) {
+    const row = px.subarray(y * w, (y + 1) * w), mid = [...row].sort((a, b) => a - b)[w >> 1];
+    for (let x = 0; x < w; x++) d[y * w + x] = Math.max(0, row[x] - mid);
+  }
+  px = d;
   const hist = new Array(256).fill(0);
   for (const v of px) hist[v]++;
+  let top = 255;
+  while (top > 0 && !hist[top]) top--;
+  if (top < min) return null;
   let thr = 255;
   for (let n = 0; thr > 0 && n + hist[thr] <= px.length * share; thr--) n += hist[thr];
   let sx = 0, sy = 0, sw = 0;
