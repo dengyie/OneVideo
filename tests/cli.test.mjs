@@ -129,7 +129,8 @@ test("init --example spacex-motion compiles to a rhythm-clean timeline", () => {
     mkdirSync(join(dir, "public", f, ".."), { recursive: true });
     writeFileSync(join(dir, "public", f), "");
   }
-  const r = ov(dir, "timeline");
+  // An empty external store, so a machine with the licensed sfx library picks the same sounds as CI.
+  const r = spawnSync(process.execPath, [CLI, "timeline"], { cwd: dir, encoding: "utf8", env: { ...process.env, HOME: dir, ONEVIDEO_LIBRARY_EXT: mkdtempSync(join(tmpdir(), "ov-ext-")) } });
   assert.equal(r.status, 0, r.stdout + r.stderr);
   assert.doesNotMatch(r.stdout + r.stderr, /\[rhythm\]/);
   const t = json(join(dir, "plan", "timeline.json"));
