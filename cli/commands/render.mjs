@@ -15,7 +15,7 @@ import * as media from "./media.mjs";
 import { assetFileExists, clipFrames, countFrames, framesDir, IMAGE_DEFAULTS, VIDEO_DEFAULTS } from "../lib/assets.mjs";
 import { llmConfig } from "../lib/llm.mjs";
 import { ensureBeats } from "../lib/beats.mjs";
-import { frameRange, readRenders, recordRender, resolveVideo, timelineHash, versionFile } from "../lib/renders.mjs";
+import { frameRange, localStamp, readRenders, recordRender, resolveVideo, timelineHash, versionFile } from "../lib/renders.mjs";
 
 const ENTRY = "src/index.ts";
 const COMPOSITION = "OneVideo";
@@ -115,7 +115,7 @@ export async function versions(args) {
   for (const r of renders) {
     const kind = [r.draft ? "draft" : "full", r.part ? "part" : null].filter(Boolean).join("+");
     const span = r.part ? `from ${r.offset}s, ${r.frames[1] - r.frames[0] + 1}f${r.scenes ? ` ${r.scenes.join(",")}` : ""}` : "whole";
-    log(`  ${`v${r.v}`.padEnd(5)} ${r.at.slice(0, 16).replace("T", " ")}  ${kind.padEnd(10)} ${span.padEnd(20)} tl ${r.timeline}  ${r.pruned ? "(pruned) " : ""}${r.note ?? ""}`);
+    log(`  ${`v${r.v}`.padEnd(5)} ${localStamp(r.at)}  ${kind.padEnd(10)} ${span.padEnd(20)} tl ${r.timeline}  ${r.pruned ? "(pruned) " : ""}${r.note ?? ""}`);
   }
   log(`compare two: onevideo sheet --video v${renders.at(-1).v} --vs v${renders.at(-2)?.v ?? renders.at(-1).v}`);
 }

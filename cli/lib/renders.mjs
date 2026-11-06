@@ -27,6 +27,9 @@ export function frameRange(timeline, { scenes, from, to } = {}) {
   return [a, b];
 }
 
+// Local wall-clock time ("2026-11-07 09:30") for logs people read.
+export const localStamp = (at) => { const d = new Date(at); return new Date(d - d.getTimezoneOffset() * 60000).toISOString().slice(0, 16).replace("T", " "); };
+
 export const timelineHash = (timeline) => createHash("sha256").update(JSON.stringify(timeline)).digest("hex").slice(0, 12);
 
 export function versionFile(project, { draft, part }) {

@@ -7,7 +7,7 @@ import { pipelineDef, readJson } from "./project.mjs";
 import { stageStatus } from "./state.mjs";
 import { checkProject } from "./check.mjs";
 import { ttsConfig } from "./tts.mjs";
-import { readRenders } from "./renders.mjs";
+import { localStamp as stamp, readRenders } from "./renders.mjs";
 
 export const MANUAL = ["锁定（不要改）", "下一轮只改", "备注"];
 const EMPTY = "（空）";
@@ -27,8 +27,6 @@ export function manualSections(md) {
   return out;
 }
 
-// Local wall-clock time: whoever reads the page reads it in their own day.
-const stamp = (at) => { const d = new Date(at); return new Date(d - d.getTimezoneOffset() * 60000).toISOString().slice(0, 16).replace("T", " "); };
 const clip = (s, n) => (s.length > n ? `${s.slice(0, n)}…` : s);
 const cell = (v) => String(v ?? "").replace(/\|/g, "\\|").replace(/\n/g, " ");
 const table = (head, rows) => [`| ${head.join(" | ")} |`, `|${head.map(() => "---").join("|")}|`, ...rows.map((r) => `| ${r.map(cell).join(" | ")} |`)].join("\n");
