@@ -99,7 +99,7 @@ export const FootageScene: React.FC<{ asset: string; startFrom?: number; ramp?: 
           </AbsoluteFill>
         );
       })}
-      {win && photo && depth && t > (windows.t ?? 0.4) && <ForegroundCut photo={photo} depth={depth} width={width} height={height} matte={windows.matte} />}
+      {win && photo && depth && t > (windows.t ?? 0.4) && <ForegroundCut photo={photo} depth={depth} width={width} height={height} matte={windows.matte ?? { mode: "near" }} />}
       {tint && <AbsoluteFill style={{ background: tint, mixBlendMode: "soft-light" }} />}
       <AbsoluteFill style={{ background: `linear-gradient(180deg, rgba(0,0,0,${dim * 0.5}) 0%, rgba(0,0,0,${dim}) 55%, rgba(0,0,0,${Math.min(0.85, dim + 0.35)}) 100%)` }} />
       {title && <TitleText title={title} />}

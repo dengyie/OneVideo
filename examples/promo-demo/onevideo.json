@@ -6,7 +6,7 @@
   "aspect": "16:9",
   "fps": 30,
   "language": "zh-CN",
-  "targetSeconds": 20,
+  "targetSeconds": 16,
   "watermark": "OneVideo · 示例",
   "sfx": {
     "transition": "auto",

@@ -81,7 +81,8 @@ export function storyboardGate(storyboard, script, config, assets) {
   if (ratio > g.staticRatioMax) out.push(issue("error", "slideshow", `${Math.round(ratio * 100)}% of scenes are static text (${[...STATIC_TYPES].join("/")}); max ${Math.round(g.staticRatioMax * 100)}% — convert some to charts, media or timelines`));
   let run = 1;
   for (let i = 1; i < types.length; i++) {
-    run = types[i] === types[i - 1] ? run + 1 : 1;
+    // One device staying on screen across scenes is the point of a product demo, not a repeat.
+    run = types[i] === types[i - 1] && types[i] !== "device" ? run + 1 : 1;
     if (run === g.maxSameTypeRun + 1) out.push(issue("warn", "variety", `${run}+ consecutive "${types[i]}" scenes ending at "${sbIds[i]}"`));
   }
 
@@ -167,9 +168,11 @@ export function assetsGate(assets, config = {}) {
       else if (["cc-by", "cc-by-sa"].includes(norm) && (!a.author || !a.source)) out.push(issue("error", "licensing", `asset "${a.id}" (${a.license}) needs author and source for attribution`));
     }
     if (a.width && a.height && Math.min(a.width, a.height) < minShort) out.push(issue("warn", "assets", `asset "${a.id}" is ${a.width}x${a.height}; short side < ${minShort}px will look soft`));
-    if (a.source) {
-      if (seen.has(a.source)) out.push(issue("warn", "assets", `assets "${seen.get(a.source)}" and "${a.id}" are the same source media`));
-      else seen.set(a.source, a.id);
+    // Captures of one page in different states (clicked, other device) are different screens.
+    const key = a.capture ? JSON.stringify([a.source, a.capture.device, a.capture.click ?? [], a.capture.full, a.capture.dark]) : a.source;
+    if (key) {
+      if (seen.has(key)) out.push(issue("warn", "assets", `assets "${seen.get(key)}" and "${a.id}" are the same source media`));
+      else seen.set(key, a.id);
     }
   }
   return out;
@@ -217,9 +220,11 @@ export function rhythmGate(timeline, config) {
     out.push(issue("warn", "rhythm", `${x.len.toFixed(1)}s with nothing new on screen from ${x.from.t.toFixed(1)}s (scene "${x.from.scene}") — add a cue, shot or overlay (max ${g.maxStill}s)`));
   }
   const types = timeline.scenes.slice(1).map((s) => s.transitionIn?.type);
+  // Cuts between scenes on the same device are the device staying put, not a transition.
+  const onDevice = (i) => timeline.scenes[i + 1].type === "device" && timeline.scenes[i].type === "device";
   let run = 1;
   for (let i = 1; i < types.length; i++) {
-    run = types[i] === types[i - 1] ? run + 1 : 1;
+    run = types[i] === types[i - 1] && !onDevice(i) ? run + 1 : 1;
     if (run === g.maxSameTransitionRun + 1) out.push(issue("warn", "rhythm", `${run}+ consecutive "${types[i]}" transitions ending at "${timeline.scenes[i + 1].id}" — vary them at chapter turns`));
   }
   return out;

@@ -128,16 +128,35 @@ export const ParallaxCanvas: React.FC<{ photo: string; depth: string | null; wid
 
 export type Matte = { mode?: "subject" | "near"; threshold?: number; soft?: number };
 
+// The depth that best splits a frame into near and far (Otsu on a 64-bin histogram).
+export function nearSplit(v: Float32Array): number {
+  const bins = new Float64Array(64);
+  for (let i = 0; i < v.length; i++) bins[Math.min(63, Math.floor(v[i] * 64))]++;
+  let total = 0;
+  for (let b = 0; b < 64; b++) total += b * bins[b];
+  let wB = 0, sumB = 0, best = 0, cut = 32;
+  for (let b = 0; b < 64; b++) {
+    wB += bins[b];
+    if (!wB || wB === v.length) continue;
+    sumB += b * bins[b];
+    const wF = v.length - wB, mB = sumB / wB, mF = (total - sumB) / wF;
+    const between = wB * wF * (mB - mF) ** 2;
+    if (between > best) { best = between; cut = b; }
+  }
+  return (cut + 1) / 64;
+}
+
 // The photo again, kept only where the matte says "subject", drawn above the text layer.
 // "subject": nearer than its surroundings (depth minus a wide blur of itself), which isolates a
-// rocket from the sea it stands on; "near": absolute depth above the threshold.
+// rocket from the sea it stands on; "near": absolute depth above the threshold (default: the
+// frame's own near/far split), which keeps a person who fills the frame whole.
 export const ForegroundCut: React.FC<{ photo: string; depth: string; width: number; height: number; matte?: Matte; style?: React.CSSProperties }> = ({
   photo, depth, width, height, matte = {}, style,
 }) => {
   const ref = useRef<HTMLCanvasElement>(null);
   const W = Math.round(width / 4), H = Math.round(height / 4);
   const { px, drawn } = usePixels([[photo, width, height], [depth, W, H]]);
-  const { mode = "subject", threshold = mode === "subject" ? 0.12 : 0.6, soft = 0.06 } = matte;
+  const { mode = "subject", threshold: given, soft = 0.06 } = matte;
   useLayoutEffect(() => {
     const c = ref.current;
     if (!c || !px) return;
@@ -163,6 +182,7 @@ export const ForegroundCut: React.FC<{ photo: string; depth: string; width: numb
       m = new Float32Array(W * H);
       for (let i = 0; i < W * H; i++) m[i] = v[i] - bg[i];
     }
+    const threshold = given ?? (mode === "subject" ? 0.12 : nearSplit(v));
     const mask = document.createElement("canvas");
     mask.width = W; mask.height = H;
     const mg = mask.getContext("2d")!;
@@ -183,6 +203,6 @@ export const ForegroundCut: React.FC<{ photo: string; depth: string; width: numb
     g.globalCompositeOperation = "source-over";
     drawn();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [px, mode, threshold, soft, width, height, W, H]);
+  }, [px, mode, given, soft, width, height, W, H]);
   return <canvas ref={ref} width={width} height={height} style={{ position: "absolute", inset: 0, width: "100%", height: "100%", ...style }} />;
 };

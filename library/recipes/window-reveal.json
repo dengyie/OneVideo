@@ -24,9 +24,12 @@
         "title": {
           "text": "{{headline}}",
           "at": 1.6,
-          "y": 0.8,
-          "size": 140,
-          "behind": true
+          "y": 0.36,
+          "size": 260,
+          "behind": true,
+          "matte": {
+            "mode": "near"
+          }
         }
       }
     }

@@ -21,9 +21,9 @@ export function findChrome() {
   if (process.env.ONEVIDEO_CHROME) return process.env.ONEVIDEO_CHROME;
   const shell = join(TEMPLATE_DIR, "node_modules", ".remotion", "chrome-headless-shell");
   if (existsSync(shell)) {
-    for (const plat of readdirSync(shell)) {
-      const dir = join(shell, plat);
-      for (const sub of existsSync(dir) ? readdirSync(dir) : []) {
+    for (const plat of readdirSync(shell, { withFileTypes: true }).filter((d) => d.isDirectory())) {
+      const dir = join(shell, plat.name);
+      for (const sub of readdirSync(dir, { withFileTypes: true }).filter((d) => d.isDirectory()).map((d) => d.name)) {
         const bin = join(dir, sub, "chrome-headless-shell");
         if (existsSync(bin)) return bin;
       }

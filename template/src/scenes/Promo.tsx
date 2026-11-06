@@ -219,6 +219,11 @@ export const DeviceScene: React.FC<{ device?: Kind; screens: Screen[]; steps?: S
 // same size, hard-cut one after another on the music's beats, so the shape stays and the object
 // changes. `items[].t` are compiled from the beats (every: beats per cut) or seconds.
 
+// Sized to the picture itself (not the square), with its edges feathered away, so a still shot on
+// its own backdrop melts into the scene's background instead of showing as a box.
+const FEATHER = "linear-gradient(to right, transparent, #000 14%, #000 86%, transparent), linear-gradient(to bottom, transparent, #000 14%, #000 86%, transparent)";
+const STILL_FIT: React.CSSProperties = { maxWidth: "100%", maxHeight: "100%", objectFit: "contain", maskImage: FEATHER, WebkitMaskImage: FEATHER, maskComposite: "intersect", WebkitMaskComposite: "source-in" };
+
 type Still = { asset: string; t?: number; x?: number; y?: number; scale?: number; label?: string };
 
 export const MatchCutScene: React.FC<{ items: Still[]; size?: number; background?: string; title?: string; flash?: boolean }> = ({
@@ -241,10 +246,10 @@ export const MatchCutScene: React.FC<{ items: Still[]; size?: number; background
   return (
     <AbsoluteFill style={{ background: background ?? theme.colors.bg, overflow: "hidden" }}>
       {a && (
-        <div style={{ position: "absolute", left: (it.x ?? 0.5) * width - s / 2, top: (it.y ?? 0.5) * height - s / 2, width: s, height: s, transform: `scale(${punch})`, opacity: 1 - 0.85 * tp }}>
+        <div style={{ position: "absolute", left: (it.x ?? 0.5) * width - s / 2, top: (it.y ?? 0.5) * height - s / 2, width: s, height: s, transform: `scale(${punch})`, opacity: 1 - 0.85 * tp, display: "flex", alignItems: "center", justifyContent: "center" }}>
           {a.kind === "video"
-            ? <ClipVideo a={a} style={{ width: "100%", height: "100%", objectFit: "contain" }} />
-            : <Img src={staticFile(a.src)} style={{ width: "100%", height: "100%", objectFit: "contain" }} />}
+            ? <ClipVideo a={a} style={STILL_FIT} />
+            : <Img src={staticFile(a.src)} style={STILL_FIT} />}
         </div>
       )}
       {flash && since < 0.08 && k > 0 && <AbsoluteFill style={{ background: "#fff", opacity: 0.18 * (1 - since / 0.08) }} />}

@@ -2239,7 +2239,7 @@
             "matte": {
               "type": "object",
               "additionalProperties": false,
-              "description": "which pixels count as the subject: subject = nearer than surroundings, near = absolute depth above threshold",
+              "description": "which pixels count as the subject: subject = nearer than surroundings (thin subjects: a rocket, a tower), near = depth above threshold, default the frame's own near/far split (a person filling the frame)",
               "properties": {
                 "mode": {
                   "enum": [
@@ -2336,7 +2336,7 @@
                 "matte": {
                   "type": "object",
                   "additionalProperties": false,
-                  "description": "which pixels count as the subject: subject = nearer than surroundings, near = absolute depth above threshold",
+                  "description": "which pixels count as the subject: subject = nearer than surroundings (thin subjects: a rocket, a tower), near = depth above threshold, default the frame's own near/far split (a person filling the frame)",
                   "properties": {
                     "mode": {
                       "enum": [
@@ -2399,7 +2399,7 @@
             "matte": {
               "type": "object",
               "additionalProperties": false,
-              "description": "which pixels count as the subject: subject = nearer than surroundings, near = absolute depth above threshold",
+              "description": "which pixels count as the subject: subject = nearer than surroundings (thin subjects: a rocket, a tower), near = depth above threshold, default the frame's own near/far split (a person filling the frame)",
               "properties": {
                 "mode": {
                   "enum": [
@@ -2499,7 +2499,7 @@
             "matte": {
               "type": "object",
               "additionalProperties": false,
-              "description": "which pixels count as the subject: subject = nearer than surroundings, near = absolute depth above threshold",
+              "description": "which pixels count as the subject: subject = nearer than surroundings (thin subjects: a rocket, a tower), near = depth above threshold, default the frame's own near/far split (a person filling the frame)",
               "properties": {
                 "mode": {
                   "enum": [
