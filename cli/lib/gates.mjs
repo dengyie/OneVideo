@@ -1,11 +1,11 @@
 // Pre-compose gates: catch structural, factual and pacing problems before spending a render.
 import { validate, loadSchema } from "./schema.mjs";
-import { extractNumbers, parseNumber, visualLength, spokenLength } from "./text.mjs";
+import { extractNumbers, parseNumber, visualLength, spokenLength, normalizeForMatch } from "./text.mjs";
 import { sceneLines, captionMaxChars, timingHashes } from "./tts.mjs";
 
 export const STATIC_TYPES = new Set(["quote", "bullets", "title", "chapter", "sources"]);
 const DEFAULT_HOLD_EST = 0.5;
-export const GATE_DEFAULTS = { staticRatioMax: 0.4, maxSameTypeRun: 2, longSceneNoCue: 25, syllablesPerSec: [3.5, 6.2], maxStill: 4.5, maxSameTransitionRun: 2 };
+export const GATE_DEFAULTS = { staticRatioMax: 0.4, maxSameTypeRun: 2, longSceneNoCue: 25, syllablesPerSec: [3.5, 6.2], maxStill: 4.5, maxSameTransitionRun: 2, echoMinChars: 8 };
 
 const issue = (level, gate, msg) => ({ level, gate, msg });
 
@@ -221,6 +221,35 @@ export function rhythmGate(timeline, config) {
   for (let i = 1; i < types.length; i++) {
     run = types[i] === types[i - 1] ? run + 1 : 1;
     if (run === g.maxSameTransitionRun + 1) out.push(issue("warn", "rhythm", `${run}+ consecutive "${types[i]}" transitions ending at "${timeline.scenes[i + 1].id}" — vary them at chapter turns`));
+  }
+  return out;
+}
+
+// Audience-question order: every narrated scene answers the question the viewer has right now
+// ("what is it?" → "why?" → "so what?"). Writing it down catches scenes that answer nothing.
+export function questionGate(script) {
+  const missing = script.scenes.filter((s) => (s.narration || s.lines?.length) && s.beat !== "credits" && s.id !== "credits" && !s.question?.trim()).map((s) => s.id);
+  return missing.length ? [issue("warn", "question", `scene(s) without the audience question they answer: ${missing.join(", ")} — add "question" (see stages/script.md)`)] : [];
+}
+
+// Three lines, three jobs: narration explains, on-screen text names the point in a few words, the
+// picture proves it. Screen text that repeats the narration word for word is read twice.
+const SCREEN_KEYS = new Set(["text", "title", "subtitle", "label", "headline", "kicker", "caption", "body"]);
+function screenTexts(v, out = []) {
+  if (Array.isArray(v)) for (const x of v) screenTexts(x, out);
+  else if (v && typeof v === "object") for (const [k, x] of Object.entries(v)) typeof x === "string" ? SCREEN_KEYS.has(k) && out.push(x) : screenTexts(x, out);
+  return out;
+}
+
+export function echoGate(timeline, config) {
+  const g = { ...GATE_DEFAULTS, ...(config.gates ?? {}) };
+  const out = [];
+  for (const sc of timeline.scenes) {
+    if (sc.type === "quote" || sc.type === "sources" || sc.id === "credits") continue; // a quote is read aloud on purpose
+    const said = normalizeForMatch((sc.lines ?? []).map((l) => l.text).join(""));
+    if (!said) continue;
+    const echoes = [...new Set(screenTexts([sc.props, sc.overlays, sc.header]))].filter((t) => { const n = normalizeForMatch(t); return n.length >= g.echoMinChars && said.includes(n); });
+    for (const t of echoes.slice(0, 3)) out.push(issue("warn", "echo", `scene "${sc.id}": on-screen "${t}" repeats the narration verbatim — keep the screen to the key words (gates.echoMinChars ${g.echoMinChars})`));
   }
   return out;
 }

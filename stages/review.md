@@ -35,6 +35,13 @@
 - `onevideo look`：请视觉模型按剪辑标准逐张联系表审片，意见写进 `out/qc/look.json`，每条带时间点、场景、严重度和改法。`--focus` 可以指定重点（例如 `"字幕可读性"`），`--models` 可以换模型。
 - look 的意见是第二意见：先在联系表上或用 `onevideo stills --scene <id>` 确认问题存在，再改分镜；确认不是问题的意见可以忽略。
 
+## 版本和对比（`onevideo versions` / `sheet --vs`）
+
+- 每次 `render` 都存成 `out/versions/v<N>.mp4`（draft、part 带后缀），记在 `out/renders.json`：时间、范围、时间轴哈希、`--note`。`out/<name>.mp4` 等常用文件名总是指向最新一版。默认保留最近 8 版的文件（`render.keepVersions`），更早的只留记录。
+- `onevideo versions` 列出所有版本；`sheet` / `look` / `qc` 都可以用 `--video v3`、`--video prev` 指定看哪一版。
+- `onevideo sheet --vs prev`：联系表每格上面是旧版、下面是新版，同一时刻对齐（局部渲染按它在时间轴上的起点对齐），改了什么、改好没有一眼可见。
+- 不确定新版是不是更好时，用对比表说话，不要凭记忆判断。
+
 ## 结论
 
 verdict 为 fail 时修复后重新渲染；warn 需逐条说明是否接受。全部确认后：`onevideo approve review`。

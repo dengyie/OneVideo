@@ -137,6 +137,15 @@
                 "resolution": {
                   "type": "string",
                   "description": "video: e.g. 720p"
+                },
+                "inspect": {
+                  "type": "boolean",
+                  "description": "video: read the take as a contact sheet and keep its longest clean stretch (default true; an explicit clip skips it)"
+                },
+                "keep": {
+                  "type": "number",
+                  "minimum": 1,
+                  "description": "video: at most this many seconds of the take are kept"
                 }
               },
               "description": "AI generation through the relay. kind image: /images/generations; kind video: /videos (text-to-video, or image-to-video with from). A failure falls back to query/url when present.",
@@ -204,6 +213,10 @@
             "string",
             "null"
           ]
+        },
+        "inspect": {
+          "type": "object",
+          "description": "generated video: the vision check of the take (score, issues by second, kept [start, seconds])"
         }
       }
     }

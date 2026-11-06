@@ -4,7 +4,7 @@ import { createServer } from "node:http";
 import { mkdtempSync, readFileSync, existsSync, writeFileSync, mkdirSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { generateImage, generateVideo, fetchAsset } from "../cli/lib/assets.mjs";
+import { generateImage, generateVideo, fetchAsset, inspectClip } from "../cli/lib/assets.mjs";
 import { ask, parseJsonReply } from "../cli/lib/llm.mjs";
 import { request } from "../cli/lib/http.mjs";
 import { sheetPlan, sceneAt, writeSheets } from "../cli/commands/director.mjs";
@@ -134,13 +134,16 @@ test("video generation: submit, poll, download, cut; image-to-video sends the st
     const publicDir = mkdtempSync(join(tmpdir(), "ov-vid-"));
     mkdirSync(join(publicDir, "assets"));
     writeFileSync(join(publicDir, "assets", "still.jpg"), JPG);
+    const warnings = [];
     const item = await generateVideo({ id: "move", kind: "video", generate: { prompt: "push in", from: "still", duration: 4.6 } }, {
-      publicDir, aspect: "16:9", lookup: (id) => (id === "still" ? { id, file: "assets/still.jpg" } : null),
+      publicDir, aspect: "16:9", onWarn: (m) => warnings.push(m), lookup: (id) => (id === "still" ? { id, file: "assets/still.jpg" } : null),
       defaults: { baseUrl: r.base, keyEnv: "OV_TEST_KEY", models: ["busy", "grok-imagine-video"], pollSec: 0.01 },
     });
     assert.equal(item.file, "assets/move.mp4");
     assert.equal(item.author, "grok-imagine-video");
     assert.equal(item.width, 320);
+    assert.match(warnings.join("\n"), /move: clip inspection failed, keeping the whole take/); // this relay has no vision model
+    assert.equal(item.inspect, undefined);
     assert.ok(existsSync(join(publicDir, "assets", "move.frames", "0001.jpg")));
     const sub = r.calls.find((c) => c.path === "/v1/videos" && c.json.model === "grok-imagine-video").json;
     assert.equal(sub.duration, 5);
@@ -159,6 +162,40 @@ test("writeSheets tiles frames into JPEG contact sheets with the bundled ffmpeg"
   const probe = await ffprobe(sheets[0].file);
   assert.deepEqual([probe.streams[0].width, probe.streams[0].height], [3 * 160 + 4 * 4, 2 * 90 + 3 * 4]);
   assert.equal(readFileSync(sheets[1].file).subarray(0, 2).toString("hex"), "ffd8");
+});
+
+test("writeSheets --vs: each cell stacks the other version above this one", { skip: !existsSync(REMOTION_BIN) && "needs template deps (ffmpeg)" }, async () => {
+  const dir = mkdtempSync(join(tmpdir(), "ov-sheet-"));
+  const a = join(dir, "a.mp4"), b = join(dir, "b.mp4");
+  await ffmpeg(["-y", "-f", "lavfi", "-i", "nullsrc=size=640x360:rate=25:duration=4", "-c:v", "libx264", "-preset", "ultrafast", a]);
+  await ffmpeg(["-y", "-f", "lavfi", "-i", "nullsrc=size=640x360:rate=25:duration=2", "-c:v", "libx264", "-preset", "ultrafast", b]);
+  mkdirSync(join(dir, "qc"));
+  writeFileSync(join(dir, "qc", "compare-09.jpg"), "old");
+  const { sheets } = await writeSheets(a, join(dir, "qc"), { fps: 1, cols: 4, width: 160, prefix: "compare", pair: { video: b, shift: 0 } });
+  assert.deepEqual(sheets.map((s) => [s.cells, s.cols, s.rows]), [[4, 4, 1]]);
+  assert.match(sheets[0].file, /compare-01\.jpg$/);
+  assert.ok(!existsSync(join(dir, "qc", "compare-09.jpg")));
+  const probe = await ffprobe(sheets[0].file);
+  assert.deepEqual([probe.streams[0].width, probe.streams[0].height], [4 * 160 + 5 * 4, (2 * 90 + 4) + 2 * 4]);
+});
+
+test("inspectClip: one sheet to the vision model; the longest clean run becomes the clip", { skip: !existsSync(REMOTION_BIN) && "needs template deps (ffmpeg)" }, async () => {
+  const dir = mkdtempSync(join(tmpdir(), "ov-inspect-"));
+  const video = join(dir, "take.mp4");
+  await ffmpeg(["-y", "-f", "lavfi", "-i", "nullsrc=size=320x180:rate=25:duration=6", "-c:v", "libx264", "-preset", "ultrafast", video]);
+  const r = await relay({ "/v1/chat/completions": () => chat('{"score": 6, "issues": [{"cell": 1, "issue": "手部变形"}], "best": {"from": 3, "to": 10}}') });
+  try {
+    const llm = { baseUrl: r.base, keyEnv: "OV_TEST_KEY", models: ["eyes"] };
+    const res = await inspectClip(video, { prompt: "a hand waves", brief: "close-up", llm });
+    assert.equal(res.model, "eyes");
+    assert.equal(res.score, 6);
+    assert.deepEqual(res.issues, [{ t: 0.75, issue: "手部变形" }]); // 12 cells at 2 per second
+    assert.deepEqual(res.clip, [1.5, 4]);
+    assert.deepEqual((await inspectClip(video, { prompt: "p", keep: 2.5, llm })).clip, [1.5, 2.5]);
+    const msg = r.calls[0].json.messages[0].content;
+    assert.equal(msg.filter((p) => p.type === "image_url").length, 1);
+    assert.match(msg[0].text, /a hand waves[\s\S]*close-up/);
+  } finally { r.close(); }
 });
 
 test("bodies past curl's config line limit go through a temp file", async () => {

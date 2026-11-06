@@ -1,5 +1,5 @@
 // init / status / validate / approve
-import { cpSync, existsSync, mkdirSync, readdirSync, writeFileSync } from "node:fs";
+import { cpSync, existsSync, mkdirSync, readdirSync, statSync, writeFileSync } from "node:fs";
 import { join, resolve, basename } from "node:path";
 import { ONEVIDEO_ROOT, CONFIG_FILE, UserError, loadProject, pipelineDef, styleDef, writeJson, readJson, log } from "../lib/project.mjs";
 import { stageStatus, approveStage } from "../lib/state.mjs";
@@ -45,6 +45,8 @@ export async function status() {
   const icon = { done: "●", approved: "✔", "awaiting-approval": "◐", stale: "↻", pending: "○", optional: "◌" };
   log(`${project.config.title} — pipeline ${pipeline.name}`);
   for (const r of rows) log(`  ${icon[r.status]} ${r.id.padEnd(11)} ${r.status.padEnd(18)} ${(r.produces ?? []).join(", ")}`);
+  const handoff = join(project.root, "plan", "handoff.md");
+  if (existsSync(handoff)) log(`handoff: plan/handoff.md (${statSync(handoff).mtime.toLocaleString()}; what is locked and what the next round changes)`);
   const next = rows.find((r) => !["done", "approved", "optional"].includes(r.status));
   if (!next) return log("all stages complete");
   log("");

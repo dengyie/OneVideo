@@ -23,6 +23,10 @@ research → proposal → script → storyboard → assets → voice → compose
 - **素材**：NASA、Wikimedia Commons、Openverse 免 key 可用；Pexels（可选）。授权信息自动进入简介。
 - **AI 生成素材**：通过 OpenAI 兼容接口生图（一次出多张，由视觉模型挑一张，备选全部保留）和生视频（文生视频，或用 `from` 把一张图做成首帧图生视频）。按模型顺序依次回退，生成失败时回落到检索素材。
 - **导演工具**：`onevideo sheet` 把成片铺成联系表；`onevideo look` 请视觉模型按剪辑标准审片，每条意见对应到时间点和场景，写进 `out/qc/look.json`。
+- **版本与局部渲染**：`render --scenes a,b` / `--from --to` 只渲一段做样片；每次渲染存成 `out/versions/vN` 并记录时间轴哈希和备注，`onevideo versions` 查看，`sheet --vs prev` 把新旧两版逐格上下对比。
+- **生成视频自动质检**：生视频取回后由视觉模型检查人物重复、变形、跳变，自动保留最长的一段干净画面。
+- **写作门控**：脚本每个场景写它回答的观众问题（question 门控）；屏幕文字逐字照抄旁白时报 echo 警告。
+- **交接页**：`onevideo handoff` 生成 `plan/handoff.md`，记录阶段、已定参数、版本、看片意见和待处理问题，手写的“锁定 / 下一轮只改”跨次保留，换会话或交给子 agent 时不丢上下文。
 - **程序化配乐和音效**：零依赖合成，没有版权问题。
 - **渲染后 QC**：检查编码、分辨率、帧率、时长、响度、真峰值、旁白中的静音、黑帧、冻结画面、静态占比，并按场景抽帧供人工审阅。
 - **发布包**：SRT/VTT 字幕、章节时间戳、带全部来源与素材署名的简介。

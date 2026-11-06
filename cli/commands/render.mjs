@@ -15,6 +15,7 @@ import * as media from "./media.mjs";
 import { assetFileExists, clipFrames, countFrames, framesDir, IMAGE_DEFAULTS, VIDEO_DEFAULTS } from "../lib/assets.mjs";
 import { llmConfig } from "../lib/llm.mjs";
 import { ensureBeats } from "../lib/beats.mjs";
+import { frameRange, readRenders, recordRender, resolveVideo, timelineHash, versionFile } from "../lib/renders.mjs";
 
 const ENTRY = "src/index.ts";
 const COMPOSITION = "OneVideo";
@@ -65,11 +66,16 @@ export async function render(args) {
   await ensureClipFrames(project);
   await ensureMusicBeats(project);
   const tl = freshTimeline(project, { force: Boolean(args.force) });
-  mkdirSync(project.paths.out, { recursive: true });
+  mkdirSync(join(project.paths.out, "versions"), { recursive: true });
   const draft = Boolean(args.draft);
-  const out = args.out ?? (draft ? join(project.paths.out, `${project.config.name}.draft.mp4`) : videoPath(project));
+  // A part (--scenes / --from / --to / --frames) is the 15-second sample: iterate on one stretch
+  // without paying for the whole cut.
+  const range = args.frames ? String(args.frames).split("-").map(Number) : frameRange(tl, { scenes: args.scenes, from: args.from, to: args.to });
+  const part = Boolean(range) && !(range[0] === 0 && range[1] >= Math.round(tl.duration * tl.fps) - 1);
+  const alias = args.out ? null : part ? join(project.paths.out, `${project.config.name}.part.mp4`) : draft ? join(project.paths.out, `${project.config.name}.draft.mp4`) : videoPath(project);
+  const { v, file } = args.out ? { v: null, file: args.out } : versionFile(project, { draft, part });
   const flags = [
-    "render", ENTRY, COMPOSITION, out, ...commonFlags(project),
+    "render", ENTRY, COMPOSITION, file, ...commonFlags(project),
     "--codec=h264", "--audio-codec=aac", "--audio-bitrate=192k",
     `--concurrency=${args.concurrency ?? project.config.render?.concurrency ?? autoConcurrency()}`,
     `--crf=${draft ? 30 : project.config.render?.crf ?? 18}`,
@@ -82,12 +88,36 @@ export async function render(args) {
   if (Object.values(tl.assets ?? {}).some((a) => a.kind === "video")) {
     flags.push(`--offthreadvideo-cache-size-in-bytes=${Math.round((project.config.render?.videoCacheMB ?? 512) * 1024 * 1024)}`);
   }
-  if (args.frames) flags.push(`--frames=${args.frames}`);
-  log(`rendering ${tl.duration.toFixed(1)}s ${tl.width}x${tl.height}${draft ? " (draft, half scale)" : ""} → ${out}`);
+  if (range) flags.push(`--frames=${range[0]}-${range[1]}`);
+  const span = range ? `${(range[0] / tl.fps).toFixed(1)}–${((range[1] + 1) / tl.fps).toFixed(1)}s of ` : "";
+  log(`rendering ${span}${tl.duration.toFixed(1)}s ${tl.width}x${tl.height}${draft ? " (draft, half scale)" : ""}${v ? ` as v${v}` : ""} → ${file}`);
   const t0 = Date.now();
   await run(REMOTION_BIN, flags, { cwd: TEMPLATE_DIR, stdio: "inherit" });
-  log(`rendered in ${((Date.now() - t0) / 1000).toFixed(0)}s → ${out}`);
-  return out;
+  const secs = Math.round((Date.now() - t0) / 1000);
+  if (!v) { log(`rendered in ${secs}s → ${file}`); return file; }
+  const prev = readRenders(project).at(-1);
+  const hash = timelineHash(tl);
+  const rec = recordRender(project, {
+    v, file, at: new Date().toISOString(), draft, part, offset: range ? +(range[0] / tl.fps).toFixed(3) : 0,
+    frames: range ?? [0, Math.round(tl.duration * tl.fps) - 1], ...(args.scenes ? { scenes: String(args.scenes).split(",") } : {}),
+    timeline: hash, seconds: secs, ...(typeof args.note === "string" ? { note: args.note } : {}),
+  }, { alias });
+  log(`rendered v${v} in ${secs}s → ${rec.file} (${rec.alias})${prev && prev.timeline === hash ? `; timeline unchanged since v${prev.v}` : ""}`);
+  if (prev) log(`compare: onevideo sheet --vs v${prev.v}`);
+  return alias;
+}
+
+export async function versions(args) {
+  const project = loadProject();
+  const renders = readRenders(project);
+  if (args.json) return console.log(JSON.stringify(renders, null, 2));
+  if (!renders.length) return log("no renders yet; run: onevideo render [--draft] [--scenes a,b]");
+  for (const r of renders) {
+    const kind = [r.draft ? "draft" : "full", r.part ? "part" : null].filter(Boolean).join("+");
+    const span = r.part ? `from ${r.offset}s, ${r.frames[1] - r.frames[0] + 1}f${r.scenes ? ` ${r.scenes.join(",")}` : ""}` : "whole";
+    log(`  ${`v${r.v}`.padEnd(5)} ${r.at.slice(0, 16).replace("T", " ")}  ${kind.padEnd(10)} ${span.padEnd(20)} tl ${r.timeline}  ${r.pruned ? "(pruned) " : ""}${r.note ?? ""}`);
+  }
+  log(`compare two: onevideo sheet --video v${renders.at(-1).v} --vs v${renders.at(-2)?.v ?? renders.at(-1).v}`);
 }
 
 export async function stills(args) {
@@ -124,7 +154,7 @@ export async function studio(args) {
 
 export async function qc(args) {
   const project = loadProject();
-  const video = args.video ?? videoPath(project);
+  const video = args.video ? resolveVideo(project, args.video).file : videoPath(project);
   if (!existsSync(video)) throw new UserError(`no video at ${video}; run: onevideo render`);
   const tl = readJson(project.paths.timeline);
   const review = await runQc({ video, timeline: tl, outDir: join(project.paths.out, "qc"), thresholds: project.config.qc });

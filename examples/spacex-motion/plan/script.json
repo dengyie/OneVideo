@@ -5,12 +5,14 @@
     {
       "id": "hook",
       "beat": "hook",
+      "question": "这家公司凭什么值一万多亿？",
       "narration": "2026年6月12日，SpaceX在纳斯达克上市，代码SPCX。一家造火箭的公司，凭什么值一万多亿美元？",
       "chapter": "开场"
     },
     {
       "id": "ipo",
       "beat": "setup",
+      "question": "上市那天到底发生了什么？",
       "chapter": "上市",
       "narration": "发行价135美元，募资约857亿美元，是史上规模最大的IPO。首日收盘上涨约19%，市值约2.1万亿美元。",
       "claims": [
@@ -22,6 +24,7 @@
     {
       "id": "revenue",
       "beat": "build",
+      "question": "钱从哪儿来？",
       "chapter": "收入结构",
       "narration": "撑起估值的是星链。2025年收入约187亿美元，以星链为主的连接业务贡献约114亿，占比超过六成。",
       "claims": [

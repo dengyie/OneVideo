@@ -7,6 +7,7 @@ import { join } from "node:path";
 import { ffmpeg, ffprobe } from "./ffmpeg.mjs";
 import { getJson, download, request, requireApiKey } from "./http.mjs";
 import { ask, imagePart } from "./llm.mjs";
+import { cellTime, writeSheets } from "./sheet.mjs";
 
 const stripHtml = (s) => String(s ?? "").replace(/<[^>]+>/g, "").replace(/&amp;/g, "&").replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/\s+/g, " ").trim();
 const enc = encodeURIComponent;
@@ -316,7 +317,38 @@ const sleep = (s) => new Promise((r) => setTimeout(r, s * 1000));
 // Text- or image-to-video through the relay's /videos task API: submit, poll, download, then the
 // same cut + frame sequence as any fetched clip. `from: <asset id>` animates that (already
 // fetched) image as the first frame.
-export async function generateVideo(item, { publicDir, defaults = {}, aspect = "16:9", lookup = () => null }) {
+// Generated clips go wrong mid-shot (a person cloned, a face melting, a hand growing fingers) even
+// when the first frame looks fine, so the whole take is read as a contact sheet and only its
+// longest clean stretch is kept (capped at generate.keep seconds when set). An explicit `clip`
+// or generate.inspect: false skips this.
+export async function inspectClip(file, { prompt, brief, keep, llm = {} }) {
+  const tmp = mkdtempSync(join(tmpdir(), "ov-inspect-"));
+  try {
+    const dur = +(await ffprobe(file)).format.duration;
+    const { sheets: [s] } = await writeSheets(file, tmp, { fps: Math.min(2, 24 / Math.max(dur, 1)), cols: 6, width: 320, per: 24 });
+    const { data, model } = await ask({
+      prompt: `Contact sheet of one AI-generated video take, read row by row, left to right, cell 0 first. ${s.cells} cells; cell i shows t = ${cellTime(s, 0)}s + i×${+s.step.toFixed(3)}s.
+The take was asked for: ${prompt}${brief ? `\nWhat the shot must do: ${brief}` : ""}
+Find generation artifacts: a person or object duplicated or appearing from nowhere, faces, hands or bodies deforming, things melting or popping, garbled text or logos, sudden jumps of the camera. Then name the longest run of consecutive clean, steady cells.
+Reply only JSON: {"score": <1-10 usable quality>, "issues": [{"cell": <i>, "issue": "<Chinese, under 30 chars>"}], "best": {"from": <first clean cell>, "to": <last clean cell>}}`,
+      images: [imagePart(s.file)], json: true, maxTokens: 2000, config: { llm },
+    });
+    const at = (i) => Math.max(0, Math.min(s.cells - 1, Math.round(Number(i))));
+    const issues = (Array.isArray(data.issues) ? data.issues : []).map((x) => ({ t: cellTime(s, at(x.cell ?? 0)), issue: String(x.issue ?? "") }));
+    let clip = null;
+    if (data.best && Number.isFinite(Number(data.best.from)) && Number.isFinite(Number(data.best.to))) {
+      const a = at(data.best.from), b = Math.max(a, at(data.best.to));
+      const start = +(s.t0 + a * s.step).toFixed(2), end = Math.min(dur, s.t0 + (b + 1) * s.step);
+      const len = +Math.min(end - start, keep ?? Infinity).toFixed(2);
+      if (len >= 1) clip = [start, len];
+    }
+    return { model, score: Number(data.score) || null, issues, clip };
+  } finally {
+    rmSync(tmp, { recursive: true, force: true });
+  }
+}
+
+export async function generateVideo(item, { publicDir, defaults = {}, aspect = "16:9", lookup = () => null, llm = {}, onWarn = () => {} }) {
   const cfg = genConfig(item, VIDEO_DEFAULTS, defaults);
   const key = requireApiKey(cfg.keyEnv, cfg.baseUrl);
   const base = cfg.baseUrl.replace(/\/$/, "");
@@ -344,10 +376,25 @@ export async function generateVideo(item, { publicDir, defaults = {}, aspect = "
   const file = `assets/${item.id}.mp4`;
   const raw = join(dir, `${item.id}.src.mp4`);
   writeFileSync(raw, t.buf);
-  let dims;
-  try { dims = await cutClip(raw, join(publicDir, file), item.clip); } finally { rmSync(raw, { force: true }); }
+  let dims, inspect = null;
+  try {
+    if (!item.clip && cfg.inspect !== false) {
+      try {
+        inspect = await inspectClip(raw, { prompt: cfg.prompt, brief: cfg.brief, keep: cfg.keep, llm });
+        if (inspect.score !== null && inspect.score <= 4) onWarn(`${item.id}: generated take scored ${inspect.score}/10 (${inspect.issues.map((x) => `${x.t}s ${x.issue}`).join("; ") || "no detail"}); consider regenerating (assets fetch --only ${item.id} --force)`);
+        if (!inspect.clip) onWarn(`${item.id}: inspection found no clean stretch; keeping the whole take`);
+      } catch (e) {
+        onWarn(`${item.id}: clip inspection failed, keeping the whole take (${e.message.split("\n")[0]})`);
+      }
+    }
+    dims = await cutClip(raw, join(publicDir, file), item.clip ?? inspect?.clip ?? (cfg.keep ? [0, cfg.keep] : undefined));
+  } finally { rmSync(raw, { force: true }); }
   await clipFrames(join(publicDir, file), join(publicDir, framesDir(file)));
-  return { ...item, file, kind: "video", via: "generate", license: "generated", author: t.model, title: item.title ?? cfg.prompt.slice(0, 80), ...dims, fetchedAt: new Date().toISOString() };
+  return {
+    ...item, file, kind: "video", via: "generate", license: "generated", author: t.model, title: item.title ?? cfg.prompt.slice(0, 80), ...dims,
+    ...(inspect ? { inspect: { model: inspect.model, score: inspect.score, issues: inspect.issues, ...(inspect.clip ? { kept: inspect.clip } : {}) } } : {}),
+    fetchedAt: new Date().toISOString(),
+  };
 }
 
 export const assetFileExists = (publicDir, item) => Boolean(item.file) && existsSync(join(publicDir, item.file));

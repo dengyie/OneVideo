@@ -1,6 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { schemaGate, numbersGate, captionGate, storyboardGate, rateGate, assetsGate, budgetGate, timingsGate, normalizeLicense, summarize } from "../cli/lib/gates.mjs";
+import { schemaGate, numbersGate, captionGate, storyboardGate, rateGate, assetsGate, budgetGate, timingsGate, normalizeLicense, summarize, questionGate, echoGate } from "../cli/lib/gates.mjs";
+import { compileTimeline } from "../cli/lib/timeline.mjs";
 import { example } from "./helpers.mjs";
 
 const msgs = (issues, gate) => issues.filter((i) => !gate || i.gate === gate).map((i) => i.msg);
@@ -104,4 +105,30 @@ test("timingsGate flags narration changed since tts", () => {
   assert.ok(timingsGate(ex.script, ex.timings, style).length > 0, "a style change invalidates timings");
   const split = { ...ex.config, captions: { ...ex.config.captions, maxChars: 10 } };
   assert.ok(timingsGate(ex.script, ex.timings, split).length > 0, "a new caption split re-aligns the lines");
+});
+
+test("questionGate lists narrated scenes that answer no audience question", () => {
+  const script = { scenes: [{ id: "a", narration: "x", question: "为什么？" }, { id: "b", narration: "y" }, { id: "c", lines: ["z"], question: " " }, { id: "credits", beat: "credits" }] };
+  const out = questionGate(script);
+  assert.equal(out.length, 1);
+  assert.equal(out[0].level, "warn");
+  assert.match(out[0].msg, /: b, c —/);
+  assert.deepEqual(questionGate(example().script), []);
+});
+
+test("echoGate flags on-screen text that repeats the narration verbatim", () => {
+  const lines = [{ text: "撑起估值的是星链。" }, { text: "2025年收入约187亿美元，" }];
+  const tl = { scenes: [
+    { id: "a", type: "footage", lines, props: { title: { text: "撑起估值的是星链" } }, overlays: [{ type: "word", text: "$187亿" }] },
+    { id: "b", type: "bullets", lines, props: { items: [{ label: "2025年收入约187亿美元" }] }, overlays: [] },
+    { id: "q", type: "quote", lines, props: { text: "撑起估值的是星链。" } },
+  ] };
+  assert.deepEqual(echoGate(tl, {}).map((i) => i.msg.match(/^scene "(\w+)": on-screen "([^"]+)"/).slice(1)), [["a", "撑起估值的是星链"], ["b", "2025年收入约187亿美元"]]);
+  assert.deepEqual(echoGate(tl, { gates: { echoMinChars: 20 } }), []);
+});
+
+test("the SpaceX examples' screens do not echo their narration", () => {
+  const ex = example();
+  const { timeline } = compileTimeline({ ...ex, assets: ex.fetchedAssets });
+  assert.deepEqual(echoGate(timeline, ex.config), []);
 });

@@ -33,7 +33,8 @@
         "narration": { "type": "string" },
         "lines": { "type": "array", "items": { "$ref": "#/$defs/line" } },
         "claims": { "type": "array", "items": { "type": "string" } },
-        "visualIntent": { "type": "string" }
+        "visualIntent": { "type": "string" },
+        "question": { "type": "string", "description": "The audience question this scene answers, in the viewer's words" }
       }
     }
   }
