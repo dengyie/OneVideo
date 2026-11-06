@@ -1,7 +1,9 @@
 // The director's eyes on a render: contact sheets (every Nth second tiled into one image) and a
 // second opinion from a vision model that reads them against the timeline.
-import { existsSync, mkdirSync, readdirSync, rmSync } from "node:fs";
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
 import { join, relative } from "node:path";
+import { deflateSync } from "node:zlib";
 import { UserError, loadProject, readJson, writeJson, log, warn } from "../lib/project.mjs";
 import { ffmpeg, ffprobe } from "../lib/ffmpeg.mjs";
 import { ask, imagePart, llmConfig } from "../lib/llm.mjs";
@@ -26,22 +28,65 @@ export function sheetPlan(duration, { fps, from = 0, to = duration, cols = 6, pe
 // The scene playing at t (seconds) on a compiled timeline.
 export const sceneAt = (timeline, t) => timeline?.scenes?.findLast((s) => s.start <= t + 1e-6)?.id ?? null;
 
-async function writeSheets(video, outDir, opts) {
+const cellTime = (s, i) => +(s.t0 + s.step * (i + 0.5)).toFixed(2);
+
+// Remotion's ffmpeg build has scale but no fps/tile filters, so cells are pulled one by one as raw
+// RGB and tiled here; the grid goes out as PNG and ffmpeg re-encodes it to JPEG.
+const PAD = 4;
+
+const CRC = Array.from({ length: 256 }, (_, n) => { for (let k = 0; k < 8; k++) n = n & 1 ? 0xedb88320 ^ (n >>> 1) : n >>> 1; return n >>> 0; });
+const crc32 = (buf) => { let c = 0xffffffff; for (const b of buf) c = CRC[(c ^ b) & 0xff] ^ (c >>> 8); return (c ^ 0xffffffff) >>> 0; };
+function chunk(type, data) {
+  const body = Buffer.concat([Buffer.from(type), data]);
+  const len = Buffer.alloc(4), crc = Buffer.alloc(4);
+  len.writeUInt32BE(data.length); crc.writeUInt32BE(crc32(body));
+  return Buffer.concat([len, body, crc]);
+}
+function encodePng(rgb, w, h) {
+  const rows = Buffer.alloc((w * 3 + 1) * h);
+  for (let y = 0; y < h; y++) rgb.copy(rows, y * (w * 3 + 1) + 1, y * w * 3, (y + 1) * w * 3);
+  const ihdr = Buffer.alloc(13);
+  ihdr.writeUInt32BE(w, 0); ihdr.writeUInt32BE(h, 4); ihdr.set([8, 2, 0, 0, 0], 8);
+  return Buffer.concat([Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]), chunk("IHDR", ihdr), chunk("IDAT", deflateSync(rows)), chunk("IEND", Buffer.alloc(0))]);
+}
+
+async function frameRgb(video, t, w, h, tmp) {
+  const f = join(tmp, "cell.rgb");
+  rmSync(f, { force: true });
+  await ffmpeg(["-y", "-v", "error", "-ss", String(t), "-i", video, "-frames:v", "1", "-vf", `scale=${w}:${h}`, "-pix_fmt", "rgb24", "-c:v", "rawvideo", "-f", "image2", "-update", "1", f]);
+  return existsSync(f) ? readFileSync(f) : null; // past the last frame: leave the cell black
+}
+
+export async function writeSheets(video, outDir, opts) {
   const probe = await ffprobe(video);
   const duration = +probe.format.duration;
+  const vs = probe.streams.find((st) => st.codec_type === "video");
   const plan = sheetPlan(duration, opts);
   mkdirSync(outDir, { recursive: true });
   for (const f of readdirSync(outDir)) if (/^sheet-\d+\.jpg$/.test(f)) rmSync(join(outDir, f));
-  const width = opts.width ?? 480;
-  for (const [k, s] of plan.entries()) {
-    s.file = join(outDir, `sheet-${String(k + 1).padStart(2, "0")}.jpg`);
-    // Sample mid-interval so a cell shows its second, not the cut at its edge.
-    await ffmpeg(["-y", "-ss", String(s.t0 + s.step / 2), "-t", String(s.cells * s.step), "-i", video, "-frames:v", "1", "-vf", `fps=${1 / s.step},scale=${width}:-2,tile=${s.cols}x${s.rows}:padding=4:color=black`, "-q:v", "4", s.file]);
+  const w = opts.width ?? 480, h = Math.round((w * vs.height) / vs.width / 2) * 2;
+  const tmp = mkdtempSync(join(tmpdir(), "ov-sheet-"));
+  try {
+    for (const [k, s] of plan.entries()) {
+      s.file = join(outDir, `sheet-${String(k + 1).padStart(2, "0")}.jpg`);
+      const W = s.cols * w + (s.cols + 1) * PAD, H = s.rows * h + (s.rows + 1) * PAD;
+      const grid = Buffer.alloc(W * H * 3);
+      for (let i = 0; i < s.cells; i++) {
+        // Sample mid-interval so a cell shows its second, not the cut at its edge.
+        const cell = await frameRgb(video, Math.min(cellTime(s, i), duration - 0.05), w, h, tmp);
+        if (!cell) continue;
+        const x0 = PAD + (i % s.cols) * (w + PAD), y0 = PAD + Math.floor(i / s.cols) * (h + PAD);
+        for (let y = 0; y < h; y++) cell.copy(grid, ((y0 + y) * W + x0) * 3, y * w * 3, (y + 1) * w * 3);
+      }
+      const png = join(tmp, "sheet.png");
+      writeFileSync(png, encodePng(grid, W, H));
+      await ffmpeg(["-y", "-v", "error", "-i", png, "-q:v", "4", s.file]);
+    }
+  } finally {
+    rmSync(tmp, { recursive: true, force: true });
   }
   return { duration, sheets: plan };
 }
-
-const cellTime = (s, i) => +(s.t0 + s.step * (i + 0.5)).toFixed(2);
 
 export async function sheet(args) {
   const project = loadProject();

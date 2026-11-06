@@ -6,8 +6,8 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { generateImage, generateVideo, fetchAsset } from "../cli/lib/assets.mjs";
 import { ask, parseJsonReply } from "../cli/lib/llm.mjs";
-import { sheetPlan, sceneAt } from "../cli/commands/director.mjs";
-import { REMOTION_BIN, ffmpeg } from "../cli/lib/ffmpeg.mjs";
+import { sheetPlan, sceneAt, writeSheets } from "../cli/commands/director.mjs";
+import { REMOTION_BIN, ffmpeg, ffprobe } from "../cli/lib/ffmpeg.mjs";
 
 // A stand-in relay: `routes[path]` answers (req, body) → [status, json | Buffer]; calls are logged.
 async function relay(routes) {
@@ -137,4 +137,15 @@ test("video generation: submit, poll, download, cut; image-to-video sends the st
     assert.match(sub.image.url, /^data:image\/jpeg;base64,/);
     await assert.rejects(generateVideo({ id: "m2", kind: "video", generate: { prompt: "p", from: "nope" } }, { publicDir, lookup: () => null, defaults: { baseUrl: r.base, keyEnv: "OV_TEST_KEY" } }), /"nope" is not fetched yet/);
   } finally { r.close(); }
+});
+
+test("writeSheets tiles frames into JPEG contact sheets with the bundled ffmpeg", { skip: !existsSync(REMOTION_BIN) && "needs template deps (ffmpeg)" }, async () => {
+  const dir = mkdtempSync(join(tmpdir(), "ov-sheet-"));
+  const video = join(dir, "v.mp4");
+  await ffmpeg(["-y", "-f", "lavfi", "-i", "nullsrc=size=640x360:rate=25:duration=7", "-c:v", "libx264", "-preset", "ultrafast", video]);
+  const { sheets } = await writeSheets(video, join(dir, "qc"), { fps: 1, per: 6, cols: 3, width: 160 });
+  assert.deepEqual(sheets.map((s) => [s.cells, s.cols, s.rows]), [[6, 3, 2], [1, 1, 1]]);
+  const probe = await ffprobe(sheets[0].file);
+  assert.deepEqual([probe.streams[0].width, probe.streams[0].height], [3 * 160 + 4 * 4, 2 * 90 + 3 * 4]);
+  assert.equal(readFileSync(sheets[1].file).subarray(0, 2).toString("hex"), "ffd8");
 });
