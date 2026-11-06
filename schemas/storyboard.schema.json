@@ -66,6 +66,17 @@
                 "null"
               ],
               "description": "sound for this boundary; null silences it"
+            },
+            "focus": {
+              "type": "array",
+              "items": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 1
+              },
+              "minItems": 2,
+              "maxItems": 2,
+              "description": "through: screen point [x, y] (0–1) to dive at; default the outgoing subject from its depth map"
             }
           }
         }

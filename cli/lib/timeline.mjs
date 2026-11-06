@@ -10,6 +10,7 @@ import { entryAvailable, entryPath, isMonoDark, loadCatalog, resolveEntry, tintL
 import { parseWav } from "./wav.mjs";
 import { countFrames, depthPath, framesDir } from "./assets.mjs";
 import { beatsFile, snapToBar, snapToBeat } from "./beats.mjs";
+import { subjectFocus } from "./subject.mjs";
 
 export const DIMENSIONS = { "16:9": [1920, 1080], "9:16": [1080, 1920], "1:1": [1080, 1080], "4:5": [1080, 1350] };
 export const DEFAULT_HOLD = 0.5;
@@ -63,7 +64,7 @@ export function boundaryTransition(prev, next, theme, fps) {
   // Never let a transition eat more than 40% of either scene.
   const frames = spec.type === "cut" ? 0 : Math.max(2, Math.min(want, Math.floor(prev.durationInFrames * 0.4), Math.floor(next.durationInFrames * 0.4)));
   const lead = Math.floor(frames / 2);
-  return { type: spec.type, frames, lead, direction: spec.direction ?? "left", sfx: spec.sfx };
+  return { type: spec.type, frames, lead, direction: spec.direction ?? "left", sfx: spec.sfx, ...(spec.focus ? { focus: spec.focus } : {}) };
 }
 
 const clampT = (t, d) => Math.max(0, Math.min(d, t));
@@ -401,6 +402,11 @@ export function compileTimeline({ config, script, storyboard, timings, assets, r
     const b = boundaryTransition(prev, sc, theme, fps);
     sc.transitionIn = { type: b.type, frames: b.frames, lead: b.lead, direction: b.direction };
     prev.transitionOut = { type: b.type, frames: b.frames, tail: b.frames - b.lead, direction: b.direction, nextOpaque: sc.opaque };
+    // Through dives at the outgoing subject: an authored [x, y] on screen, else the depth map's.
+    if (b.type === "through") {
+      const focus = b.focus ? { x: b.focus[0], y: b.focus[1], layer: "screen" } : subjectFocus(root, prev, usedAssets, fps, width, height);
+      if (focus) sc.transitionIn.focus = prev.transitionOut.focus = focus;
+    }
     const sound = b.sfx !== undefined ? b.sfx : transitionSfx(sfxCfg.transition, b.type);
     if (sound) sfx.push({ sound, src: sfxFile(sound), at: r3(Math.max(0, (sc.from - b.lead) / fps - 0.06)), volume: sfxCfg.volume * 0.7 });
   });

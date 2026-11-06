@@ -1,8 +1,8 @@
 import React from "react";
 import { AbsoluteFill, Html5Audio, Sequence, staticFile, useCurrentFrame, useVideoConfig } from "remotion";
 import { noise2D } from "@remotion/noise";
-import type { Camera, Direction, Scene, Timeline, Transition } from "./types";
-import { SceneContext, TimelineContext, useLayout } from "./context";
+import type { Camera, Direction, Focus, Scene, Shot, Timeline, Transition } from "./types";
+import { SceneContext, TimelineContext, useLayout, useTimeline } from "./context";
 import { clamp01, easeInOut, easeOut } from "./motion";
 import { cutBetween, farther, viewAt, viewTransform, viewVelocity } from "./camera";
 import { MotionBlur } from "../components/MotionBlur";
@@ -113,6 +113,20 @@ export function cameraTransform(cam: Camera, k: number, t: number, w: number, se
 // carries its own copy of the style background while one of these runs.
 const SOLID: Transition[] = ["push", "whip", "iris", "clock", "wipe", "through"];
 
+// Screen point a through transition dives at: the outgoing subject filmed through that scene's
+// shot track at time t (the backdrop layer through its weaker copy), as a CSS transform-origin.
+function throughOrigin(f: Focus | undefined, shots: Shot[] | undefined, t: number): string | undefined {
+  if (!f) return undefined;
+  let { x, y } = f;
+  if (f.layer !== "screen") {
+    const v0 = viewAt(shots?.length ? shots : undefined, t);
+    const v = f.layer === "backdrop" ? farther(v0, 0.55) : v0;
+    x = 0.5 + v.zoom * (x - v.x);
+    y = 0.5 + v.zoom * (y - v.y);
+  }
+  return `${(clamp01(x) * 100).toFixed(1)}% ${(clamp01(y) * 100).toFixed(1)}%`;
+}
+
 const SceneFrame: React.FC<{ scene: Scene; length: number; children: React.ReactNode; content: React.ReactNode; base: React.ReactNode }> = ({ scene, length, children, content, base }) => {
   const frame = useCurrentFrame();
   const { fps, width, height } = useVideoConfig();
@@ -121,15 +135,25 @@ const SceneFrame: React.FC<{ scene: Scene; length: number; children: React.React
   const tout = scene.transitionOut;
   let look: Look = { style: {} };
   let active: Transition | null = null;
+  let out = false;
   if (tin && tin.frames > 0 && frame < tin.frames) {
     active = tin.type;
     look = presentation(tin.type, "in", easeInOut(frame / tin.frames), tin.direction, width, height, false);
   } else if (tout && tout.frames > 0 && frame > length - tout.frames) {
     active = tout.type;
+    out = true;
     look = presentation(tout.type, "out", easeInOut((frame - (length - tout.frames)) / tout.frames), tout.direction, width, height, tout.nextOpaque);
   }
   const solid = !scene.opaque && active !== null && SOLID.includes(active);
   const t = (frame - (tin?.lead ?? 0)) / fps;
+  const tl = useTimeline();
+  if (active === "through") {
+    const prev = out ? scene : tl.scenes[tl.scenes.findIndex((s) => s.id === scene.id) - 1];
+    const f = out ? tout?.focus : tin?.focus;
+    // The incoming side surfaces from the same screen point, read on the outgoing scene's clock.
+    const origin = prev && throughOrigin(f, prev.shots, out ? t : (frame - (tin?.lead ?? 0) + scene.from - prev.from) / fps);
+    if (origin) look = { ...look, style: { ...look.style, transformOrigin: origin } };
+  }
   const cam = cameraTransform(scene.camera ?? { move: "drift" }, clamp01(t / Math.max(0.1, scene.duration)), t, width, scene.id);
   // Shot track: the foreground is filmed through the current framing, the backdrop through a
   // weaker one, and a move between framings smears by its per-frame travel.

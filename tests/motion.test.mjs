@@ -1,10 +1,13 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { writeFileSync } from "node:fs";
+import { mkdirSync, mkdtempSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { deflateSync } from "node:zlib";
 import { AUTO_SHOTS, MOTION_SFX, compileShots, compileTimeline, motionCues, resolveWhen, sfxVariants } from "../cli/lib/timeline.mjs";
 import { beatsFile, detectBeats, everyFourth, gridBeats, snapToBar, snapToBeat } from "../cli/lib/beats.mjs";
 import { schemaGate } from "../cli/lib/gates.mjs";
+import { coverPoint, nearCentroid, rampTime, subjectFocus } from "../cli/lib/subject.mjs";
 import { example } from "./helpers.mjs";
 
 const lines = [{ start: 0, end: 1.8 }, { start: 2, end: 3.9 }, { start: 4.1, end: 6 }];
@@ -145,4 +148,47 @@ test("compileTimeline: sfx.motion auto adds motion sounds that yield to authored
   assert.ok(!timeline.sfx.some((s) => s.sound.startsWith("ui-pop")));
   assert.ok(motion[0].sound.startsWith(MOTION_SFX.slam) && motion[1].sound.startsWith(MOTION_SFX.flyLong));
   assert.equal(motion[1].volume, 0.45);
+});
+
+// 8-bit gray PNG, filter 0 on every row (the decoder does not check CRCs).
+function grayPng(w, h, px) {
+  const chunk = (type, data) => {
+    const len = Buffer.alloc(4); len.writeUInt32BE(data.length);
+    return Buffer.concat([len, Buffer.from(type, "ascii"), data, Buffer.alloc(4)]);
+  };
+  const ihdr = Buffer.alloc(13); ihdr.writeUInt32BE(w, 0); ihdr.writeUInt32BE(h, 4); ihdr[8] = 8;
+  const raw = Buffer.alloc((w + 1) * h);
+  for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) raw[y * (w + 1) + 1 + x] = px[y * w + x];
+  return Buffer.concat([Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]), chunk("IHDR", ihdr), chunk("IDAT", deflateSync(raw)), chunk("IEND", Buffer.alloc(0))]);
+}
+
+test("subject: nearest pixels' centroid, cover-fitted, pulled toward the centre; ramps mirror the renderer", () => {
+  const w = 16, h = 9, px = new Uint8Array(w * h).fill(40);
+  for (let y = 2; y <= 4; y++) for (let x = 11; x <= 13; x++) px[y * w + x] = 230;
+  const c = nearCentroid(px, w, h, 0.08);
+  assert.ok(Math.abs(c.x - 12.5 / 16) < 1e-9 && Math.abs(c.y - 3.5 / 9) < 1e-9);
+  // A 4:3 layer covering 16:9 is cropped top and bottom.
+  assert.deepEqual(coverPoint({ x: 0.5, y: 0 }, 4, 3, 16, 9), { x: 0.5, y: -1 / 6 });
+  assert.equal(rampTime(2, [], 30), 2);
+  assert.ok(Math.abs(rampTime(2, [{ t: 0, speed: 0.5 }], 30) - 1.075) < 0.005);
+  const root = mkdtempSync(join(tmpdir(), "ov-subject-"));
+  mkdirSync(join(root, "public"));
+  writeFileSync(join(root, "public", "p.depth.png"), grayPng(w, h, px));
+  const f = subjectFocus(root, { type: "parallax", duration: 2, props: { asset: "p" } }, { p: { kind: "image", depth: "p.depth.png" } }, 30, 1920, 1080);
+  assert.deepEqual(f, { x: 0.739, y: 0.406, layer: "content" });
+  assert.equal(subjectFocus(root, { type: "canvas", duration: 2, props: {} }, {}, 30, 1920, 1080), null);
+});
+
+test("through: an authored focus reaches both sides of the boundary; schema takes [x, y]", () => {
+  const ex = example();
+  const sb = structuredClone(ex.storyboard);
+  sb.scenes[1] = { ...sb.scenes[1], enter: { type: "through", focus: [0.3, 0.6] } };
+  const { timeline, errors } = compileTimeline({ ...ex, storyboard: sb, assets: ex.fetchedAssets });
+  assert.deepEqual(errors, []);
+  const [a, b] = timeline.scenes;
+  assert.deepEqual(b.transitionIn.focus, { x: 0.3, y: 0.6, layer: "screen" });
+  assert.deepEqual(a.transitionOut.focus, b.transitionIn.focus);
+  assert.equal(b.transitionIn.frames, 24);
+  assert.deepEqual(schemaGate("storyboard", { scenes: [{ id: "x", type: "title", enter: { type: "through", focus: [0.4, 0.5] }, props: { title: "t" } }] }).filter((i) => /focus/.test(i.msg)), []);
+  assert.ok(schemaGate("storyboard", { scenes: [{ id: "x", type: "title", enter: { type: "through", focus: [2, 0.5] }, props: { title: "t" } }] }).length);
 });

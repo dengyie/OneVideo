@@ -18,11 +18,14 @@ export type Theme = {
 
 export type Transition = "fade" | "slide" | "push" | "whip" | "zoom" | "punch" | "iris" | "wipe" | "clock" | "dip" | "through" | "cut";
 export type Direction = "left" | "right" | "up" | "down";
-export type TransitionSpec = { type: Transition; duration?: number; direction?: Direction; sfx?: string | null };
+export type TransitionSpec = { type: Transition; duration?: number; direction?: Direction; sfx?: string | null; focus?: [number, number] };
 // A boundary as compiled: `frames` of overlap, `lead` of them before this scene's own start (in)
 // or `tail` of them after its end (out).
-export type TransitionIn = { type: Transition; frames: number; lead: number; direction: Direction };
-export type TransitionOut = { type: Transition; frames: number; tail: number; direction: Direction; nextOpaque: boolean };
+// `focus`: where a through transition dives, in frame coordinates of the outgoing scene's layer
+// before its shot track ("screen": already on screen).
+export type Focus = { x: number; y: number; layer: "content" | "backdrop" | "screen" };
+export type TransitionIn = { type: Transition; frames: number; lead: number; direction: Direction; focus?: Focus };
+export type TransitionOut = { type: Transition; frames: number; tail: number; direction: Direction; nextOpaque: boolean; focus?: Focus };
 export type CameraMove = "static" | "drift" | "push" | "pull" | "pan-left" | "pan-right" | "rise" | "handheld";
 export type Camera = { move: CameraMove; amount?: number };
 export type Background = "default" | "plain" | "grid" | "stars" | "media";

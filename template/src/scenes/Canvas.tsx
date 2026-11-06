@@ -120,8 +120,9 @@ export function canvasBackdrop(props: { items?: Item[]; path?: Stop[] }, t: numb
   return `translate(${dx.toFixed(1)}px, ${dy.toFixed(1)}px) scale(${s.toFixed(4)})`;
 }
 
-// `roll`: a stat entering counts up on odometer reels to `full` (its settled value).
-const Content: React.FC<{ s: State; scale: number; theme: ReturnType<typeof useTheme>; t: number; enter: number; roll?: { p: number; full: number } }> = ({ s, scale, theme, t, enter, roll }) => {
+// `roll`: a stat entering counts up on odometer reels to `full` (its settled value). `lay`: seconds
+// since it entered; label and number arrive after the plate, staggered, instead of all at once.
+const Content: React.FC<{ s: State; scale: number; theme: ReturnType<typeof useTheme>; t: number; enter: number; roll?: { p: number; was: number; full: number }; lay?: number }> = ({ s, scale, theme, t, enter, roll, lay }) => {
   const tl = useTimeline();
   const color = s.color ?? theme.colors.accent;
   const fs = (n: number) => n * scale;
@@ -148,15 +149,18 @@ const Content: React.FC<{ s: State; scale: number; theme: ReturnType<typeof useT
         </div>
       );
     }
-    default:
+    default: {
+      const label = lay === undefined ? 1 : easeOut(clamp01((lay - 0.1) / 0.4));
+      const num = lay === undefined ? 1 : easeOut(clamp01((lay - 0.18) / 0.45));
       return (
         <div style={{ width: "100%", height: "100%", display: "flex", flexDirection: "column", justifyContent: "center", padding: `0 ${fs(40)}px` }}>
-          {s.label && <div style={{ fontSize: fs(30), color: theme.colors.muted }}>{s.label}</div>}
-          <div style={{ fontFamily: theme.fonts.number, fontSize: fs(s.size ?? 110), fontWeight: 800, color, lineHeight: 1.05, whiteSpace: "nowrap" }}>
-            {roll && roll.p < 1 ? <Roll text={fmtCount(roll.full, roll.full, s.format)} p={roll.p} /> : fmtCount(s.value ?? 0, s.value ?? 0, s.format)}
+          {s.label && <div style={{ fontSize: fs(30), color: theme.colors.muted, opacity: label, transform: label < 1 ? `translateX(${(-(1 - label) * 36 * scale).toFixed(1)}px)` : undefined }}>{s.label}</div>}
+          <div style={{ fontFamily: theme.fonts.number, fontSize: fs(s.size ?? 110), fontWeight: 800, color, lineHeight: 1.05, whiteSpace: "nowrap", opacity: Math.min(1, num * 1.6), transform: num < 1 ? `translateY(${((1 - num) * 0.35).toFixed(3)}em)` : undefined }}>
+            {roll && roll.p < 1 ? <Roll text={fmtCount(roll.full, roll.full, s.format)} p={roll.p} was={roll.was} /> : fmtCount(s.value ?? 0, s.value ?? 0, s.format)}
           </div>
         </div>
       );
+    }
   }
 };
 
@@ -219,8 +223,10 @@ export const CanvasScene: React.FC<{ items?: Item[]; path?: Stop[]; links?: Link
     // Count up with the decimals of the values the item settles on, not the frame's float.
     const f = s.format ?? {};
     const format = f.decimals !== undefined || f.compact ? f : { ...f, decimals: decimalsOf(it) };
-    const roll = s.value !== undefined && count < 1 ? { p: count, full: s.value } : undefined;
-    return { it, s: { ...s, value: s.value !== undefined ? s.value * count : undefined, format }, prev, p, e, enter, roll };
+    const roll = s.value !== undefined && count < 1 ? { p: count, was: easeOut((t - 1 / fps - enter) / 1.1), full: s.value } : undefined;
+    // Layered entry only for a fresh arrival, not one settled from a previous canvas or morphing.
+    const lay = it.settled || count >= 1 ? undefined : t - enter;
+    return { it, s: { ...s, value: s.value !== undefined ? s.value * count : undefined, format }, prev, p, e, enter, roll, lay };
   });
   const pos = new Map(shown.map((x) => [x.it.id, x]));
 
@@ -242,7 +248,7 @@ export const CanvasScene: React.FC<{ items?: Item[]; path?: Stop[]; links?: Link
           );
         })}
       </svg>
-      {shown.map(({ it, s, prev, p, e, enter, roll }) => {
+      {shown.map(({ it, s, prev, p, e, enter, roll, lay }) => {
         if (e <= 0) return null;
         const c = toScreen(s.x!, s.y!);
         const w = s.w! * k, h = s.h! * k;
@@ -251,6 +257,8 @@ export const CanvasScene: React.FC<{ items?: Item[]; path?: Stop[]; links?: Link
         const card = boxed(s.type) || (prev && boxed(prev.type));
         const cardO = boxed(s.type) ? (prev && !boxed(prev.type) ? p : 1) : prev && boxed(prev.type) ? 1 - p : 0;
         const accent = s.color ?? theme.colors.accent;
+        // The plate wipes open from its accent edge before the content lands on it.
+        const wipe = lay === undefined ? 1 : easeOut(clamp01(lay / 0.4));
         return (
           <div key={it.id} style={{
             position: "absolute", left: c.x - w / 2, top: c.y - h / 2, width: w, height: h,
@@ -260,6 +268,7 @@ export const CanvasScene: React.FC<{ items?: Item[]; path?: Stop[]; links?: Link
               <div style={{
                 position: "absolute", inset: 0, opacity: cardO, background: theme.colors.surface, border: `${Math.max(1, 2 * k)}px solid ${theme.colors.border}`,
                 borderRadius: (s.radius ?? theme.radius) * k, boxShadow: `inset ${6 * k}px 0 0 ${accent}`,
+                clipPath: wipe < 1 ? `inset(0 ${((1 - wipe) * 100).toFixed(1)}% 0 0 round ${(s.radius ?? theme.radius) * k}px)` : undefined,
               }} />
             )}
             {prev && (
@@ -268,7 +277,7 @@ export const CanvasScene: React.FC<{ items?: Item[]; path?: Stop[]; links?: Link
               </div>
             )}
             <div style={{ position: "absolute", inset: 0, opacity: prev ? p : 1, display: "flex", alignItems: "center", justifyContent: "center" }}>
-              <Content s={s} scale={k} theme={theme} t={t} enter={prev ? t - 0.9 * p : it.settled ? -99 : enter} roll={roll} />
+              <Content s={s} scale={k} theme={theme} t={t} enter={prev ? t - 0.9 * p : it.settled ? -99 : enter} roll={roll} lay={prev ? undefined : lay} />
             </div>
           </div>
         );
