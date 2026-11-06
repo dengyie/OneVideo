@@ -6,6 +6,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { generateImage, generateVideo, fetchAsset } from "../cli/lib/assets.mjs";
 import { ask, parseJsonReply } from "../cli/lib/llm.mjs";
+import { request } from "../cli/lib/http.mjs";
 import { sheetPlan, sceneAt, writeSheets } from "../cli/commands/director.mjs";
 import { REMOTION_BIN, ffmpeg, ffprobe } from "../cli/lib/ffmpeg.mjs";
 
@@ -153,4 +154,14 @@ test("writeSheets tiles frames into JPEG contact sheets with the bundled ffmpeg"
   const probe = await ffprobe(sheets[0].file);
   assert.deepEqual([probe.streams[0].width, probe.streams[0].height], [3 * 160 + 4 * 4, 2 * 90 + 3 * 4]);
   assert.equal(readFileSync(sheets[1].file).subarray(0, 2).toString("hex"), "ffd8");
+});
+
+test("bodies past curl's config line limit go through a temp file", async () => {
+  const r = await relay({ "/v1/echo": (_, j) => [200, { n: j.blob.length }] });
+  try {
+    for (const n of [100, 200 * 1024, 3 << 20]) {
+      const res = await request(`${r.base}/echo`, { method: "POST", json: { blob: "x".repeat(n) }, retries: 0 });
+      assert.equal(JSON.parse(res.body.toString()).n, n);
+    }
+  } finally { r.close(); }
 });

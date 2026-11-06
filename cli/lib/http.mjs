@@ -71,12 +71,13 @@ export async function request(url, { method = "GET", headers = {}, json, key, ti
   if (key) lines.push(`header = ${quote(`Authorization: Bearer ${key}`)}`);
   if (accept) lines.push(`header = ${quote(`Accept: ${accept}`)}`);
   for (const [k, v] of Object.entries(headers)) lines.push(`header = ${quote(`${k}: ${v}`)}`);
-  // Inline images make bodies of megabytes; those go through a private temp file (0600) instead.
+  // Bodies past a few KB (inline images run to megabytes) exceed curl's config line limit, so they go
+  // through a private temp file (0600) instead.
   let bodyDir = null;
   if (json !== undefined) {
     const body = JSON.stringify(json);
     lines.push(`header = ${quote("Content-Type: application/json")}`);
-    if (body.length > 256 * 1024) {
+    if (body.length > 8 * 1024) {
       bodyDir = mkdtempSync(join(tmpdir(), "ov-body-"));
       writeFileSync(join(bodyDir, "body.json"), body, { mode: 0o600 });
       lines.push(`data-binary = ${quote(`@${join(bodyDir, "body.json")}`)}`);
