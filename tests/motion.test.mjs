@@ -4,10 +4,10 @@ import { mkdirSync, mkdtempSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { deflateSync } from "node:zlib";
-import { AUTO_SHOTS, MOTION_SFX, compileShots, compileTimeline, motionCues, resolveWhen, sfxVariants } from "../cli/lib/timeline.mjs";
+import { AUTO_SHOTS, MOTION_SFX, bestOffset, captionBand, compileShots, compileTimeline, hardCuts, motionCues, resolveWhen, sfxVariants } from "../cli/lib/timeline.mjs";
 import { beatsFile, detectBeats, everyFourth, gridBeats, snapToBar, snapToBeat } from "../cli/lib/beats.mjs";
 import { schemaGate } from "../cli/lib/gates.mjs";
-import { coverPoint, nearCentroid, rampTime, subjectFocus } from "../cli/lib/subject.mjs";
+import { coverPoint, dodgeX, hexLuminance, nearCentroid, rampTime, scrimFor, subjectFocus } from "../cli/lib/subject.mjs";
 import { example } from "./helpers.mjs";
 
 const lines = [{ start: 0, end: 1.8 }, { start: 2, end: 3.9 }, { start: 4.1, end: 6 }];
@@ -196,4 +196,39 @@ test("through: an authored focus reaches both sides of the boundary; schema take
   assert.equal(b.transitionIn.frames, 24);
   assert.deepEqual(schemaGate("storyboard", { scenes: [{ id: "x", type: "title", enter: { type: "through", focus: [0.4, 0.5] }, props: { title: "t" } }] }).filter((i) => /focus/.test(i.msg)), []);
   assert.ok(schemaGate("storyboard", { scenes: [{ id: "x", type: "title", enter: { type: "through", focus: [2, 0.5] }, props: { title: "t" } }] }).length);
+});
+
+test("music offset: hits land on downbeats; auto compiles the track start and shifts the beats", () => {
+  assert.equal(bestOffset([{ at: 1.3, w: 1 }, { at: 3.3, w: 1 }], [0, 2, 4, 6]), 0.7);
+  assert.equal(bestOffset([], [0, 2]), 0);
+  const tl = { fps: 30, scenes: [
+    { from: 0, start: 0, shots: [{ t: 0, cut: true }, { t: 1.5, cut: true }], overlays: [{ type: "word", t: 2 }, { type: "word", style: "rise", t: 2.5 }] },
+    { from: 90, start: 3, shots: [] },
+  ] };
+  assert.deepEqual(hardCuts(tl), [{ at: 1.5, w: 1 }, { at: 2, w: 0.5 }, { at: 3, w: 1 }]);
+  const ex = example({ media: ["sfx/whoosh.wav", "sfx/pop.wav", "music/inspired.mp3"] });
+  const beats = gridBeats(120, 200);
+  writeFileSync(beatsFile(join(ex.root, "public", ex.config.music.file)), JSON.stringify({ bpm: 120, beats, downbeats: everyFourth(beats) }));
+  const { timeline, errors } = compileTimeline({ ...ex, config: { ...ex.config, music: { ...ex.config.music, offset: "auto" } }, assets: ex.fetchedAssets });
+  assert.deepEqual(errors, []);
+  const off = timeline.music.offset;
+  assert.ok(off >= 0 && off < 2);
+  assert.equal(timeline.beats[0], Math.round(((Math.ceil(off / 0.5 - 1e-9) * 0.5) - off) * 1000) / 1000);
+  assert.deepEqual(schemaGate("project", { ...ex.config, music: { ...ex.config.music, offset: "auto" } }), []);
+  assert.ok(schemaGate("project", { ...ex.config, music: { ...ex.config.music, offset: "late" } }).length);
+});
+
+test("text over media: words dodge the depth subject, scrims follow contrast, captions read the shot", () => {
+  const w = 64, h = 36, px = new Uint8Array(w * h).fill(40);
+  for (let y = 10; y < 26; y++) for (let x = 26; x < 38; x++) px[y * w + x] = 230;
+  const d = { width: w, height: h, pixels: px };
+  assert.equal(dodgeX(d, { text: "AB", y: 0.5, size: 150 }, 1920, 1080), 0.3);
+  assert.equal(dodgeX(d, { text: "AB", y: 0.12, size: 100 }, 1920, 1080), null); // above the subject
+  const white = hexLuminance("#ffffff");
+  assert.equal(scrimFor(white, 20), 0);
+  assert.equal(scrimFor(white, 250), 1);
+  assert.ok(scrimFor(hexLuminance("#FBBF24"), 150) > 0.5);
+  assert.deepEqual(captionBand(undefined, 1), [0.2, 0.84, 0.8, 0.96]);
+  const z = captionBand([{ t: 0, zoom: 2, x: 0.5, y: 0.5 }], 1).map((v) => Math.round(v * 1000) / 1000);
+  assert.deepEqual(z, [0.35, 0.67, 0.65, 0.73]);
 });

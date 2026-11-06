@@ -8,9 +8,9 @@ import { collectIcons, resolveIcon } from "./icons.mjs";
 import { resolveCountry } from "./geo.mjs";
 import { entryAvailable, entryPath, isMonoDark, loadCatalog, resolveEntry, tintLottie } from "./library.mjs";
 import { parseWav } from "./wav.mjs";
-import { countFrames, depthPath, framesDir } from "./assets.mjs";
+import { countFrames, depthPath, framesDir, lumaPath } from "./assets.mjs";
 import { beatsFile, snapToBar, snapToBeat } from "./beats.mjs";
-import { subjectFocus } from "./subject.mjs";
+import { boxMean, depthAt, dodgeX, hexLuminance, lumaAt, scrimFor, subjectFocus, subjectShare, wordBox } from "./subject.mjs";
 
 export const DIMENSIONS = { "16:9": [1920, 1080], "9:16": [1080, 1920], "1:1": [1080, 1080], "4:5": [1080, 1350] };
 export const DEFAULT_HOLD = 0.5;
@@ -215,6 +215,40 @@ function resolvePropTimes(type, props, ctx, errors, where) {
   if (type === "parallax") fix(props.title, "title");
 }
 
+// Moments a viewer feels as hits, in seconds with a weight: scene boundaries, hard shot cuts and
+// slammed words (half weight).
+export function hardCuts(timeline) {
+  const out = [];
+  timeline.scenes.forEach((sc, i) => {
+    if (i) out.push({ at: sc.from / timeline.fps, w: 1 });
+    for (const sh of sc.shots ?? []) if (sh.cut && sh.t > 0) out.push({ at: sc.start + sh.t, w: 1 });
+    for (const o of sc.overlays ?? []) if (slamWord(o)) out.push({ at: sc.start + o.t, w: 0.5 });
+  });
+  return out;
+}
+
+// Track start (0 to one bar, 10 ms steps) that puts the weighted hits nearest the downbeats;
+// each hit counts at most 0.3 s off, so one stray hit can't drag the rest.
+export function bestOffset(hits, downbeats) {
+  if (!hits.length || downbeats.length < 2) return 0;
+  const bar = downbeats[1] - downbeats[0];
+  const near = (t) => downbeats.reduce((m, d) => Math.min(m, Math.abs(d - t)), Infinity);
+  let best = { off: 0, score: Infinity };
+  for (let off = 0; off < bar; off = r3(off + 0.01)) {
+    const score = hits.reduce((s, h) => s + h.w * Math.min(0.3, near(h.at + off)), 0);
+    if (score < best.score - 1e-6) best = { off, score };
+  }
+  return best.off;
+}
+
+// The caption band (screen) in the scene's own frame coordinates under the shot framing at t.
+export function captionBand(shots, t, portrait = false) {
+  const sh = [...(shots ?? [])].reverse().find((s) => s.t <= t) ?? { zoom: 1, x: 0.5, y: 0.5 };
+  const back = (v, c) => c + (v - 0.5) / sh.zoom;
+  const [y0, y1] = portrait ? [0.74, 0.86] : [0.84, 0.96];
+  return [back(0.2, sh.x), back(y0, sh.y), back(0.8, sh.x), back(y1, sh.y)];
+}
+
 export function compileTimeline({ config, script, storyboard, timings, assets, research, root }) {
   const errors = [];
   const warnings = [];
@@ -240,8 +274,16 @@ export function compileTimeline({ config, script, storyboard, timings, assets, r
   const musicSrc = config.music?.file ?? "music/bgm.wav";
   const beatsAt = root ? beatsFile(join(root, "public", musicSrc)) : null;
   const grid = config.music?.enabled !== false && beatsAt && existsSync(beatsAt) ? JSON.parse(readFileSync(beatsAt, "utf8")) : {};
-  const beats = grid.beats ?? [];
-  const downbeats = grid.downbeats ?? [];
+  // music.offset starts the track that many seconds in; "auto" picks the start that lands the
+  // hard cuts on downbeats (a dry compile without snapping says where they fall).
+  let offset = typeof config.music?.offset === "number" ? config.music.offset : 0;
+  if (config.music?.offset === "auto" && grid.downbeats?.length) {
+    const dry = compileTimeline({ config: { ...config, music: { ...config.music, offset: 0 }, beats: { ...config.beats, snap: false } }, script, storyboard, timings, assets, research, root });
+    if (dry.timeline) offset = bestOffset(hardCuts(dry.timeline), grid.downbeats);
+  }
+  const shift = (list) => (list ?? []).map((b) => r3(b - offset)).filter((b) => b >= 0);
+  const beats = shift(grid.beats);
+  const downbeats = shift(grid.downbeats);
   const snap = config.beats?.snap !== false;
   let lastCanvas = null;
 
@@ -352,6 +394,7 @@ export function compileTimeline({ config, script, storyboard, timings, assets, r
         const meta = join(root, "public", depthPath(a), "meta.json");
         if (a.kind === "video" && existsSync(meta)) { const m = JSON.parse(readFileSync(meta, "utf8")); Object.assign(usedAssets[id], { depthStep: m.step, depthFrames: m.frames }); }
       }
+      if (root && existsSync(join(root, "public", lumaPath(a)))) usedAssets[id].luma = lumaPath(a);
       if (a.kind === "video" && root) {
         const frames = countFrames(join(root, "public", framesDir(a.file)));
         if (frames) Object.assign(usedAssets[id], { seq: framesDir(a.file), frames, fps: 30 });
@@ -410,6 +453,29 @@ export function compileTimeline({ config, script, storyboard, timings, assets, r
     const sound = b.sfx !== undefined ? b.sfx : transitionSfx(sfxCfg.transition, b.type);
     if (sound) sfx.push({ sound, src: sfxFile(sound), at: r3(Math.max(0, (sc.from - b.lead) / fps - 0.06)), volume: sfxCfg.volume * 0.7 });
   });
+  // Text over media: a word without an authored x steps aside from the depth subject, and gets a
+  // scrim when the background under it leaves less than 4.5:1; a caption line moves to the top
+  // while the subject fills the caption band.
+  for (const sc of scenes) {
+    for (const o of sc.overlays ?? []) {
+      if (o.type !== "word") continue;
+      const at = Math.min(sc.duration, o.t + 0.3);
+      const d = depthAt(root, sc, usedAssets, fps, at);
+      if (d && o.x === undefined) { const x = dodgeX(d, o, width, height); if (x !== null) o.x = x; }
+      const g = o.scrim === undefined && lumaAt(root, sc, usedAssets, fps, at);
+      if (g) {
+        const bg = boxMean(g.px, g.w, g.h, wordBox(o, width, height), width, height) * (g.fill ? 1 : 1 - (sc.backdrop?.dim ?? 0));
+        const k = scrimFor(hexLuminance(o.color ?? theme.colors?.text), bg);
+        if (k) o.scrim = k;
+      }
+    }
+    for (const c of captions) {
+      if (c.scene !== sc.id) continue;
+      const t = (c.start + c.end) / 2 - sc.start;
+      const d = depthAt(root, sc, usedAssets, fps, t);
+      if (d && subjectShare(d, captionBand(sc.shots, t, height > width), width, height) > 0.25) c.top = true;
+    }
+  }
   const last = scenes[scenes.length - 1];
   if (last) last.transitionOut = { type: normTransition(last.exit)?.type === "cut" ? "cut" : "fade", frames: normTransition(last.exit)?.type === "cut" ? 0 : Math.round(0.6 * fps), tail: 0, direction: "left", nextOpaque: false };
   if (sfxCfg.motion === "auto") {
@@ -429,7 +495,7 @@ export function compileTimeline({ config, script, storyboard, timings, assets, r
   sfx.sort((a, b) => a.at - b.at);
   // music.file is a path under public/ (own or licensed track); otherwise the synthesized bgm.wav.
   const music = config.music?.enabled === false ? null : root && existsSync(join(root, "public", musicSrc))
-    ? { src: musicSrc, volume: config.music?.volume ?? 0.22, duckTo: config.music?.duckTo ?? 0.07, fade: 1.2, credit: config.music?.file ? config.music?.credit ?? null : "OneVideo 程序化合成" }
+    ? { src: musicSrc, offset, volume: config.music?.volume ?? 0.22, duckTo: config.music?.duckTo ?? 0.07, fade: 1.2, credit: config.music?.file ? config.music?.credit ?? null : "OneVideo 程序化合成" }
     : null;
   if (config.music?.enabled !== false && !music) warnings.push(`no background music (public/${musicSrc})${config.music?.file ? "" : "; run: onevideo music"}`);
   if (config.music?.file && !config.music?.credit) warnings.push("music.file has no music.credit; add the track title/author/license for the publish credits");

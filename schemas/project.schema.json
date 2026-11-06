@@ -212,6 +212,13 @@
         "credit": {
           "type": "string",
           "description": "title · author · license of music.file, used in publish credits"
+        },
+        "offset": {
+          "description": "seconds into the track the video starts at; \"auto\" picks the start that lands hard cuts on downbeats",
+          "oneOf": [
+            { "type": "number", "minimum": 0 },
+            { "const": "auto" }
+          ]
         }
       }
     },

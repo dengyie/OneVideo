@@ -7,7 +7,7 @@ import { runTts, ttsConfig, sceneLines } from "../lib/tts.mjs";
 import { writeMusic, synthSfx, SFX, MUSIC_PRESETS } from "../lib/synth.mjs";
 import { writeWav } from "../lib/wav.mjs";
 import { checkProject, printIssues } from "../lib/check.mjs";
-import { search, fetchAsset, scoreCandidate, assetFileExists, depthPath, framesDir, countFrames } from "../lib/assets.mjs";
+import { search, fetchAsset, scoreCandidate, assetFileExists, depthPath, lumaPath, framesDir, countFrames } from "../lib/assets.mjs";
 import { run } from "../lib/ffmpeg.mjs";
 import { AUTO_TRANSITION_SFX, DIMENSIONS, MOTION_SFX, overlaySound, sfxFile, sfxVariants } from "../lib/timeline.mjs";
 import { categories, entryPath, loadCatalog, resolveSfx } from "../lib/library.mjs";
@@ -183,7 +183,6 @@ export async function depth(args) {
   const script = join(ONEVIDEO_ROOT, "cli", "py", "depth.py");
   for (const a of todo) {
     const out = project.p("public", depthPath(a));
-    if (existsSync(out) && !args.force) { log(`✓ ${a.id}: public/${depthPath(a)} (exists; --force to redo)`); continue; }
     let src = project.p("public", a.file);
     const extra = [];
     if (a.kind === "video") {
@@ -191,6 +190,12 @@ export async function depth(args) {
       if (!countFrames(src)) throw new UserError(`asset "${a.id}" has no frame sequence yet; run: onevideo stills (or render) once to extract it`);
       extra.push("--step", String(args.step ?? 2));
     }
+    // The luma grid is cheap: made whenever it is missing, even when the depth map already exists.
+    if (!existsSync(project.p("public", lumaPath(a))) || args.force) {
+      await run(py, [join(ONEVIDEO_ROOT, "cli", "py", "luma.py"), src, project.p("public", lumaPath(a)), ...extra], { cwd: project.root });
+      log(`✓ ${a.id}: public/${lumaPath(a)}`);
+    }
+    if (existsSync(out) && !args.force) { log(`✓ ${a.id}: public/${depthPath(a)} (exists; --force to redo)`); continue; }
     log(`depth: ${a.id} → public/${depthPath(a)}`);
     const t0 = Date.now();
     await run(py, [script, model, src, out, ...extra], { cwd: project.root, stdio: "inherit" });

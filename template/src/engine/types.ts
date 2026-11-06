@@ -40,6 +40,8 @@ export type Overlay = {
   kind?: "circle" | "box" | "underline" | "highlight" | "strike"; rect?: [number, number, number, number];
   text?: string; subtitle?: string; side?: "left" | "right"; rotate?: number;
   asset?: string; shape?: "circle" | "rounded"; style?: "slam" | "rise" | "type";
+  // Word only: 0–1 strength of the backing that keeps it legible over bright or busy media.
+  scrim?: number;
 };
 export type Look = { grain?: number; vignette?: number; leak?: number };
 
@@ -76,7 +78,7 @@ export type Scene = {
 
 // Video assets carry a JPEG sequence (seq/0001.jpg…, `frames` long at `fps`) when one was extracted.
 // `depth` is a near-is-white depth map (an image, or a sequence dir for a video) when one was made.
-export type Asset = { src: string; kind: "image" | "video"; credit: string; seq?: string; frames?: number; fps?: number; depth?: string; depthStep?: number; depthFrames?: number };
+export type Asset = { src: string; kind: "image" | "video"; credit: string; seq?: string; frames?: number; fps?: number; depth?: string; depthStep?: number; depthFrames?: number; luma?: string };
 
 export type Timeline = {
   version: number;
@@ -89,9 +91,10 @@ export type Timeline = {
   duration: number;
   theme: Theme;
   watermark: string | null;
-  captions: { enabled: boolean; style: "line" | "karaoke" | "kinetic" | "none"; items: { scene: string; text: string; start: number; end: number }[] };
+  captions: { enabled: boolean; style: "line" | "karaoke" | "kinetic" | "none"; items: { scene: string; text: string; start: number; end: number; top?: boolean }[] };
   narration: [number, number][];
-  music: { src: string; volume: number; duckTo: number; fade: number; credit?: string | null } | null;
+  // `offset`: seconds into the track the video starts at.
+  music: { src: string; offset?: number; volume: number; duckTo: number; fade: number; credit?: string | null } | null;
   sfx: { sound: string; src: string; at: number; volume: number; duration?: number }[];
   chapters: { title: string; start: number }[];
   assets: Record<string, Asset>;

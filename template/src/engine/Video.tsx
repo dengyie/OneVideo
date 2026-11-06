@@ -230,6 +230,7 @@ export const Video: React.FC<Timeline> = (timeline) => {
         {music && (
           <Html5Audio
             src={staticFile(music.src)}
+            trimBefore={music.offset ? Math.round(music.offset * fps) : undefined}
             loop
             volume={(f) => musicGain(f / fps, timeline.duration, music, timeline.narration)}
           />

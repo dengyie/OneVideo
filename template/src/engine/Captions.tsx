@@ -40,7 +40,7 @@ export const Captions: React.FC = () => {
         position: "absolute",
         left: 0,
         right: 0,
-        bottom: (portrait ? 300 : 46) * u,
+        ...(item.top ? { top: (portrait ? 220 : 46) * u } : { bottom: (portrait ? 300 : 46) * u }),
         display: "flex",
         justifyContent: "center",
         opacity: Math.min(fadeIn, fadeOut),

@@ -633,6 +633,12 @@
         "rotate": {
           "type": "number"
         },
+        "scrim": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "word: backing strength for legibility; set over media automatically, 0 = none"
+        },
         "asset": {
           "type": "string",
           "minLength": 1

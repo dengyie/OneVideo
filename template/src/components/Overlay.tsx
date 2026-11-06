@@ -324,6 +324,12 @@ export const FilmLook: React.FC = () => {
 
 // Keyword pop: the word the narrator is saying, set huge for a beat. "slam" drops in from 1.6×
 // with a blur that clears on impact, "rise" slides up out of a mask, "type" types it out.
+// Rough perceived lightness (0–1) of #rrggbb.
+const luma = (hex: string) => {
+  const n = parseInt(hex.replace("#", ""), 16);
+  return (0.299 * (n >> 16) + 0.587 * ((n >> 8) & 255) + 0.114 * (n & 255)) / 255;
+};
+
 const Word: React.FC<{ o: Overlay; x: number; y: number; color: string; local: number; out: number }> = ({ o, x, y, color, local, out }) => {
   const theme = useTheme();
   const { u } = useLayout();
@@ -331,8 +337,17 @@ const Word: React.FC<{ o: Overlay; x: number; y: number; color: string; local: n
   const size = (o.size ?? 150) * u;
   const style = o.style ?? "slam";
   const base: React.CSSProperties = { fontSize: size, fontWeight: 900, lineHeight: 1, whiteSpace: "nowrap", color, fontFamily: /^[\d$¥%+.,-]+$/.test(text) ? theme.fonts.number : undefined, letterSpacing: -0.02 * size };
+  // Scrim (compiled from the background luma under the word): a soft dark pool behind light text,
+  // a light one behind dark text, plus a matching glow on the glyphs.
+  const k = o.scrim ?? 0;
+  const dark = !/^#?[0-9a-f]{6}$/i.test(color) || luma(color) > 0.45;
+  const tone = dark ? "0,0,0" : "255,255,255";
+  if (k) base.textShadow = `0 0 ${0.08 * size}px rgba(${tone},${0.7 * k}), 0 ${0.02 * size}px ${0.04 * size}px rgba(${tone},${0.5 * k})`;
   const box = (node: React.ReactNode, extra: React.CSSProperties = {}) => (
-    <div style={{ position: "absolute", left: x, top: y, transform: `translate(-50%, -50%) rotate(${o.rotate ?? 0}deg)`, opacity: out, ...extra }}>{node}</div>
+    <div style={{ position: "absolute", left: x, top: y, transform: `translate(-50%, -50%) rotate(${o.rotate ?? 0}deg)`, opacity: out, ...extra }}>
+      {k > 0 && <div style={{ position: "absolute", inset: `${-0.35 * size}px ${-0.3 * size}px`, background: `radial-gradient(closest-side, rgba(${tone},${0.6 * k}), rgba(${tone},${0.25 * k}) 60%, transparent)` }} />}
+      <div style={{ position: "relative" }}>{node}</div>
+    </div>
   );
   if (style === "rise") {
     const p = easeOut(local / 0.4);
