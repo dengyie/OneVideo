@@ -1,6 +1,7 @@
 // render / stills / studio / qc / publish / build / doctor
 import { existsSync, mkdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
+import { availableParallelism, totalmem } from "node:os";
 import { execFileSync } from "node:child_process";
 import { UserError, loadProject, pipelineDef, readJson, writeJson, log, warn, ONEVIDEO_ROOT } from "../lib/project.mjs";
 import { stageStatus } from "../lib/state.mjs";
@@ -16,6 +17,11 @@ import { ensureBeats } from "../lib/beats.mjs";
 
 const ENTRY = "src/index.ts";
 const COMPOSITION = "OneVideo";
+
+// Render tabs when nothing is set: one per core, at most 4, and one per ~1.5 GB of RAM so a
+// 2 GB node does not run out of memory.
+export const autoConcurrency = (cpus = availableParallelism(), mem = totalmem()) =>
+  Math.max(1, Math.min(4, cpus, Math.floor(mem / 1.5e9)));
 
 export const videoPath = (project) => join(project.paths.out, `${project.config.name}.mp4`);
 
@@ -64,7 +70,7 @@ export async function render(args) {
   const flags = [
     "render", ENTRY, COMPOSITION, out, ...commonFlags(project),
     "--codec=h264", "--audio-codec=aac", "--audio-bitrate=192k",
-    `--concurrency=${args.concurrency ?? project.config.render?.concurrency ?? 4}`,
+    `--concurrency=${args.concurrency ?? project.config.render?.concurrency ?? autoConcurrency()}`,
     `--crf=${draft ? 30 : project.config.render?.crf ?? 18}`,
     "--image-format=jpeg", `--jpeg-quality=${draft ? 70 : 90}`,
   ];
@@ -172,7 +178,7 @@ export async function build(args) {
   await media.music({ _: [] });
   await prepareMedia(loadProject());
   await media.timeline({ _: [] });
-  await render({ _: [], draft: args.draft });
+  await render({ _: [], draft: args.draft, concurrency: args.concurrency });
   if (args.draft) return;
   const review = await qc({ _: [] });
   if (review.verdict !== "fail") log("next: review out/qc/frames/, then: onevideo approve review && onevideo publish");

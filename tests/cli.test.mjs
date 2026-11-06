@@ -105,3 +105,11 @@ test("zcode provider config is opt-in", () => {
     Object.assign(process.env, saved);
   }
 });
+
+test("render concurrency defaults by cores and memory", async () => {
+  const { autoConcurrency } = await import("../cli/commands/render.mjs");
+  assert.equal(autoConcurrency(2, 1.9e9), 1);
+  assert.equal(autoConcurrency(2, 16e9), 2);
+  assert.equal(autoConcurrency(16, 64e9), 4);
+  assert.equal(autoConcurrency(8, 4e9), 2);
+});

@@ -53,7 +53,7 @@ export ONEVIDEO_PY=/opt/onevideo-py/bin/python ONEVIDEO_DEPTH_MODEL=$PWD/depth-a
 
 没有这两项时 `build` 跳过深度图，相关效果退回默认位置。
 
-小内存机器（2 GB）渲染时用 `onevideo render --concurrency 1`，或在 `onevideo.json` 里设 `render.concurrency`。
+渲染并发默认按 CPU 核数和内存自动选（每 1.5 GB 内存一个，最多 4 个，2 GB 机器为 1）；需要时用 `--concurrency N` 或 `onevideo.json` 的 `render.concurrency` 覆盖。
 
 TTS 和生图使用 OpenAI 兼容接口，key 从环境变量 `MANGO_API_KEY` 读取（接口地址和 env 名可在 `onevideo.json` 里改），永远不会打印出来。
 
