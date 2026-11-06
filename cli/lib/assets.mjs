@@ -1,7 +1,8 @@
 // Licensed media sourcing. Keyless providers: NASA Images (photos + video), Wikimedia Commons
 // (photos + video), Openverse (photos). Optional: Pexels (PEXELS_API_KEY, photos + video) and
 // AI image and video generation (OpenAI-compatible relay). Videos are cut to a short silent H.264 clip.
-import { existsSync, mkdirSync, readdirSync, rmSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { ffmpeg, ffprobe } from "./ffmpeg.mjs";
 import { getJson, download, request, requireApiKey } from "./http.mjs";
@@ -232,6 +233,21 @@ function genConfig(item, base, defaults) {
 
 const imageExt = (buf) => (buf[0] === 0x89 ? "png" : buf[0] === 0xff ? "jpg" : "webp");
 
+// An image as a JPEG data-URL part at most `width` px wide: full-size PNG takes run to megabytes,
+// which vision calls and video submits time out on. Undecodable input goes as is.
+async function jpegPart(file, width) {
+  const tmp = mkdtempSync(join(tmpdir(), "ov-jpeg-"));
+  try {
+    const out = join(tmp, "x.jpg");
+    await ffmpeg(["-y", "-v", "error", "-i", file, "-frames:v", "1", "-vf", `scale='min(${width},iw)':-2`, "-q:v", "3", out]);
+    return imagePart(readFileSync(out), "image/jpeg");
+  } catch {
+    return imagePart(file);
+  } finally {
+    rmSync(tmp, { recursive: true, force: true });
+  }
+}
+
 async function firstModel(cfg, what, fn) {
   const failures = [];
   for (const model of cfg.models) {
@@ -275,7 +291,7 @@ export async function generateImage(item, { dir, defaults = {}, aspect = "16:9",
     try {
       const { data, model } = await ask({
         prompt: `These are ${takes.length} takes (in order, 0-based) for one shot of a narrated video, framed ${aspect}.\nBrief: ${cfg.prompt}${cfg.brief ? `\nWhat the shot must do: ${cfg.brief}` : ""}\nPick the take that best fits the brief: clear subject, believable detail, no garbled text, logos or watermarks, room for an on-screen title. Reply only JSON {"best": <index>, "reason": "<one sentence>"}.`,
-        images: takes.map((t) => imagePart(t.buf, `image/${imageExt(t.buf) === "jpg" ? "jpeg" : imageExt(t.buf)}`)), json: true, maxTokens: 400, config: { llm },
+        images: await Promise.all(takes.map((t) => jpegPart(join(dir, t.file.slice("assets/".length)), 768))), json: true, maxTokens: 2000, config: { llm },
       });
       if (Number.isInteger(data.best) && data.best >= 0 && data.best < takes.length) [best, pickedBy, pickReason] = [data.best, model, data.reason ?? null];
     } catch (e) {
@@ -308,7 +324,7 @@ export async function generateVideo(item, { publicDir, defaults = {}, aspect = "
   if (cfg.from) {
     const src = lookup(cfg.from);
     if (!src?.file || !existsSync(join(publicDir, src.file))) throw new Error(`asset "${item.id}": generate.from "${cfg.from}" is not fetched yet`);
-    image = { url: imagePart(join(publicDir, src.file)).image_url.url };
+    image = { url: (await jpegPart(join(publicDir, src.file), 1280)).image_url.url };
   }
   const t = await firstModel(cfg, `video "${item.id}"`, async (model) => {
     const json = { model, prompt: cfg.prompt, duration: Math.round(cfg.duration), aspect_ratio: aspect, resolution: cfg.resolution, ...(image ? { image } : {}) };
