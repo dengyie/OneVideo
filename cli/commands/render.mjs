@@ -11,7 +11,7 @@ import { buildPublishKit } from "../lib/publish.mjs";
 import { resolveApiKey, trustedKeyHost } from "../lib/http.mjs";
 import { ttsConfig } from "../lib/tts.mjs";
 import * as media from "./media.mjs";
-import { clipFrames, countFrames, framesDir } from "../lib/assets.mjs";
+import { assetFileExists, clipFrames, countFrames, framesDir } from "../lib/assets.mjs";
 import { ensureBeats } from "../lib/beats.mjs";
 
 const ENTRY = "src/index.ts";
@@ -153,11 +153,24 @@ export async function publish(args = {}) {
   log(`publish kit → ${dir} (${Object.keys(kit.files).join(", ")})`);
 }
 
+// Missing licensed files are fetched, clips get their frame sequences, and depth / luma maps are
+// made when the depth tools exist: subject-aware dives, word dodging and scrims all read them.
+async function prepareMedia(project) {
+  if (!existsSync(project.paths.assets)) return;
+  const items = readJson(project.paths.assets).items ?? [];
+  if (items.some((a) => !assetFileExists(project.p("public"), a))) await media.assets({ _: ["fetch"] });
+  await ensureClipFrames(project);
+  const { missing } = media.depthTools();
+  if (missing) warn(`depth skipped: ${missing}; text dodging, scrims and subject dives fall back to defaults`);
+  else await media.depth({ _: [] });
+}
+
 // Full non-creative pass: voice → music → timeline → render → qc. Publishing waits for the
 // human review sign-off, so build stops at the QC report.
 export async function build(args) {
   await media.tts({ _: [], force: args.forceTts });
   await media.music({ _: [] });
+  await prepareMedia(loadProject());
   await media.timeline({ _: [] });
   await render({ _: [], draft: args.draft });
   if (args.draft) return;
@@ -182,6 +195,8 @@ export async function doctor() {
   add(Boolean(key), "tts key", key ? `found via ${key.source}` : trustedKeyHost(t.baseUrl) ? `missing: set ${t.keyEnv}` : `missing: ${new URL(t.baseUrl).host} needs its own keyEnv variable`);
   add(true, "pexels", process.env.PEXELS_API_KEY ? "PEXELS_API_KEY set" : "optional; unset (NASA/Wikimedia/Openverse still work)");
   add(existsSync(join(ONEVIDEO_ROOT, "template", "src", "index.ts")), "template", join(ONEVIDEO_ROOT, "template"));
+  const depth = media.depthTools();
+  add(true, "depth", depth.missing ? `optional; ${depth.missing}` : `${depth.py} + ${depth.model}`);
   for (const [ok, name, detail] of checks) log(`${ok ? "✓" : "✗"} ${name.padEnd(9)} ${detail}`);
   if (checks.some(([ok]) => !ok)) process.exitCode = 1;
 }

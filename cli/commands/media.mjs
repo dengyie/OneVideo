@@ -169,14 +169,21 @@ export async function decide(args) {
 
 // Depth maps for parallax and text-behind-subject: Depth Anything V2 (ONNX, CPU) through the
 // helper venv. Images → <file>.depth.png; videos → <file>.depth/NNNN.png every --step frames.
+// Python + ONNX model behind `depth`; `missing` says what to set when either is absent.
+export function depthTools() {
+  const py = process.env.ONEVIDEO_PY ?? "/opt/onevideo-py/bin/python";
+  const model = process.env.ONEVIDEO_DEPTH_MODEL ?? "/srv/onevideo/library/models/depth-anything-v2-small.onnx";
+  const missing = !existsSync(py) ? `python not found at ${py} (set ONEVIDEO_PY; needs numpy, pillow, onnxruntime)`
+    : !existsSync(model) ? `depth model not found at ${model} (set ONEVIDEO_DEPTH_MODEL)` : null;
+  return { py, model, missing };
+}
+
 export async function depth(args) {
   const project = loadProject();
   const items = existsSync(project.paths.assets) ? readJson(project.paths.assets).items ?? [] : [];
   const ids = args._.length ? args._.flatMap((x) => String(x).split(",")) : null;
-  const py = process.env.ONEVIDEO_PY ?? "/opt/onevideo-py/bin/python";
-  const model = process.env.ONEVIDEO_DEPTH_MODEL ?? "/srv/onevideo/library/models/depth-anything-v2-small.onnx";
-  if (!existsSync(py)) throw new UserError(`python not found at ${py} (set ONEVIDEO_PY; needs numpy, pillow, onnxruntime)`);
-  if (!existsSync(model)) throw new UserError(`depth model not found at ${model} (set ONEVIDEO_DEPTH_MODEL)`);
+  const { py, model, missing } = depthTools();
+  if (missing) throw new UserError(missing);
   const todo = items.filter((a) => a.file && (a.kind === "image" || a.kind === "video") && (!ids || ids.includes(a.id)));
   for (const id of ids ?? []) if (!items.some((a) => a.id === id)) throw new UserError(`unknown asset "${id}"`);
   if (!todo.length) return log("no image/video assets to process");

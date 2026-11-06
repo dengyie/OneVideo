@@ -241,6 +241,8 @@ export function bestOffset(hits, downbeats) {
   return best.off;
 }
 
+const overlaps = (a, b) => a[0] < b[2] && b[0] < a[2] && a[1] < b[3] && b[1] < a[3];
+
 // The caption band (screen) in the scene's own frame coordinates under the shot framing at t.
 export function captionBand(shots, t, portrait = false) {
   const sh = [...(shots ?? [])].reverse().find((s) => s.t <= t) ?? { zoom: 1, x: 0.5, y: 0.5 };
@@ -468,6 +470,12 @@ export function compileTimeline({ config, script, storyboard, timings, assets, r
         const k = scrimFor(hexLuminance(o.color ?? theme.colors?.text), bg);
         if (k) o.scrim = k;
       }
+    }
+    // A word still on screen when a later one lands on top of it leaves as that one arrives.
+    const words = (sc.overlays ?? []).filter((o) => o.type === "word").sort((a, b) => a.t - b.t);
+    for (const [i, a] of words.entries()) {
+      const b = words.slice(i + 1).find((w) => w.t < a.end && overlaps(wordBox(a, width, height), wordBox(w, width, height)));
+      if (b) a.end = r3(Math.max(a.t + 0.4, b.t));
     }
     for (const c of captions) {
       if (c.scene !== sc.id) continue;

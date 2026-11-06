@@ -1,0 +1,33 @@
+{
+  "title": "SpaceX 上市：一家火箭公司的万亿估值",
+  "summary": "从 IPO 数字、36 年市值榜、估值曲线和收入结构，看 SpaceX 为什么值一万多亿美元。",
+  "scenes": [
+    {
+      "id": "hook",
+      "beat": "hook",
+      "narration": "2026年6月12日，SpaceX在纳斯达克上市，代码SPCX。一家造火箭的公司，凭什么值一万多亿美元？",
+      "chapter": "开场"
+    },
+    {
+      "id": "ipo",
+      "beat": "setup",
+      "chapter": "上市",
+      "narration": "发行价135美元，募资约857亿美元，是史上规模最大的IPO。首日收盘上涨约19%，市值约2.1万亿美元。",
+      "claims": [
+        "ipo-price",
+        "ipo-proceeds",
+        "day-one"
+      ]
+    },
+    {
+      "id": "revenue",
+      "beat": "build",
+      "chapter": "收入结构",
+      "narration": "撑起估值的是星链。2025年收入约187亿美元，以星链为主的连接业务贡献约114亿，占比超过六成。",
+      "claims": [
+        "rev-2025",
+        "segments-2025"
+      ]
+    }
+  ]
+}

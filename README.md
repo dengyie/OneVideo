@@ -16,6 +16,9 @@ research → proposal → script → storyboard → assets → voice → compose
   - 语速门控：按音节估算，范围 3.5–6.2 音节/秒。
   - 字幕长度、场景时长、素材授权白名单。
 - **逐句 TTS 计时**：字幕和画面揭示跟着真实语音时间走。整片统一做 BS.1770 响度归一化（默认 −16 LUFS），带软限幅。
+- **动效引擎**：每个场景一条镜头轨（推近、硬切、动态模糊）；实拍变速、标题压在主体后面；无限画布让数字卡变形并让镜头连续飞行；through / whip 等 12 种转场；切点吸附音乐重拍，`music.offset: "auto"` 自动对齐配乐；动态字幕和运动音效。
+- **画面感知**：`onevideo depth` 生成深度图和亮度网格，编译器据此让 through 冲向主体、关键词避开主体、亮背景上的字自动加底、字幕在主体占满底部时移到顶部。
+- **节奏门控**：编译后检查画面超过 4.5s 没有新元素的空档和连续相同转场，避免做成翻页 PPT。
 - **场景库**：标题、数据卡、柱状图竞赛、折线、对比、时间线、引用、图片/视频 Ken Burns、章节卡、片尾等；风格和动效节奏可配置。
 - **素材**：NASA、Wikimedia Commons、Openverse 免 key 可用；Pexels（可选）；也可以通过 OpenAI 兼容接口生图。授权信息自动进入简介。
 - **程序化配乐和音效**：零依赖合成，没有版权问题。
@@ -40,6 +43,16 @@ apt-get install -y --no-install-recommends libnss3 libdbus-1-3 libatk1.0-0 libat
   libxkbcommon0 libxcomposite1 libxdamage1 libxfixes3 libxrandr2 libgbm1 libasound2 libpango-1.0-0 libcairo2 fonts-noto-cjk
 ```
 
+深度图（可选，但动效引擎的主体感知都依赖它）需要 Python 3 + `numpy pillow onnxruntime` 和 Depth Anything V2 Small 的 ONNX 模型：
+
+```bash
+python3 -m venv /opt/onevideo-py && /opt/onevideo-py/bin/pip install numpy pillow onnxruntime
+curl -L -o depth-anything-v2-small.onnx https://huggingface.co/onnx-community/depth-anything-v2-small/resolve/main/onnx/model.onnx
+export ONEVIDEO_PY=/opt/onevideo-py/bin/python ONEVIDEO_DEPTH_MODEL=$PWD/depth-anything-v2-small.onnx
+```
+
+没有这两项时 `build` 跳过深度图，相关效果退回默认位置。
+
 小内存机器（2 GB）渲染时用 `onevideo render --concurrency 1`，或在 `onevideo.json` 里设 `render.concurrency`。
 
 TTS 和生图使用 OpenAI 兼容接口，key 从环境变量 `MANGO_API_KEY` 读取（接口地址和 env 名可在 `onevideo.json` 里改），永远不会打印出来。
@@ -47,12 +60,12 @@ TTS 和生图使用 OpenAI 兼容接口，key 从环境变量 `MANGO_API_KEY` �
 ## 快速开始
 
 ```bash
-onevideo init my-video --example spacex-ipo   # 从完整示例起步
+onevideo init my-video --example spacex-motion   # 动效示例（另有数据图表版 spacex-ipo）
 cd my-video
 onevideo status          # 各阶段状态 + 下一步该读的导演文档
 onevideo validate        # schema + 门控
 onevideo tts --sample    # 先试听一句
-onevideo build           # tts → music → timeline → render → qc
+onevideo build           # tts → music → 素材/深度图 → timeline → render → qc
 onevideo approve review  # 逐张看完 out/qc/frames/ 之后
 onevideo publish         # 需要 review 已审批
 ```
@@ -80,7 +93,7 @@ ln -s "$PWD" ~/.claude/skills/onevideo
 | `styles/` | 视觉风格 token |
 | `schemas/` | 项目与各 plan 产物的 JSON Schema |
 | `references/` | 中文写作、TTS 读音、数据可信、授权、场景、动效、QC 阈值 |
-| `examples/spacex-ipo/` | 完整示例（SpaceX IPO 数据解说） |
+| `examples/` | `spacex-motion`（动效引擎示范）、`spacex-ipo`（数据图表版） |
 | `tests/` | `npm test`（node:test） |
 
 ## 许可

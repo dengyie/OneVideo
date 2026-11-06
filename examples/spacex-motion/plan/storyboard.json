@@ -1,0 +1,371 @@
+{
+  "scenes": [
+    {
+      "id": "hook",
+      "type": "footage",
+      "enter": "cut",
+      "exit": {
+        "type": "whip",
+        "duration": 0.4
+      },
+      "intent": "实拍做主角：点火慢动作推近，SpaceX 压在发射塔后面；报代码时提速硬切",
+      "props": {
+        "asset": "launch-video",
+        "startFrom": 0,
+        "dim": 0.1,
+        "ramp": [
+          {
+            "at": 1.4,
+            "speed": 0.45
+          },
+          {
+            "cue": "spcx",
+            "speed": 1.7
+          },
+          {
+            "cue": "q",
+            "speed": 0.9
+          }
+        ],
+        "title": {
+          "text": "SpaceX",
+          "kicker": "NASDAQ · SPCX · 2026-06-12",
+          "at": 0.5,
+          "y": 0.34,
+          "size": 300,
+          "behind": true,
+          "matte": {
+            "mode": "subject",
+            "threshold": 0.1
+          },
+          "duration": 4.8
+        }
+      },
+      "cues": {
+        "spcx": "代码SPCX",
+        "q": "凭什么",
+        "trillion": "一万多亿"
+      },
+      "shots": [
+        {
+          "at": 0,
+          "zoom": 1,
+          "snap": false
+        },
+        {
+          "at": 0.3,
+          "zoom": 1.2,
+          "x": 0.47,
+          "y": 0.44,
+          "ease": 4
+        },
+        {
+          "cue": "spcx",
+          "zoom": 1.04,
+          "x": 0.5,
+          "y": 0.5,
+          "cut": true
+        },
+        {
+          "cue": "q",
+          "zoom": 1.14,
+          "x": 0.5,
+          "y": 0.42,
+          "rotate": -0.6,
+          "cut": true
+        },
+        {
+          "cue": "trillion",
+          "zoom": 1.24,
+          "x": 0.5,
+          "y": 0.4,
+          "ease": 1.2
+        }
+      ],
+      "overlays": [
+        {
+          "type": "word",
+          "text": "SPCX",
+          "style": "slam",
+          "at": "代码SPCX",
+          "y": 0.5,
+          "size": 220,
+          "duration": 1.3
+        },
+        {
+          "type": "word",
+          "text": "凭什么？",
+          "style": "rise",
+          "at": "凭什么",
+          "y": 0.62,
+          "size": 130,
+          "duration": 0.8
+        },
+        {
+          "type": "word",
+          "text": "$1T+",
+          "style": "slam",
+          "at": "一万多亿",
+          "y": 0.5,
+          "size": 260,
+          "color": "#FBBF24"
+        }
+      ],
+      "camera": {
+        "move": "handheld",
+        "amount": 1
+      }
+    },
+    {
+      "id": "ipo",
+      "type": "canvas",
+      "enter": {
+        "type": "through",
+        "duration": 0.8
+      },
+      "intent": "无限画布：镜头从发行价飞到募资，再拉开把募资和市值并排成条形，让量级差一眼可见",
+      "header": {
+        "title": "上市当天",
+        "subtitle": "来源：公司新闻稿、路透社、纳斯达克"
+      },
+      "backdrop": {
+        "asset": "nasdaq",
+        "dim": 0.86,
+        "blur": 8,
+        "motion": "left"
+      },
+      "cues": {
+        "price": "发行价",
+        "raise": "募资",
+        "big": "史上规模最大",
+        "pop": "首日",
+        "cap": "市值约"
+      },
+      "sfx": [
+        {
+          "sound": "pop",
+          "at": "发行价"
+        }
+      ],
+      "props": {
+        "items": [
+          {
+            "id": "price",
+            "type": "stat",
+            "x": 960,
+            "y": 560,
+            "value": 135,
+            "format": {
+              "prefix": "$"
+            },
+            "label": "发行价",
+            "cue": "price"
+          },
+          {
+            "id": "raise",
+            "type": "stat",
+            "x": 2160,
+            "y": 560,
+            "w": 640,
+            "value": 85700000000,
+            "format": {
+              "compact": "zh",
+              "suffix": "美元"
+            },
+            "label": "募资（含超额配售）",
+            "cue": "raise",
+            "morph": [
+              {
+                "cue": "cap",
+                "type": "bar",
+                "x": 2160,
+                "y": 1560,
+                "w": 1300,
+                "h": 130,
+                "max": 2100000000000,
+                "label": "募资",
+                "dur": 0.9
+              }
+            ]
+          },
+          {
+            "id": "pop",
+            "type": "stat",
+            "x": 2160,
+            "y": 1180,
+            "value": 19,
+            "format": {
+              "prefix": "+",
+              "suffix": "%"
+            },
+            "label": "首日涨幅",
+            "color": "#34D399",
+            "cue": "pop"
+          },
+          {
+            "id": "cap",
+            "type": "bar",
+            "x": 2160,
+            "y": 1740,
+            "w": 1300,
+            "h": 130,
+            "value": 2100000000000,
+            "max": 2100000000000,
+            "format": {
+              "compact": "zh",
+              "suffix": "美元"
+            },
+            "label": "首日收盘市值",
+            "color": "#FBBF24",
+            "cue": "cap",
+            "offset": 0.3
+          }
+        ],
+        "links": [
+          {
+            "from": "price",
+            "to": "raise",
+            "cue": "raise",
+            "dashed": true
+          },
+          {
+            "from": "raise",
+            "to": "pop",
+            "cue": "pop",
+            "dashed": true
+          }
+        ],
+        "path": [
+          {
+            "focus": "price",
+            "zoom": 1.5
+          },
+          {
+            "cue": "raise",
+            "focus": "raise",
+            "zoom": 1.35,
+            "fly": 0.9
+          },
+          {
+            "cue": "big",
+            "focus": "raise",
+            "zoom": 1.6,
+            "fly": 1.6
+          },
+          {
+            "cue": "pop",
+            "focus": "pop",
+            "zoom": 1.4,
+            "fly": 0.8
+          },
+          {
+            "cue": "cap",
+            "focus": [
+              "pop",
+              "raise",
+              "cap"
+            ],
+            "fly": 1.1
+          }
+        ]
+      },
+      "overlays": [
+        {
+          "type": "word",
+          "text": "史上最大 IPO",
+          "style": "slam",
+          "at": "史上规模最大",
+          "y": 0.78,
+          "size": 120,
+          "color": "#FBBF24",
+          "duration": 2.2
+        },
+        {
+          "type": "confetti",
+          "at": "市值约",
+          "origin": "top",
+          "count": 50
+        }
+      ]
+    },
+    {
+      "id": "revenue",
+      "type": "footage",
+      "enter": {
+        "type": "whip",
+        "duration": 0.4
+      },
+      "intent": "星链发射实拍收尾：数字词自动避开火箭、亮背景自动加底；报到连接业务时硬切",
+      "props": {
+        "asset": "starlink-launch",
+        "startFrom": 0,
+        "dim": 0.1,
+        "ramp": [
+          {
+            "at": 0,
+            "speed": 0.7
+          },
+          {
+            "cue": "conn",
+            "speed": 1.3
+          },
+          {
+            "cue": "six",
+            "speed": 0.6
+          }
+        ]
+      },
+      "cues": {
+        "rev": "187亿",
+        "conn": "以星链为主",
+        "six": "超过六成"
+      },
+      "shots": [
+        {
+          "at": 0,
+          "zoom": 1.04,
+          "snap": false
+        },
+        {
+          "at": 0.2,
+          "zoom": 1.16,
+          "ease": 3
+        },
+        {
+          "cue": "conn",
+          "zoom": 1.06,
+          "cut": true
+        },
+        {
+          "cue": "six",
+          "zoom": 1.22,
+          "ease": 1.2
+        }
+      ],
+      "overlays": [
+        {
+          "type": "word",
+          "text": "$187亿",
+          "style": "slam",
+          "at": "187亿",
+          "y": 0.42,
+          "size": 200,
+          "duration": 1.6
+        },
+        {
+          "type": "word",
+          "text": "星链 > 60%",
+          "style": "slam",
+          "at": "超过六成",
+          "y": 0.4,
+          "size": 170,
+          "color": "#FBBF24"
+        }
+      ],
+      "camera": {
+        "move": "handheld",
+        "amount": 1
+      }
+    }
+  ]
+}

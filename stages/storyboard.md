@@ -16,12 +16,18 @@
 
 - **cues** 把画面变化钉在旁白上：值可以是旁白里的短语（取该短语开始说出的时刻）、`{phrase, offset}`、0–1 之间的比例（场景长度的百分比）或秒数。props 里的 `cue`/`drawCue`/`periodCues` 引用这些名字；引用未定义的 cue 会报错。
 - 没写 cue 的元素按默认节奏在场景前 55% 依次出现。
-- `enter`/`exit`：fade · slide · zoom · wipe · cut；不写用风格默认。
+- `enter`/`exit`：fade · slide · push · whip · zoom · punch · iris · wipe · clock · dip · through · cut；不写用风格默认。按语义选（见 motion-rules 的“转场”）。
+- `shots`：镜头轨。每个场景至少 `"auto"`，关键场景手写推近/硬切。
+- `overlays`：叠层，钩子和结论每句配一个 `word` 关键词；不写 `x` 时编译器按深度图自动避开主体并按背景亮度加底。
 - `duration`（无旁白场景）、`minDuration`（数据动画需要的最短时间）、`hold`（旁白结束后额外停留秒数）。
 - `captions: false` 关闭本场景字幕（片尾来源页）。
 - `sources` 场景的 `props.auto: true` 自动汇总 research 来源与素材署名。
 
 ## 原则（详见 `references/motion-rules.md`）
+
+- 先看 `examples/spacex-motion/plan/storyboard.json`：实拍做主角、数字进画布、关键词跟着旁白。目标是剪辑感，不是一页一张卡。
+- 画面每 2–4 秒要有新东西（cue / 机位 / 叠层）。rhythm 门控会在 `onevideo timeline` 后报出超过 4.5s 的空档和连续 3 个相同转场。
+- 有音乐时 `onevideo.json` 写 `music.offset: "auto"`。
 
 - 连续同类型场景不超过 2 个（variety 门）。
 - 静态类（title/quote/bullets/chapter/sources）合计不超过约 40% 的场景（documentary 30%）。
@@ -30,4 +36,4 @@
 
 ## 检查
 
-`onevideo validate` 之后 `onevideo tts && onevideo timeline && onevideo stills`，逐张看 `out/stills/`，再进入渲染。
+`onevideo validate` 之后 `onevideo tts`、`onevideo assets fetch`、`onevideo depth`、`onevideo timeline`，处理 rhythm 警告，再 `onevideo stills --at 0.3,0.7`，逐张看 `out/stills/`，再进入渲染。

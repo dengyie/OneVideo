@@ -6,7 +6,7 @@ import { join } from "node:path";
 import { deflateSync } from "node:zlib";
 import { AUTO_SHOTS, MOTION_SFX, bestOffset, captionBand, compileShots, compileTimeline, hardCuts, motionCues, resolveWhen, sfxVariants } from "../cli/lib/timeline.mjs";
 import { beatsFile, detectBeats, everyFourth, gridBeats, snapToBar, snapToBeat } from "../cli/lib/beats.mjs";
-import { schemaGate } from "../cli/lib/gates.mjs";
+import { rhythmGate, schemaGate } from "../cli/lib/gates.mjs";
 import { coverPoint, dodgeX, hexLuminance, nearCentroid, rampTime, scrimFor, subjectFocus } from "../cli/lib/subject.mjs";
 import { example } from "./helpers.mjs";
 
@@ -231,4 +231,28 @@ test("text over media: words dodge the depth subject, scrims follow contrast, ca
   assert.deepEqual(captionBand(undefined, 1), [0.2, 0.84, 0.8, 0.96]);
   const z = captionBand([{ t: 0, zoom: 2, x: 0.5, y: 0.5 }], 1).map((v) => Math.round(v * 1000) / 1000);
   assert.deepEqual(z, [0.35, 0.67, 0.65, 0.73]);
+});
+
+test("rhythm: long stills and transition runs warn; a covered word leaves when the next lands", () => {
+  const sc = (id, start, duration, extra = {}) => ({ id, type: "media", start, duration, cues: {}, shots: [], overlays: [], transitionIn: { type: "fade" }, ...extra });
+  const tl = { duration: 20, scenes: [sc("a", 0, 6, { cues: { x: 2 } }), sc("b", 6, 4), sc("c", 10, 4), sc("d", 14, 6, { shots: [{ t: 1 }] })] };
+  const w = rhythmGate(tl, {}).map((i) => i.msg);
+  assert.equal(w.length, 2);
+  assert.match(w[0], /^5\.0s .* from 15\.0s \(scene "d"\)/);
+  assert.match(w[1], /3\+ consecutive "fade" transitions ending at "d"/);
+  assert.deepEqual(rhythmGate(tl, { gates: { maxStill: 6, maxSameTransitionRun: 3 } }), []);
+
+  const ex = example({ media: ["sfx/whoosh.wav", "sfx/pop.wav", "music/bgm.wav"] });
+  const sb = structuredClone(ex.storyboard);
+  sb.scenes[0].overlays = [
+    { type: "word", text: "凭什么", at: 0.5, duration: 2, y: 0.55 },
+    { type: "word", text: "$1T+", at: 1.5, duration: 1, y: 0.5 },
+    { type: "word", text: "远处", at: 1.8, duration: 1, y: 0.12 },
+  ];
+  const { timeline, errors } = compileTimeline({ ...ex, storyboard: sb, assets: ex.fetchedAssets });
+  assert.deepEqual(errors, []);
+  const [a, b, c] = timeline.scenes[0].overlays.filter((o) => o.type === "word");
+  assert.equal(a.end, b.t); // covered: yields
+  assert.equal(b.end, Math.round((b.t + 1) * 1000) / 1000); // the far-off word does not cut it short
+  assert.ok(c.end > c.t + 0.9);
 });

@@ -1,0 +1,43 @@
+{
+  "items": [
+    {
+      "id": "nasdaq",
+      "kind": "image",
+      "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/9/94/NASA_Mars_Perseverance_on_Nasdaq_MarketSite_%28NHQ202102180118%29.jpg/3840px-NASA_Mars_Perseverance_on_Nasdaq_MarketSite_%28NHQ202102180118%29.jpg",
+      "title": "Nasdaq MarketSite",
+      "author": "NASA/Emma Howells",
+      "license": "Public domain",
+      "source": "https://commons.wikimedia.org/wiki/File:NASA_Mars_Perseverance_on_Nasdaq_MarketSite_(NHQ202102180118).jpg"
+    },
+    {
+      "id": "launch-video",
+      "kind": "video",
+      "provider": "wikimedia",
+      "query": "Starlink 10-35 Launches from Cape Canaveral",
+      "pick": 0,
+      "clip": [
+        8,
+        14
+      ],
+      "title": "Starlink 10-35 Launches from Cape Canaveral Space Force Station (1011941)",
+      "author": "U.S. Space Force video by Gwendolyn Kurzen",
+      "license": "Public domain",
+      "source": "https://commons.wikimedia.org/wiki/File:Starlink_10-35_Launches_from_Cape_Canaveral_Space_Force_Station_(1011941).webm"
+    },
+    {
+      "id": "starlink-launch",
+      "kind": "video",
+      "provider": "wikimedia",
+      "query": "Falcon 9 Starlink 6-98",
+      "pick": 0,
+      "clip": [
+        8,
+        15
+      ],
+      "title": "Falcon 9 - Starlink 6-98 (993230)",
+      "author": "U.S. Space Force video by Gwendolyn Kurzen",
+      "license": "Public domain",
+      "source": "https://commons.wikimedia.org/wiki/File:Falcon_9_-_Starlink_6-98_(993230).webm"
+    }
+  ]
+}

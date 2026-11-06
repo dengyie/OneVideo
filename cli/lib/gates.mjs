@@ -5,7 +5,7 @@ import { sceneLines, captionMaxChars, timingHashes } from "./tts.mjs";
 
 export const STATIC_TYPES = new Set(["quote", "bullets", "title", "chapter", "sources"]);
 const DEFAULT_HOLD_EST = 0.5;
-export const GATE_DEFAULTS = { staticRatioMax: 0.4, maxSameTypeRun: 2, longSceneNoCue: 25, syllablesPerSec: [3.5, 6.2] };
+export const GATE_DEFAULTS = { staticRatioMax: 0.4, maxSameTypeRun: 2, longSceneNoCue: 25, syllablesPerSec: [3.5, 6.2], maxStill: 4.5, maxSameTransitionRun: 2 };
 
 const issue = (level, gate, msg) => ({ level, gate, msg });
 
@@ -189,6 +189,42 @@ export function budgetGate(script, config) {
   if (Math.abs(dev) > 0.12) return [issue("warn", "budget", msg)];
   return [];
 }
+// Reveal times the compiler resolved into props (`t` of items, morphs, path stops, cards…).
+function propTimes(v, at) {
+  if (Array.isArray(v)) for (const x of v) propTimes(x, at);
+  else if (v && typeof v === "object") for (const [k, x] of Object.entries(v)) k === "t" && typeof x === "number" ? at(x) : propTimes(x, at);
+}
+
+// Screen rhythm on the compiled timeline: the longest stretches where nothing new happens on
+// screen (no scene, cue, shot or overlay), and runs of the same transition. Warnings only.
+export function rhythmGate(timeline, config) {
+  const g = { ...GATE_DEFAULTS, ...(config.gates ?? {}) };
+  const out = [];
+  const events = [];
+  for (const sc of timeline.scenes) {
+    const at = (t) => { if (t >= 0 && t <= sc.duration) events.push({ t: sc.start + t, scene: sc.id }); };
+    at(0);
+    for (const t of Object.values(sc.cues ?? {})) at(t);
+    for (const sh of sc.shots ?? []) at(sh.t);
+    for (const o of sc.overlays ?? []) at(o.t);
+    propTimes(sc.props, at);
+  }
+  events.sort((a, b) => a.t - b.t);
+  const end = { t: timeline.duration, scene: timeline.scenes.at(-1)?.id };
+  const gaps = [...events, end].slice(1).map((e, i) => ({ from: events[i], to: e, len: e.t - events[i].t }))
+    .filter((x) => x.len > g.maxStill && x.from.scene !== "credits" && timeline.scenes.find((s) => s.id === x.from.scene)?.type !== "sources");
+  for (const x of gaps.sort((a, b) => b.len - a.len).slice(0, 5)) {
+    out.push(issue("warn", "rhythm", `${x.len.toFixed(1)}s with nothing new on screen from ${x.from.t.toFixed(1)}s (scene "${x.from.scene}") — add a cue, shot or overlay (max ${g.maxStill}s)`));
+  }
+  const types = timeline.scenes.slice(1).map((s) => s.transitionIn?.type);
+  let run = 1;
+  for (let i = 1; i < types.length; i++) {
+    run = types[i] === types[i - 1] ? run + 1 : 1;
+    if (run === g.maxSameTransitionRun + 1) out.push(issue("warn", "rhythm", `${run}+ consecutive "${types[i]}" transitions ending at "${timeline.scenes[i + 1].id}" — vary them at chapter turns`));
+  }
+  return out;
+}
+
 export function summarize(issues) {
   return { errors: issues.filter((i) => i.level === "error"), warnings: issues.filter((i) => i.level === "warn") };
 }

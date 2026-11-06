@@ -45,7 +45,8 @@
 - `intent`：一句话写明这个画面要让观众记住什么，方便审稿。
 - `shots`：场景的镜头轨，作用于内容和叠层（背景以 0.55 倍弱跟随，产生视差）。`"auto"` = 每句字幕一个机位，推/切交替；或写列表 `[{at, zoom, x, y | focus:[x,y,w,h], rotate, cut, ease}]`。运动帧按镜头速度加方向性动态模糊，硬切帧不加。
 - 卡点：有音乐时编译器读取 `public/<music>.beats.json`（`onevideo music` 生成：合成乐按 BPM 出网格，外部音轨用 onset 检测），镜头时间吸附到 0.12s 内最近的拍点，硬切镜头（`cut`）、画布路径的硬切停靠点和 speed>1.3 的变速优先吸附到 0.25s 内的小节重拍（downbeat，4/4 下 onset 能量最大的拍位）；单个镜头/停靠点/变速写 `snap: false` 保持原时间；`onevideo.json` 里 `beats.snap: false` 关闭。`at: {beat: n}` 直接指定场景内第 n 拍（shots、canvas、footage 可用）。
-- 深度图：`onevideo depth [asset ids] [--step 2]` 在 VM 上用 Depth Anything V2（ONNX，CPU）生成，图片 → `<file>.depth.png`，视频 → `<file>.depth/NNNN.png`；parallax 和 footage 的 `title.behind` 使用。
+- 配乐对齐：`onevideo.json` 的 `music.offset` 写秒数，或写 `"auto"` 让编译器在一小节内找让场景边界、硬切和 slam 关键词最贴近重拍的音乐起点。
+- 深度图：`onevideo depth [asset ids] [--step 2]` 在 VM 上用 Depth Anything V2（ONNX，CPU）生成，图片 → `<file>.depth.png`，视频 → `<file>.depth/NNNN.png`，同时生成亮度网格 `<file>.luma.json`；through 定焦、parallax、footage 的 `title.behind`、关键词避让和自动加底、字幕避让都会读取。`onevideo build` 在 depth 工具可用时自动执行。
 
 ## 叠层动效 `overlays`
 
@@ -74,7 +75,7 @@
 | `spotlight` | 聚光压暗四周 | `x`/`y`、`size` | swell |
 | `flash` | 闪白 | — | boom |
 | `image` | 图片贴纸 | `asset`、`shape`、`rotate` | ui-pop |
-| `word` | 关键词弹字（配 `shots` 做每句一个关键词） | `text`、`style: slam|rise|type`、`color` | ui-pop |
+| `word` | 关键词弹字（配 `shots` 做每句一个关键词）；不写 `x` 时按深度图避开主体，背景对比度不足时自动加底，被后一个关键词盖住时提前离场 | `text`、`style: slam|rise|type`、`color`、`scrim`（0–1，`0` 关闭自动加底） | ui-pop |
 
 - 项目级 `sfx.overlays: "auto"`：所有没写 `sfx` 的叠层都配默认音效。
 - 项目级 `sfx.motion: "auto"`：画面运动自己出声。canvas 飞行配 whoosh-soft，飞行 ≥1.3s 换成 whoosh-cinematic；硬切和 slam 关键词配 impact（slam 词不再配 ui-pop）；镜头推拉（Δzoom ≥0.12）配 whoosh-soft；footage 变速从慢放提回快速时配 whoosh-cinematic。同一类别的音效变体轮换使用。离已有音效不到 0.2s 的运动音效跳过，运动音效之间至少间隔 0.25s。`onevideo music` 会把这些类别的全部变体都放进 `public/sfx/`。

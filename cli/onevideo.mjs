@@ -8,7 +8,7 @@ import * as render from "./commands/render.mjs";
 import * as library from "./commands/library.mjs";
 
 const COMMANDS = {
-  init: [plan.init, "init <dir> [--pipeline data-explainer] [--style midnight-data] [--aspect 16:9] [--title …] [--example spacex-ipo]"],
+  init: [plan.init, "init <dir> [--pipeline data-explainer] [--style midnight-data] [--aspect 16:9] [--title …] [--example spacex-motion|spacex-ipo]"],
   status: [plan.status, "status                       stage table + next director doc"],
   validate: [plan.validate, "validate [--strict]          schemas + pre-compose gates"],
   approve: [plan.approve, "approve <stage> [--note …]   human sign-off (hash-locked)"],

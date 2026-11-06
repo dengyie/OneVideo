@@ -35,3 +35,21 @@ test("every pipeline stage points at an existing director and every style parses
     assert.ok(s.colors?.bg && s.colors?.accent && s.fonts?.body, f);
   }
 });
+
+test("every example passes the schemas and the pre-voice content gates", async () => {
+  const { schemaGate, numbersGate, storyboardGate, captionGate } = await import("../cli/lib/gates.mjs");
+  const dirs = readdirSync(join(ROOT, "examples"));
+  assert.ok(dirs.includes("spacex-motion") && dirs.includes("spacex-ipo"));
+  for (const name of dirs) {
+    const read = (f) => JSON.parse(readFileSync(join(ROOT, "examples", name, f), "utf8"));
+    const config = read("onevideo.json"), plan = (f) => read(join("plan", `${f}.json`));
+    const [research, script, storyboard, assets] = ["research", "script", "storyboard", "assets"].map(plan);
+    const errors = [
+      ...schemaGate("project", config), ...schemaGate("research", research), ...schemaGate("script", script),
+      ...schemaGate("storyboard", storyboard), ...schemaGate("assets", assets),
+      ...numbersGate(script, research), ...captionGate(script, config), ...storyboardGate(storyboard, script, config, assets),
+    ].filter((i) => i.level === "error");
+    assert.deepEqual(errors, [], name);
+    assert.equal(config.name, name);
+  }
+});
